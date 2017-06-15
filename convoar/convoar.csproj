@@ -56,6 +56,13 @@
     <Reference Include="OpenMetaverse">
       <HintPath>..\..\opensim-ssh\bin\OpenMetaverse.dll</HintPath>
     </Reference>
+    <Reference Include="OpenMetaverse.Rendering.Meshmerizer">
+      <HintPath>..\..\opensim-ssh\bin\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenMetaverse.StructuredData, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\opensim-ssh\bin\OpenMetaverse.StructuredData.dll</HintPath>
+    </Reference>
     <Reference Include="OpenMetaverseTypes">
       <HintPath>..\..\opensim-ssh\bin\OpenMetaverseTypes.dll</HintPath>
     </Reference>
@@ -72,14 +79,26 @@
     <Reference Include="OpenSim.Region.Framework">
       <HintPath>..\..\opensim-ssh\bin\OpenSim.Region.Framework.dll</HintPath>
     </Reference>
+    <Reference Include="OpenSim.Region.PhysicsModule.BasicPhysics, Version=0.9.1.21260, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\opensim-ssh\bin\OpenSim.Region.PhysicsModule.BasicPhysics.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Region.PhysicsModules.SharedBase, Version=0.9.1.36086, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\opensim-ssh\bin\OpenSim.Region.PhysicsModules.SharedBase.dll</HintPath>
+    </Reference>
     <Reference Include="OpenSim.Services.Interfaces">
       <HintPath>..\..\opensim-ssh\bin\OpenSim.Services.Interfaces.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Tests.Common">
       <HintPath>..\..\opensim-ssh\bin\OpenSim.Tests.Common.dll</HintPath>
     </Reference>
+    <Reference Include="RSG.Promise">
+      <HintPath>..\libs\RSG.Promise.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -88,11 +107,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BasilAssets.cs" />
+    <Compile Include="BasilPersist.cs" />
+    <Compile Include="BasilTerrain.cs" />
+    <Compile Include="BConverter.cs" />
+    <Compile Include="BConverterOS.cs" />
+    <Compile Include="BHasher.cs" />
     <Compile Include="Convoar.cs" />
+    <Compile Include="ConvoarParams.cs" />
+    <Compile Include="ConvoarStats.cs" />
+    <Compile Include="EntityGroup.cs" />
+    <Compile Include="EntityHandle.cs" />
+    <Compile Include="GltfClasses.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="MemAssetService.cs" />
+    <Compile Include="NullUserAccountService.cs" />
     <Compile Include="ParameterParsing.cs" />
+    <Compile Include="PrimToMesh.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WebGLConstants.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

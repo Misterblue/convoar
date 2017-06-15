@@ -29,10 +29,33 @@ using OpenSim.Region.CoreModules.World.Terrain;
 using OpenSim.Region.CoreModules.World.Archiver;
 using OpenSim.Tests.Common;
 using OpenSim.Data.Null;
+using OpenSim.Region.PhysicsModule.BasicPhysics;
+using OpenSim.Region.PhysicsModules.SharedBase;
+
+using Nini.Config;
+using log4net;
 
 using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
+
+    // Class passed around for global context for this region module instance.
+    // NOT FOR PASSING DATA! Only used for global resources like logging, configuration
+    //    parameters, statistics, and the such.
+    public class GlobalContext {
+        public ConvoarParams parms;
+        public BasilStats stats;
+        public Logger log;
+        public string contextName;  // a unique identifier for this context -- used in filenames, ...
+
+        public GlobalContext(ConvoarParams pParms, Logger pLog)
+        {
+            parms = pParms;
+            log = pLog;
+            stats = null;
+            contextName = String.Empty;
+        }
+    }
 
     class ConvOAR {
 
@@ -43,6 +66,8 @@ namespace org.herbal3d.convoar {
         // options passed to the OAR parser which are applied to the read content
         string _optDisplacement;
         string _optRotation;
+
+        GlobalContext _context;
 
         private string Invocation() {
             return @"Invocation:
@@ -63,6 +88,10 @@ convoar
         }
 
         public void Start(string[] args) {
+            _context = new GlobalContext(new ConvoarParams(), new Logger());
+
+            _context.parms.MergeCommandLine(args);
+
             _parameters = ParameterParse.ParseArguments(args, /*firstOpFlag*/ false, /*multipleFiles*/ false);
             foreach (KeyValuePair<string, string> kvp in _parameters) {
                 switch (kvp.Key) {
@@ -76,33 +105,35 @@ convoar
                         _optRotation = kvp.Value;
                         break;
                     case "--verbose":
-                        Logger.Verbose = true;
+                        _context.log.Verbose = true;
                         break;
                     case ParameterParse.LAST_PARAM:
                         _inputOAR = kvp.Value;
                         break;
                     case ParameterParse.ERROR_PARAM:
                         // this means the parser found something it didn't like
-                        Logger.LogError("Parameter error: " + kvp.Value);
-                        Logger.LogError(Invocation());
+                        _context.log.LogError("Parameter error: " + kvp.Value);
+                        _context.log.LogError(Invocation());
                         return;
                     default:
-                        Logger.LogError("ERROR: Unknown Parameter: " + kvp.Key);
-                        Logger.LogError(Invocation());
-                        return;
-
+                        if (! _context.parms.SetParameterValue(kvp.Key, kvp.Value)) {
+                            _context.log.LogError("ERROR: Unknown Parameter: " + kvp.Key);
+                            _context.log.LogError(Invocation());
+                            return;
+                        }
+                        break;
                 }
             }
 
             // Validate parameters
             if (String.IsNullOrEmpty(_inputOAR)) {
-                Logger.LogError("An input OAR file must be specified");
-                Logger.LogError(Invocation());
+                _context.log.LogError("An input OAR file must be specified");
+                _context.log.LogError(Invocation());
                 return;
             }
             if (String.IsNullOrEmpty(_outputDir)) {
                 _outputDir = "./out";
-                Logger.LogDebug("Output directory defaulting to {0}", _outputDir);
+                _context.log.LogDebug("Output directory defaulting to {0}", _outputDir);
             }
 
 
@@ -136,6 +167,14 @@ convoar
             IRegionSerialiserModule serializerModule = new SerialiserModule();
             scene.RegisterModuleInterface<IRegionSerialiserModule>(serializerModule);
 
+            IUserAccountService userAccountService = new NullUserAccountService();
+            scene.RegisterModuleInterface<IUserAccountService>(userAccountService);
+
+            PhysicsScene physScene = CreateSimplePhysicsEngine();
+            ((INonSharedRegionModule)physScene).AddRegion(scene);
+            ((INonSharedRegionModule)physScene).RegionLoaded(scene);
+            scene.PhysicsScene = physScene;
+
             scene.LandChannel = new TestLandChannel(scene); // simple land with no parcels
             var terrainModule = new TerrainModule();
             terrainModule.AddRegion(scene);
@@ -144,12 +183,27 @@ convoar
 
             // Load the archive into our scene
             ArchiveReadRequest archive = new ArchiveReadRequest(scene, _inputOAR, Guid.Empty, options);
-            archive.DearchiveRegion();
+            archive.DearchiveRegion(false);
 
             // Convert SOGs from OAR into EntityGroups
-            Logger.Log("Num assets = {0}", memAssetService.NumAssets);
-            Logger.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
+            _context.log.Log("Num assets = {0}", memAssetService.NumAssets);
+            _context.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
 
+            // Convert all the loaded SOGs and images into meshes and our format
+
+
+        }
+
+        private PhysicsScene CreateSimplePhysicsEngine() {
+            IConfigSource config = new IniConfigSource();
+            config.AddConfig("Startup");
+            config.Configs["Startup"].Set("physics", "basicphysics");
+
+            PhysicsScene pScene = new BasicScene();
+            INonSharedRegionModule mod = pScene as INonSharedRegionModule;
+            mod.Initialise(config);
+
+            return pScene;
         }
     }
 }

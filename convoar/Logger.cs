@@ -24,11 +24,11 @@ using log4net;
 namespace org.herbal3d.convoar {
 
     // One place to put all the logging routines
-    public static class Logger {
+    public class Logger {
         private static readonly ILog _log = LogManager.GetLogger("convoar");
 
-        private static bool _verbose = false;
-        public static bool Verbose {
+        private bool _verbose = false;
+        public bool Verbose {
             get { return _verbose; }
             set {
                 bool nextValue = value;
@@ -44,20 +44,20 @@ namespace org.herbal3d.convoar {
             }
         }
 
-        public static void Log(string msg, params Object[] args) {
+        public void Log(string msg, params Object[] args) {
             _log.InfoFormat(msg, args);
             // System.Console.WriteLine(msg, args);
         }
 
         // Output the message if 'Verbose' is true
-        public static void LogDebug(string msg, params Object[] args) {
+        public void LogDebug(string msg, params Object[] args) {
             _log.DebugFormat(msg, args);
             // if (Verbose) {
             //     System.Console.WriteLine(msg, args);
             // }
         }
 
-        public static void LogError(string msg, params Object[] args) {
+        public void LogError(string msg, params Object[] args) {
             _log.ErrorFormat(msg, args);
             // System.Console.WriteLine(msg, args);
         }
