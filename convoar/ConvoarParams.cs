@@ -30,10 +30,11 @@ namespace org.herbal3d.convoar {
             SetParameterDefaultValues();
         }
 
-        #pragma warning disable CS0649  // disable 'never assigned' warnings
-        public bool Enabled;            // True if, well, enabled.
-        public string AssetDirectory;   // root directory of asset storage
-        public int WebSocketPort;       // port to open WebSocket listener
+#pragma warning disable CS0649  // disable 'never assigned' warnings
+        public string InputOAR;
+        public string OutputDirectory;
+        public string Displacement;
+        public string Rotation;
 
         public bool MergeStaticMeshes;      // whether to merge meshes with similar materials
         public bool MergeNonStaticMeshes;      // whether to merge meshes with non-static entities
@@ -80,12 +81,15 @@ namespace org.herbal3d.convoar {
         //    v = value (appropriate type)
         private ParameterDefnBase[] ParameterDefinitions =
         {
-https://github.com/fclp/fluent-command-line-parser/wiki/Roadmap            new ParameterDefn<bool>("Enabled", "If false, module is not enabled to operate",
-                false ),
-            new ParameterDefn<string>("AssetDirectory", "The directory (relative to simulator) to hold Basil assets",
-                "./BasilAssets" ),
-            new ParameterDefn<int>("WebSocketPort", "Port for the WebSocket to listen on",
-                34343 ),
+            new ParameterDefn<string>("InputOAR", "The input OAR file",
+                null),
+            new ParameterDefn<string>("OutputDirectory", "The directory (relative to simulator) to hold Basil assets",
+                "./BasilAssets", "d" ),
+            new ParameterDefn<string>("Displacement", "Optional displacement to add to OAR entites",
+                null ),
+            new ParameterDefn<string>("Rotation", "Optional rotation to add to OAR entites",
+                null ),
+
             new ParameterDefn<bool>("MergeStaticMeshes", "whether to merge meshes with similar materials",
                 true ),
             new ParameterDefn<bool>("MergeNonStaticMeshes", "whether to merge meshes within non-static entities ",
@@ -274,25 +278,22 @@ https://github.com/fclp/fluent-command-line-parser/wiki/Roadmap            new P
             MergeCommandLine(args, null, null);
         }
 
-        public const string LAST_PARAM = "--LastParameter--";
-        public const string ERROR_PARAM = "--ErrorParameter--";
         // Given parameters from the command line, read the parameters and set values specified
         // <param name="args">array of command line tokens</param>
         // <param name="firstOpFlag">if 'true' presume the first token in the parameter line
         // is a special value that should be assigned to the keyword "--firstparam".</param>
-        // <param name="multipleFiles">if 'true' presume multiple specs at the end of the line
+        // <param name="multipleLastParameters">if 'true' presume multiple specs at the end of the line
         // are filenames and pack them together into a CSV string in LAST_PARAM.</param>
-        public bool MergeCommandLine(string[] args, string firstOpParameter, string multipleFilesParameter) {
+        public bool MergeCommandLine(string[] args, string firstOpParameter, string multipleLastParameters) {
             bool ret = true;    // start out assuming parsing worked
-            bool errorMsg = null;
 
             bool firstOpFlag = false;   // no first op
             if (!String.IsNullOrEmpty(firstOpParameter)) {
                 firstOpFlag = true;
             }
-            bool multipleFiles = false;
-            if (!String.IsNullOrEmpty(multipleFilesParameter)) {
-                multipleFiles = true;
+            bool multipleLast = false;
+            if (!String.IsNullOrEmpty(multipleLastParameters)) {
+                multipleLast = true;
             }
 
 
@@ -317,7 +318,7 @@ https://github.com/fclp/fluent-command-line-parser/wiki/Roadmap            new P
                         AddCommandLineParameter(firstOpParameter, args[ii + 1]);
                     }
                     else {
-                        if (multipleFiles) {
+                        if (multipleLast) {
                             // Pack all remaining arguments into a comma-separated list as LAST_PARAM
                             StringBuilder multFiles = new StringBuilder();
                             for (int jj = ii; jj < args.Length; jj++) {
@@ -326,21 +327,13 @@ https://github.com/fclp/fluent-command-line-parser/wiki/Roadmap            new P
                                 }
                                 multFiles.Append(args[jj]);
                             }
-                            AddCommandLineParameter(multipleFilesParameter, multipleFiles.ToString());
+                            AddCommandLineParameter(multipleLastParameters, multipleLast.ToString());
 
                             // Skip them all
                             ii = args.Length;
                         }
                         else {
-                            // This token is not a keyword. If it's the last thing, place it
-                            // into the dictionary as the last parameter. Otherwise an error.
-                            if (ii == args.Length - 1) {
-                                AddCommandLineParameter(LAST_PARAM, para);
-                            }
-                            else {
-                                // something is wrong with  the format of the parameters
-                                AddCommandLineParameter(ERROR_PARAM, "Unknown parameter " + para);
-                            }
+                            throw new ArgumentException("Unknown parameter " + para);
                         }
                     }
                 }

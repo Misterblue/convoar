@@ -32,8 +32,7 @@ using OpenSim.Data.Null;
 using OpenSim.Region.PhysicsModule.BasicPhysics;
 using OpenSim.Region.PhysicsModules.SharedBase;
 
-using Nini.Config;
-using log4net;
+using Nini;
 
 using OMV = OpenMetaverse;
 
@@ -59,15 +58,9 @@ namespace org.herbal3d.convoar {
 
     class ConvOAR {
 
-        Dictionary<string, string> _parameters;
-        string _outputDir;
-        string _inputOAR;
-
-        // options passed to the OAR parser which are applied to the read content
-        string _optDisplacement;
-        string _optRotation;
-
         GlobalContext _context;
+
+        string _outputDir;
 
         private string Invocation() {
             return @"Invocation:
@@ -90,58 +83,33 @@ convoar
         public void Start(string[] args) {
             _context = new GlobalContext(new ConvoarParams(), new Logger());
 
-            _context.parms.MergeCommandLine(args);
-
-            _parameters = ParameterParse.ParseArguments(args, /*firstOpFlag*/ false, /*multipleFiles*/ false);
-            foreach (KeyValuePair<string, string> kvp in _parameters) {
-                switch (kvp.Key) {
-                    case "-d":
-                        _outputDir = kvp.Value;
-                        break;
-                    case "--displacement":
-                        _optDisplacement = kvp.Value;
-                        break;
-                    case "--rotation":
-                        _optRotation = kvp.Value;
-                        break;
-                    case "--verbose":
-                        _context.log.Verbose = true;
-                        break;
-                    case ParameterParse.LAST_PARAM:
-                        _inputOAR = kvp.Value;
-                        break;
-                    case ParameterParse.ERROR_PARAM:
-                        // this means the parser found something it didn't like
-                        _context.log.LogError("Parameter error: " + kvp.Value);
-                        _context.log.LogError(Invocation());
-                        return;
-                    default:
-                        if (! _context.parms.SetParameterValue(kvp.Key, kvp.Value)) {
-                            _context.log.LogError("ERROR: Unknown Parameter: " + kvp.Key);
-                            _context.log.LogError(Invocation());
-                            return;
-                        }
-                        break;
-                }
+            try {
+                _context.parms.MergeCommandLine(args, null, "InputOAR");
+            }
+            catch (Exception e) {
+                _context.log.LogError("ERROR: bad parameters: " + e.Message);
+                _context.log.LogError(Invocation());
+                return;
             }
 
             // Validate parameters
-            if (String.IsNullOrEmpty(_inputOAR)) {
+            if (String.IsNullOrEmpty(_context.parms.InputOAR)) {
                 _context.log.LogError("An input OAR file must be specified");
                 _context.log.LogError(Invocation());
                 return;
             }
-            if (String.IsNullOrEmpty(_outputDir)) {
+            if (String.IsNullOrEmpty(_context.parms.OutputDirectory)) {
                 _outputDir = "./out";
                 _context.log.LogDebug("Output directory defaulting to {0}", _outputDir);
             }
 
-
             // Read in OAR
             Dictionary<string, object> options = new Dictionary<string, object>();
             // options.Add("merge", false);
-            if (_optDisplacement != null) options.Add("displacement", _optDisplacement);
-            if (_optRotation != null) options.Add("rotation", _optRotation);
+            string optDisplacement = _context.parms.Displacement;
+            if (optDisplacement != null) options.Add("displacement", optDisplacement);
+            string optRotation = _context.parms.Rotation;
+            if (optRotation != null) options.Add("rotation", optRotation);
             // options.Add("default-user", OMV.UUID.Random());
             // if (_optSkipAssets != null) options.Add('skipAssets', true);
             // if (_optForceTerrain != null) options.Add("force-terrain", true);
@@ -182,7 +150,7 @@ convoar
             SceneManager.Instance.Add(scene);
 
             // Load the archive into our scene
-            ArchiveReadRequest archive = new ArchiveReadRequest(scene, _inputOAR, Guid.Empty, options);
+            ArchiveReadRequest archive = new ArchiveReadRequest(scene, _context.parms.InputOAR, Guid.Empty, options);
             archive.DearchiveRegion(false);
 
             // Convert SOGs from OAR into EntityGroups
@@ -195,7 +163,7 @@ convoar
         }
 
         private PhysicsScene CreateSimplePhysicsEngine() {
-            IConfigSource config = new IniConfigSource();
+            Nini.Config.IConfigSource config = new Nini.Config.IniConfigSource();
             config.AddConfig("Startup");
             config.Configs["Startup"].Set("physics", "basicphysics");
 

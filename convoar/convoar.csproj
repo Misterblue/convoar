@@ -50,48 +50,50 @@
   <ItemGroup>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\opensim-ssh\bin\log4net.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="Nini, Version=1.1.0.0, Culture=neutral, PublicKeyToken=null" />
+    <Reference Include="Nini">
+      <HintPath>..\..\opensim-github\bin\Nini.dll</HintPath>
+    </Reference>
     <Reference Include="OpenMetaverse">
-      <HintPath>..\..\opensim-ssh\bin\OpenMetaverse.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenMetaverse.dll</HintPath>
     </Reference>
     <Reference Include="OpenMetaverse.Rendering.Meshmerizer">
-      <HintPath>..\..\opensim-ssh\bin\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
     </Reference>
     <Reference Include="OpenMetaverse.StructuredData, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\opensim-ssh\bin\OpenMetaverse.StructuredData.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenMetaverse.StructuredData.dll</HintPath>
     </Reference>
     <Reference Include="OpenMetaverseTypes">
-      <HintPath>..\..\opensim-ssh\bin\OpenMetaverseTypes.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenMetaverseTypes.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Data.Null, Version=0.9.1.16355, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\opensim-ssh\bin\OpenSim.Data.Null.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenSim.Data.Null.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Framework">
-      <HintPath>..\..\opensim-ssh\bin\OpenSim.Framework.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenSim.Framework.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Region.CoreModules">
-      <HintPath>..\..\opensim-ssh\bin\OpenSim.Region.CoreModules.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenSim.Region.CoreModules.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Region.Framework">
-      <HintPath>..\..\opensim-ssh\bin\OpenSim.Region.Framework.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenSim.Region.Framework.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Region.PhysicsModule.BasicPhysics, Version=0.9.1.21260, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\opensim-ssh\bin\OpenSim.Region.PhysicsModule.BasicPhysics.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenSim.Region.PhysicsModule.BasicPhysics.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Region.PhysicsModules.SharedBase, Version=0.9.1.36086, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\opensim-ssh\bin\OpenSim.Region.PhysicsModules.SharedBase.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenSim.Region.PhysicsModules.SharedBase.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Services.Interfaces">
-      <HintPath>..\..\opensim-ssh\bin\OpenSim.Services.Interfaces.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenSim.Services.Interfaces.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Tests.Common">
-      <HintPath>..\..\opensim-ssh\bin\OpenSim.Tests.Common.dll</HintPath>
+      <HintPath>..\..\opensim-github\bin\OpenSim.Tests.Common.dll</HintPath>
     </Reference>
     <Reference Include="RSG.Promise">
       <HintPath>..\libs\RSG.Promise.dll</HintPath>

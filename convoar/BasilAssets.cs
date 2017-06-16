@@ -20,6 +20,7 @@ using System.Drawing;
 using log4net;
 
 using OpenSim.Framework;
+using OpenSim.Services.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
 
@@ -41,23 +42,23 @@ namespace org.herbal3d.convoar {
 
     // Fetch an asset from  the OpenSimulator asset system
     public class OSAssetFetcher : IAssetFetcher {
-        private ILog m_log;
-        private string LogHeader = "[OSAssetFetcher]";
+        private string _logHeader = "[OSAssetFetcher]";
+        private GlobalContext _context;
 
-        private Scene m_scene;
-        private ConvoarParams m_params;
+        private Scene _scene;
+        private IAssetService _assetService;
 
-        public OSAssetFetcher(Scene scene, ILog logger, ConvoarParams pParams) {
-            m_scene = scene;
-            m_log = logger;
-            m_params = pParams;
+        public OSAssetFetcher(Scene pScene, IAssetService pAssetService, GlobalContext pGC) {
+            _scene = pScene;
+            _assetService = pAssetService;
+            _context = pGC;
         }
 
         public override IPromise<byte[]> FetchRawAsset(EntityHandle handle) {
             var prom = new Promise<byte[]>();
 
             // Don't bother with async -- this call will hang until the asset is fetched
-            byte[] returnBytes = m_scene.AssetService.GetData(handle.GetOSAssetString());
+            byte[] returnBytes = _assetService.GetData(handle.GetOSAssetString());
             if (returnBytes.Length > 0) {
                 prom.Resolve(returnBytes);
             }
@@ -77,7 +78,7 @@ namespace org.herbal3d.convoar {
             var prom = new Promise<OMVA.AssetTexture>();
 
             // Don't bother with async -- this call will hang until the asset is fetched
-            AssetBase asset = m_scene.AssetService.Get(handle.GetOSAssetString());
+            AssetBase asset = _assetService.Get(handle.GetOSAssetString());
             if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                 OMVA.AssetTexture tex = new OMVA.AssetTexture(handle.GetUUID(), asset.Data);
                 try {
@@ -110,13 +111,13 @@ namespace org.herbal3d.convoar {
             var prom = new Promise<Image>();
 
             // Don't bother with async -- this call will hang until the asset is fetched
-            AssetBase asset = m_scene.AssetService.Get(handle.GetOSAssetString());
+            AssetBase asset = _assetService.Get(handle.GetOSAssetString());
             if (asset != null) {
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
                         Image imageDecoded = null;
-                        if (m_params.UseOpenSimImageDecoder) {
-                            IJ2KDecoder imgDecoder = m_scene.RequestModuleInterface<IJ2KDecoder>();
+                        if (_context.parms.UseOpenSimImageDecoder) {
+                            IJ2KDecoder imgDecoder = _scene.RequestModuleInterface<IJ2KDecoder>();
                             imageDecoded = imgDecoder.DecodeToImage(asset.Data);
                         }
                         else {
@@ -147,7 +148,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void Dispose() {
-            m_scene = null;
+            _scene = null;
         }
     }
 
