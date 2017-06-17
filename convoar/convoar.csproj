@@ -123,6 +123,7 @@
     <Compile Include="ConvoarParams.cs" />
     <Compile Include="ConvoarStats.cs" />
     <Compile Include="ConvoarTests.cs" />
+    <Compile Include="Displayable.cs" />
     <Compile Include="EntityGroup.cs" />
     <Compile Include="EntityHandle.cs" />
     <Compile Include="GltfClasses.cs" />

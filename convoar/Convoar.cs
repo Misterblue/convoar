@@ -115,6 +115,25 @@ convoar
             // if (_optForceTerrain != null) options.Add("force-terrain", true);
             // if (_optNoObjects != null) options.Add("no-objects", true);
 
+            using (MemAssetService memAssetService = new MemAssetService()) {
+
+                Scene scene = CreateScene(memAssetService);
+
+                // Load the archive into our scene
+                ArchiveReadRequest archive = new ArchiveReadRequest(scene, _context.parms.InputOAR, Guid.Empty, options);
+                archive.DearchiveRegion(false);
+
+                // Convert SOGs from OAR into EntityGroups
+                _context.log.Log("Num assets = {0}", memAssetService.NumAssets);
+                _context.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
+
+                // Convert all the loaded SOGs and images into meshes and our format
+            }
+        }
+
+        // Create an OpenSimulator Scene and add enough auxillery services and objects
+        //   to it so it will do a asset load;
+        public Scene CreateScene(MemAssetService memAssetService) {
             RegionInfo regionInfo = new RegionInfo(0, 0, null, "convoar");
             regionInfo.RegionName = "convoar";
             regionInfo.RegionSizeX = regionInfo.RegionSizeY = Constants.RegionSize;
@@ -126,7 +145,6 @@ convoar
             Scene scene = new Scene(regionInfo);
 
             // Add an in-memory asset service for all the loaded assets to go into
-            MemAssetService memAssetService = new MemAssetService();
             scene.RegisterModuleInterface<IAssetService>(memAssetService);
 
             ISimulationDataService simulationDataService = new NullDataService();
@@ -149,20 +167,10 @@ convoar
 
             SceneManager.Instance.Add(scene);
 
-            // Load the archive into our scene
-            ArchiveReadRequest archive = new ArchiveReadRequest(scene, _context.parms.InputOAR, Guid.Empty, options);
-            archive.DearchiveRegion(false);
-
-            // Convert SOGs from OAR into EntityGroups
-            _context.log.Log("Num assets = {0}", memAssetService.NumAssets);
-            _context.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
-
-            // Convert all the loaded SOGs and images into meshes and our format
-
-
+            return scene;
         }
 
-        private PhysicsScene CreateSimplePhysicsEngine() {
+        public PhysicsScene CreateSimplePhysicsEngine() {
             Nini.Config.IConfigSource config = new Nini.Config.IniConfigSource();
             config.AddConfig("Startup");
             config.Configs["Startup"].Set("physics", "basicphysics");

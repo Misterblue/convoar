@@ -79,9 +79,6 @@ namespace org.herbal3d.convoar {
         }
     }
 
-    public class SceneInstance {
-    }
-
     public class FaceInfo {
         public int num;                 // number of this face on the prim
         public List<OMVR.Vertex> vertexs;

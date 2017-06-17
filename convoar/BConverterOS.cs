@@ -46,18 +46,6 @@ namespace org.herbal3d.convoar {
         private PrimToMesh _mesher;
         private GlobalContext _context;
 
-        // Lists of similar faces indexed by the texture hash
-        public class SimilarFaces : Dictionary<BHash, List<FaceInfo>> {
-            public SimilarFaces() : base() {
-            }
-            public void AddSimilarFace(BHash pHash, FaceInfo pFace) {
-                if (! this.ContainsKey(pHash)) {
-                    this.Add(pHash, new List<FaceInfo>());
-                }
-                this[pHash].Add(pFace);
-            }
-        }
-
         public BConverterOS(IAssetFetcher assetFetcher, PrimToMesh mesher, GlobalContext context) {
             _assetFetcher = assetFetcher;
             _mesher = mesher;

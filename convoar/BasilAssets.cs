@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Robert Adams
+ * Copyright (c) 2017 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 using System;
 using System.Drawing;
-
-using log4net;
 
 using OpenSim.Framework;
 using OpenSim.Services.Interfaces;
@@ -149,6 +147,7 @@ namespace org.herbal3d.convoar {
 
         public override void Dispose() {
             _scene = null;
+            _assetService = null;
         }
     }
 
