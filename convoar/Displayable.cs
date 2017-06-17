@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2017 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,8 +66,8 @@ namespace org.herbal3d.convoar {
     }
         
     public class RenderableMesh {
-        public MeshHandle mesh;
-        public MaterialHandle material;
+        public EntityHandle mesh;
+        public EntityHandle material;
     }
 
 

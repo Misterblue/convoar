@@ -47,12 +47,11 @@ namespace org.herbal3d.convoar {
         /// <summary>
         /// Create and return a faceted mesh.
         /// </summary>
-        public IPromise<ExtendedPrimGroup> CreateMeshResource(SceneObjectGroup sog, SceneObjectPart sop,
+        public IPromise<DisplayableRenderable> CreateMeshResource(SceneObjectGroup sog, SceneObjectPart sop,
                     OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod, BasilStats stats) {
 
-            var prom = new Promise<ExtendedPrimGroup>();
+            var prom = new Promise<DisplayableRenderable>();
 
-            ExtendedPrimGroup mesh;
             try {
                 if (prim.Sculpt != null) {
                     if (prim.Sculpt.Type == OMV.SculptType.Mesh) {
@@ -62,8 +61,8 @@ namespace org.herbal3d.convoar {
                             .Catch(e => {
                                 prom.Reject(e);
                             })
-                            .Then(ePrimGroup => {
-                                prom.Resolve(ePrimGroup);
+                            .Then(dispable => {
+                                prom.Resolve(dispable);
                             });
                     }
                     else {
@@ -73,16 +72,16 @@ namespace org.herbal3d.convoar {
                             .Catch(e => {
                                 prom.Reject(e);
                             })
-                            .Then(fm => {
-                                prom.Resolve(fm);
+                            .Then(dispable => {
+                                prom.Resolve(dispable);
                             });
                     }
                 }
                 else {
                     // m_log.DebugFormat("{0}: CreateMeshResource: creating primshape", LogHeader);
                     stats.numSimplePrims++;
-                    mesh = MeshFromPrimShapeData(sog, sop, prim, lod);
-                    prom.Resolve(mesh);
+                    DisplayableRenderable dispable = MeshFromPrimShapeData(sog, sop, prim, assetFetcher, lod);
+                    prom.Resolve(dispable);
                 }
             }
             catch (Exception e) {
@@ -92,22 +91,22 @@ namespace org.herbal3d.convoar {
             return prom;
         }
 
-        private ExtendedPrimGroup MeshFromPrimShapeData(SceneObjectGroup sog, SceneObjectPart sop,
-                                OMV.Primitive prim, OMVR.DetailLevel lod) {
-            OMVR.FacetedMesh mesh;
-
-            mesh = m_mesher.GenerateFacetedMesh(prim, lod);
-
-            ExtendedPrim extPrim = new ExtendedPrim(sog, sop, prim, mesh);
-            ExtendedPrimGroup extPrimGroup = new ExtendedPrimGroup(extPrim);
-
-            return extPrimGroup;
-        }
-
-        private IPromise<ExtendedPrimGroup> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,
+        private DisplayableRenderable MeshFromPrimShapeData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
 
-            var prom = new Promise<ExtendedPrimGroup>();
+            BHash primHash = new BHashULong(prim.GetHashCode());
+            DisplayableRenderable renderable = assetFetcher.GetRenderable(primHash, () => {
+                OMVR.FacetedMesh mesh;
+                mesh = m_mesher.GenerateFacetedMesh(prim, lod);
+                return new RenderableMeshGroup(mesh);
+            });
+            return renderable;
+        }
+
+        private IPromise<DisplayableRenderable> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,
+                                OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
+
+            var prom = new Promise<DisplayableRenderable>();
 
             // Get the asset that the sculpty is built on
             EntityHandle texHandle = new EntityHandle(prim.Sculpt.SculptTexture);
@@ -128,10 +127,10 @@ namespace org.herbal3d.convoar {
             return prom;
         }
 
-        private IPromise<ExtendedPrimGroup> MeshFromPrimMeshData(SceneObjectGroup sog, SceneObjectPart sop,
+        private IPromise<DisplayableRenderable> MeshFromPrimMeshData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
 
-            var prom = new Promise<ExtendedPrimGroup>();
+            var prom = new Promise<DisplayableRenderable>();
 
             // Get the asset that the mesh is built on
             EntityHandle meshHandle = new EntityHandle(prim.Sculpt.SculptTexture);

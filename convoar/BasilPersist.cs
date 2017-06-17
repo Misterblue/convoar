@@ -44,42 +44,6 @@ namespace org.herbal3d.convoar {
         // Texture cache used when processing one region
         private static Dictionary<int, ImageInfo> textureCache = new Dictionary<int, ImageInfo>();
 
-        public class ImageInfo {
-            public bool hasTransprency;
-            public Image image;
-
-            public ImageInfo() {
-                hasTransprency = false;
-            }
-
-            public ImageInfo(Image pImage) {
-                hasTransprency = false;
-                image = pImage;
-            }
-
-            // Check the image in this TextureInfo for transparency and set this.hasTransparency.
-            public bool CheckForTransparency() {
-                hasTransprency = false;
-                if (image != null) {
-                    if (Image.IsAlphaPixelFormat(image.PixelFormat)) {
-                        // The image could have alpha values in it
-                        Bitmap bitmapImage = image as Bitmap;
-                        if (bitmapImage != null) {
-                            for (int xx = 0; xx < bitmapImage.Width; xx++) {
-                                for (int yy = 0; yy < bitmapImage.Height; yy++) {
-                                    if (bitmapImage.GetPixel(xx, yy).A != 255) {
-                                        hasTransprency = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                return hasTransprency;
-            }
-        }
-
         public BasilPersist(string pAssetType, string pInfo, GlobalContext pContext) {
             _assetType = pAssetType;
             _assetInfo = pInfo;
@@ -202,34 +166,6 @@ namespace org.herbal3d.convoar {
                 }
             }
             return uuri;
-        }
-
-        // If the image is larger than a max, resize the image.
-        // Not sure why, but transparency is lost in this conversion.
-        private Image ConstrainTextureSize(Image inImage) {
-            int size = _context.parms.MaxTextureSize;
-            if (inImage.Width > size || inImage.Height > size) {
-                int sizeW = size;
-                int sizeH = size;
-                /*
-                if (inImage.Width > size) {
-                    sizeH = (int)(inImage.Height * (size / inImage.Width));
-                }
-                else {
-                    sizeW = (int)(inImage.Width * (size / inImage.Height));
-                }
-                */
-                Image thumbNail = new Bitmap(sizeW, sizeH, inImage.PixelFormat);
-                using (Graphics g = Graphics.FromImage(thumbNail)) {
-                    g.CompositingQuality = CompositingQuality.HighQuality;
-                    g.SmoothingMode = SmoothingMode.HighQuality;
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    Rectangle rect = new Rectangle(0, 0, sizeW, sizeH);
-                    g.DrawImage(inImage, rect);
-                }
-                return thumbNail;
-            }
-            return inImage;
         }
 
 

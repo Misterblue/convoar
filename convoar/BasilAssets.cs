@@ -15,6 +15,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 using OpenSim.Framework;
@@ -31,11 +32,73 @@ using OpenMetaverse.Imaging;
 namespace org.herbal3d.convoar {
 
     // A Promise based interface to the asset fetcher
+    /// <summary>
+    /// A Promise based interface to the asset fetcher.
+    /// Also includes storage for global meshes, materials, and textures.
+    /// </summary>
     public abstract class IAssetFetcher : IDisposable {
         public abstract IPromise<OMVA.AssetTexture> FetchTexture(EntityHandle handle);
         public abstract IPromise<Image> FetchTextureAsImage(EntityHandle handle);
         public abstract IPromise<byte[]> FetchRawAsset(EntityHandle handle);
         public abstract void Dispose();
+
+        public Dictionary<BHash, DisplayableRenderable> Renderables;
+        public Dictionary<BHash, MeshInfo> Meshes;
+        public Dictionary<BHash, MaterialInfo> Materials;
+        public Dictionary<BHash, ImageInfo> Images;
+
+        public IAssetFetcher() {
+            Renderables = new Dictionary<BHash, DisplayableRenderable>();
+            Meshes = new Dictionary<BHash, MeshInfo>();
+            Materials = new Dictionary<BHash, MaterialInfo>();
+            Images = new Dictionary<BHash, ImageInfo>();
+        }
+
+        public delegate DisplayableRenderable RenderableBuilder();
+        public DisplayableRenderable GetRenderable(BHash hash, RenderableBuilder builder) {
+            DisplayableRenderable renderable = null;
+            lock (Renderables) {
+                if (!Renderables.TryGetValue(hash, out renderable)) {
+                    renderable = builder();
+                    Renderables.Add(hash, renderable);
+                }
+            }
+            return renderable;
+        }
+        public delegate MeshInfo MeshInfoBuilder();
+        public MeshInfo GetMeshInfo(BHash hash, MeshInfoBuilder builder) {
+            MeshInfo meshInfo = null;
+            lock (Meshes) {
+                if (!Meshes.TryGetValue(hash, out meshInfo)) {
+                    meshInfo = builder();
+                    Meshes.Add(hash, meshInfo);
+                }
+            }
+            return meshInfo;
+        }
+        public delegate MaterialInfo MaterialInfoBuilder();
+        public MaterialInfo GetMaterialInfo(BHash hash, MaterialInfoBuilder builder) {
+            MaterialInfo matInfo = null;
+            lock (Materials) {
+                if (!Materials.TryGetValue(hash, out matInfo)) {
+                    matInfo = builder();
+                    Materials.Add(hash, matInfo);
+                }
+            }
+            return matInfo;
+        }
+        public delegate ImageInfo ImageInfoBuilder();
+        public ImageInfo GetImageInfo(BHash hash, ImageInfoBuilder builder) {
+            ImageInfo imageInfo = null;
+            lock (Images) {
+                if (!Images.TryGetValue(hash, out imageInfo)) {
+                    imageInfo = builder();
+                    Images.Add(hash, imageInfo);
+                }
+            }
+            return imageInfo;
+        }
+
     }
 
     // Fetch an asset from  the OpenSimulator asset system
@@ -46,7 +109,7 @@ namespace org.herbal3d.convoar {
         private Scene _scene;
         private IAssetService _assetService;
 
-        public OSAssetFetcher(Scene pScene, IAssetService pAssetService, GlobalContext pGC) {
+        public OSAssetFetcher(Scene pScene, IAssetService pAssetService, GlobalContext pGC) : base() {
             _scene = pScene;
             _assetService = pAssetService;
             _context = pGC;
@@ -149,8 +212,5 @@ namespace org.herbal3d.convoar {
             _scene = null;
             _assetService = null;
         }
-    }
-
-    class BasilAssetss {
     }
 }

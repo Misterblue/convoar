@@ -127,8 +127,11 @@
     <Compile Include="EntityGroup.cs" />
     <Compile Include="EntityHandle.cs" />
     <Compile Include="GltfClasses.cs" />
+    <Compile Include="ImageInfo.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="MaterialInfo.cs" />
     <Compile Include="MemAssetService.cs" />
+    <Compile Include="MeshInfo.cs" />
     <Compile Include="NullUserAccountService.cs" />
     <Compile Include="ParameterParsing.cs" />
     <Compile Include="PrimToMesh.cs" />

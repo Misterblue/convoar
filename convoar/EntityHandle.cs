@@ -29,6 +29,10 @@ namespace org.herbal3d.convoar {
 
         OMV.UUID m_uuid;
 
+        public EntityHandle() {
+            m_uuid = OMV.UUID.Random();
+        }
+
         public EntityHandle(OMV.UUID id) {
             m_uuid = id;
         }
