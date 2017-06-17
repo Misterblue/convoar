@@ -55,6 +55,10 @@
     <Reference Include="Nini">
       <HintPath>..\..\opensim-github\bin\Nini.dll</HintPath>
     </Reference>
+    <Reference Include="nunit.framework, Version=2.5.9.10348, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\opensim-github\bin\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="OpenMetaverse">
       <HintPath>..\..\opensim-github\bin\OpenMetaverse.dll</HintPath>
     </Reference>
@@ -118,6 +122,7 @@
     <Compile Include="Convoar.cs" />
     <Compile Include="ConvoarParams.cs" />
     <Compile Include="ConvoarStats.cs" />
+    <Compile Include="ConvoarTests.cs" />
     <Compile Include="EntityGroup.cs" />
     <Compile Include="EntityHandle.cs" />
     <Compile Include="GltfClasses.cs" />
@@ -143,6 +148,9 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
