@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2017 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,33 +28,27 @@ namespace org.herbal3d.convoar {
     /// meshes, procedures, or whatever.
     /// </summary>
     public class Displayable {
-    }
-
-    public class DisplayableList: List<Displayable> {
-    }
-
-    public class DisplayableNode {
         public OMV.Vector3 offsetPosition;
         public OMV.Quaternion offsetRotation;
         public DisplayableRenderable renderable;
-        public DisplayableNodeList children;
+        public DisplayableList children;
 
-        public DisplayableNode() {
+        public Displayable() {
             offsetPosition = OMV.Vector3.Zero;
             offsetRotation = OMV.Quaternion.Identity;
             renderable = null;
-            children = new DisplayableNodeList();
+            children = new DisplayableList();
         }
 
-        public DisplayableNode(DisplayableRenderable pRenderable) {
+        public Displayable(DisplayableRenderable pRenderable) {
             offsetPosition = OMV.Vector3.Zero;
             offsetRotation = OMV.Quaternion.Identity;
             renderable = pRenderable;
-            children = new DisplayableNodeList();
+            children = new DisplayableList();
         }
     }
 
-    public class DisplayableNodeList: List<DisplayableNode> {
+    public class DisplayableList: List<Displayable> {
     }
 
     /// <summary>
