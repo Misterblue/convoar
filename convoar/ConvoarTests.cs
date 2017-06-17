@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2016 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using org.herbal3d.convoar;
 
 using NUnit.Framework;
 
@@ -64,8 +66,29 @@ namespace org.herbal3d.convoar.tests {
         public void VerifyHeightmapMatchesMesh() {
         }
 
-        [TestCase]
-        public void VerifyMeshCoversWholeRegion() {
+        [TestCase(100.0, 200.0)]
+        public void VerifyMeshCoversWholeRegion(float pHeightmapSize, float pRegionSize) {
+            int heightmapSize = (int)pHeightmapSize;
+            int regionSize = (int)pRegionSize;
+            float[,] heightMap = CreateHeightmap(heightmapSize);
+
+            ExtendedPrimGroup epg = assetMesher.MeshFromHeightMap(heightMap, regionSize, regionSize);
+        }
+
+        // Creates a heightmap of specificed size with a simple gradient from on corner to the
+        //    opposite corner.
+        private float[,] CreateHeightmap(int pHeightmapSize) {
+            float[,] heightmap = new float[pHeightmapSize, pHeightmapSize];
+            int xSize = heightmap.GetLength(0);
+            int ySize = heightmap.GetLength(1);
+            float xStep = 1.0f / (float)xSize;
+            float yStep = 1.0f / (float)ySize;
+            for (int xx = 0; xx < xSize; xx++) {
+                for (int yy = 0; yy < ySize; yy++) {
+                    heightmap[xx, yy] = (xStep * (float)xx) + (yStep * (float)yy);
+                }
+            }
+            return heightmap;
         }
     }
 
