@@ -50,7 +50,7 @@ namespace org.herbal3d.convoar {
         void Add(uint c);
         void Add(ulong c);
         void Add(float c);
-        void Add(byte[] c);
+        void Add(byte[] c, int offset, int len);
 
         BHash Finish();
         // Finish and add byte array. 
@@ -76,7 +76,7 @@ namespace org.herbal3d.convoar {
     public class BHashULong : BHash {
         private ulong _hash;
         public BHashULong() {
-            _hash = 0;
+            _hash = 5131;
         }
         public BHashULong(ulong initialHash) {
             _hash = initialHash;
@@ -193,14 +193,25 @@ namespace org.herbal3d.convoar {
 
     // ======================================================================
     // ======================================================================
-    public abstract class BHasher
+    public abstract class BHasher : IBHasher
     {
         public BHasher() {
         }
+
+        public abstract void Add(byte c);
+        public abstract void Add(ushort c);
+        public abstract void Add(uint c);
+        public abstract void Add(ulong c);
+        public abstract void Add(float c);
+        public abstract void Add(byte[] c, int offset, int len);
+        public abstract BHash Finish();
+        public abstract BHash Finish(byte[] c);
+        public abstract BHash Finish(byte[] c, int offset, int len);
+        public abstract BHash Hash();
     }
 
     // A hasher that builds up a buffer of bytes ('building') and then hashes over same
-    public abstract class BHasherBytes : BHasher, IBHasher {
+    public abstract class BHasherBytes : BHasher {
         protected byte[] building;
         protected int buildingLoc;
         protected int allocStep = 1024;
@@ -210,48 +221,48 @@ namespace org.herbal3d.convoar {
             buildingLoc = 0;
         }
 
-        public void Add(byte c) {
+        public override void Add(byte c) {
             byte[] bytes = BitConverter.GetBytes(c);
             AddBytes(bytes, 0, bytes.Length);
         }
 
-        public void Add(ushort c) {
+        public override void Add(ushort c) {
             byte[] bytes = BitConverter.GetBytes(c);
             AddBytes(bytes, 0, bytes.Length);
         }
 
-        public void Add(uint c) {
+        public override void Add(uint c) {
             byte[] bytes = BitConverter.GetBytes(c);
             AddBytes(bytes, 0, bytes.Length);
         }
 
-        public void Add(ulong c) {
+        public override void Add(ulong c) {
             byte[] bytes = BitConverter.GetBytes(c);
             AddBytes(bytes, 0, bytes.Length);
         }
 
-        public void Add(float c) {
+        public override void Add(float c) {
             byte[] bytes = BitConverter.GetBytes(c);
             AddBytes(bytes, 0, bytes.Length);
         }
 
-        public void Add(byte[] c) {
+        public override void Add(byte[] c, int offset, int len) {
             AddBytes(c, 0, c.Length);
         }
 
         // Implemented by derived class
-        public abstract BHash Finish();
+        // public abstract BHash Finish();
 
         // Helper function for simple byte array
-        public virtual BHash Finish(byte[] c) {
+        public override BHash Finish(byte[] c) {
             return this.Finish(c, 0, c.Length);
         }
 
         // Implemented by derived class
-        public abstract BHash Finish(byte[] c, int offset, int len);
+        // public abstract BHash Finish(byte[] c, int offset, int len);
 
         // Implemented by derived class
-        public abstract BHash Hash();
+        //  public abstract BHash Hash();
 
         // Add the given number of bytes to the byte array being built
         protected void AddBytes(byte[] addition, int offset, int len) {

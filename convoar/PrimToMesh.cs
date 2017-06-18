@@ -96,11 +96,35 @@ namespace org.herbal3d.convoar {
 
             BHash primHash = new BHashULong(prim.GetHashCode());
             DisplayableRenderable renderable = assetFetcher.GetRenderable(primHash, () => {
-                OMVR.FacetedMesh mesh;
-                mesh = m_mesher.GenerateFacetedMesh(prim, lod);
-                return new RenderableMeshGroup(mesh);
+                OMVR.FacetedMesh mesh = m_mesher.GenerateFacetedMesh(prim, lod);
+                return ConvertFacetedMeshToDisplayable(assetFetcher, mesh, prim.Textures.DefaultTexture);
             });
             return renderable;
+        }
+
+        private DisplayableRenderable ConvertFacetedMeshToDisplayable(IAssetFetcher assetFetcher, OMVR.FacetedMesh fmesh,
+                        OMV.Primitive.TextureEntryFace defaultTexture) {
+            RenderableMeshGroup ret = new RenderableMeshGroup();
+            foreach (OMVR.Face face in fmesh.Faces) {
+                RenderableMesh rmesh = new RenderableMesh();
+                rmesh.num = face.ID;
+
+                MeshInfo meshInfo = new MeshInfo();
+                meshInfo.vertexs = face.Vertices;
+                meshInfo.indices = new List<int>();
+                face.Indices.ForEach(ind => { meshInfo.indices.Add((int)ind); });
+                meshInfo.faceCenter = face.Center;
+                MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetHash(), () => { return meshInfo; });
+                rmesh.mesh = lookupMeshInfo.handle;
+
+                MaterialInfo matInfo = new MaterialInfo(face, defaultTexture);
+
+                MaterialInfo lookupMatInfo = assetFetcher.GetMaterialInfo(matInfo.GetHash(), () => { return matInfo; });
+                rmesh.material = lookupMatInfo.handle;
+
+                ret.meshes.Add(rmesh);
+            }
+            return ret;
         }
 
         private IPromise<DisplayableRenderable> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,

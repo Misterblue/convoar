@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2016 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,7 +72,7 @@ namespace org.herbal3d.convoar.tests {
             int regionSize = (int)pRegionSize;
             float[,] heightMap = CreateHeightmap(heightmapSize);
 
-            ExtendedPrimGroup epg = assetMesher.MeshFromHeightMap(heightMap, regionSize, regionSize);
+            // ExtendedPrimGroup epg = assetMesher.MeshFromHeightMap(heightMap, regionSize, regionSize);
         }
 
         // Creates a heightmap of specificed size with a simple gradient from on corner to the
@@ -89,6 +89,55 @@ namespace org.herbal3d.convoar.tests {
                 }
             }
             return heightmap;
+        }
+    }
+
+    // =========================================================================================
+    // Test whether the coordinates and child rotations happen properly when
+    //    converting linksets.
+    [TestFixture]
+    public class BHasherTests : ConvoarTestCase {
+
+        [TestFixtureSetUp]
+        public void Init() {
+        }
+
+        [TestFixtureTearDown]
+        public void TearDown() {
+        }
+
+        [TestCase]
+        public void BHasherMdjb2TestParams() {
+            BHasher hasher = new BHasherMdjb2();
+            hasher.Add('c');
+            hasher.Add((ushort)6);
+            hasher.Add((int)12345);
+            hasher.Add(-2345L);
+            byte[] byt = Encoding.ASCII.GetBytes("This is a string");
+            hasher.Add(byt, 0, byt.Length);
+            BHash hash = hasher.Finish();
+            System.Console.WriteLine("BHasher hash output = " + hash.ToString());
+        }
+
+        [TestCase("This is a string", Result = 12345)]
+        [TestCase("A long string which is much longer than we are willing to test", Result = 12345)]
+        [TestCase("A string witA one difference", Result = 12345)]
+        [TestCase("A string witB one difference", Result = 12345)]
+        [TestCase("A string witC one differenceC", Result = 12345)]
+        public void BHasherMdjb2Test(string toHash) {
+            BHasher hasher = new BHasherMdjb2();
+            byte[] byt = Encoding.ASCII.GetBytes(toHash);
+            hasher.Add(byt, 0, byt.Length);
+            BHash hash = hasher.Finish();
+            System.Console.WriteLine("BHasher hash output = " + hash.ToString());
+        }
+
+        [TestCase]
+        public void BHasherMD5Test() {
+        }
+
+        [TestCase]
+        public void BHasherSHA256Test() {
         }
     }
 

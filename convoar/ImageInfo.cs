@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2017 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,14 +25,18 @@ using System.Threading.Tasks;
 namespace org.herbal3d.convoar {
 
     public class ImageInfo {
+        public EntityHandle handle;
         public bool hasTransprency;
         public Image image;
 
         public ImageInfo() {
+            handle = new EntityHandle();
             hasTransprency = false;
+            image = null;
         }
 
         public ImageInfo(Image pImage) {
+            handle = new EntityHandle();
             hasTransprency = false;
             image = pImage;
         }

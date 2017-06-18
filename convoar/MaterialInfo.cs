@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2017 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,64 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using OMV = OpenMetaverse;
+using OMVR = OpenMetaverse.Rendering;
+
 namespace org.herbal3d.convoar {
 
     public class MaterialInfo {
+        public EntityHandle handle;
+        public OMV.UUID? textureID;     // UUID of the texture if there is one
+        public OMV.Primitive.TextureEntryFace faceTexture;
+        public bool fullAlpha;
+
+        private BHash _hash = null;
+
+        public MaterialInfo(OMVR.Face face, OMV.Primitive.TextureEntryFace defaultTexture) {
+            handle = new EntityHandle();
+            faceTexture = face.TextureFace;
+            if (faceTexture == null) {
+                faceTexture = defaultTexture;
+            }
+            textureID = faceTexture.TextureID;
+            if (faceTexture.RGBA.A != 1f) {
+                fullAlpha = true;
+            }
+        }
+
+        public BHash GetHash() {
+            return GetHash(false);
+        }
+
+        public BHash GetHash(bool force) {
+            if (force) _hash = null;
+
+            if (_hash == null) {
+                int intHash;
+                if (faceTexture != null) {
+                    intHash =
+                        faceTexture.RGBA.GetHashCode() ^
+                        // faceTexture.RepeatU.GetHashCode() ^
+                        // faceTexture.RepeatV.GetHashCode() ^
+                        // faceTexture.OffsetU.GetHashCode() ^
+                        // faceTexture.OffsetV.GetHashCode() ^
+                        // faceTexture.Rotation.GetHashCode() ^
+                        faceTexture.Glow.GetHashCode() ^
+                        faceTexture.Bump.GetHashCode() ^
+                        faceTexture.Shiny.GetHashCode() ^
+                        faceTexture.Fullbright.GetHashCode() ^
+                        faceTexture.MediaFlags.GetHashCode() ^
+                        faceTexture.TexMapType.GetHashCode() ^
+                        faceTexture.TextureID.GetHashCode() ^
+                        faceTexture.MaterialID.GetHashCode();
+                }
+                else {
+                    var rnd = new Random();
+                    intHash = rnd.Next();
+                }
+                _hash = new BHashULong(intHash);
+            }
+            return _hash;
+        }
     }
 }

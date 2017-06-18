@@ -50,6 +50,11 @@ namespace org.herbal3d.convoar {
             return m_uuid.ToString();
         }
 
+        public byte[] ToBytes() {
+            byte[] ret = new byte[24];
+            return m_uuid.GetBytes();
+        }
+
         // IComparable
         public int CompareTo(object obj) {
             int ret = 0;

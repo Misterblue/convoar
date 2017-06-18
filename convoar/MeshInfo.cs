@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2017 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,49 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using OMV = OpenMetaverse;
+using OMVR = OpenMetaverse.Rendering;
+
 namespace org.herbal3d.convoar {
 
     public class MeshInfo {
+        public EntityHandle handle;
+        public List<OMVR.Vertex> vertexs;
+        public List<int> indices;
+        public OMV.Vector3 faceCenter;
+
+        private BHash _hash = null;
+
+        public MeshInfo() {
+            handle = new EntityHandle();
+            vertexs = new List<OMVR.Vertex>();
+            indices = new List<int>();
+            faceCenter = OMV.Vector3.Zero;
+        }
+
+        // The hash is just a function of the vertices and indices
+        // TODO: figure out how to canonicalize the vertices order.
+        //    At the moment this relies on the determinism of the vertex generators.
+        public BHash GetHash() {
+            return GetHash(false);
+        }
+        public BHash GetHash(bool force) {
+            if (force) _hash = null;
+
+            if (_hash == null) {
+                BHasher hasher = new BHasherMdjb2();
+
+                vertexs.ForEach(vert => {
+                    hasher.Add(vert.GetHashCode());
+                });
+                indices.ForEach(ind => {
+                    hasher.Add(ind);
+                });
+                hasher.Add(faceCenter.GetHashCode());
+
+                _hash = hasher.Finish();
+            }
+            return _hash;
+        }
     }
 }

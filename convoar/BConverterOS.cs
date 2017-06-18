@@ -56,15 +56,36 @@ namespace org.herbal3d.convoar {
         public IPromise<EntityGroup> Convert(SceneObjectGroup sog, IAssetFetcher assetFetcher) {
             var prom = new Promise<EntityGroup>();
 
+            DisplayableList displayables = new DisplayableList();
+            Displayable rootDisplayable = null;
+            foreach (SceneObjectPart sop in sog.Parts) {
+                OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
+                _mesher.CreateMeshResource(sog, sop, aPrim, _assetFetcher, OMVR.DetailLevel.Highest, _context.stats)
+                    .Catch(e => {
+                        _context.log.LogError("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
+                        prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
+                    })
+                    .Then(dr => {
+                        Displayable dAble = new Displayable(dr);
+                        dAble.offsetPosition = sop.OffsetPosition;
+                        dAble.offsetRotation = sop.RotationOffset;
+                        if (sop.IsRoot) {
+                            rootDisplayable = dAble;
+                        }
+                        displayables.Add(dAble);
+                    });
+            }
+
             // Create meshes for all the parts of the SOG
-            Promise<ExtendedPrimGroup>.All(
+            Promise<DisplayableRenderable>.All(
                 sog.Parts.Select(sop => {
                     OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
                     return _mesher.CreateMeshResource(sog, sop, aPrim, _assetFetcher, OMVR.DetailLevel.Highest, _context.stats);
                 } )
             )
             // Tweak the converted parts individually (scale, texturize, ...)
-            .Then(epgs => {
+            .Then(renderables => {
+                // 'renderables' are the DisplayRenderables for all the SOPs in the SOG
                 return epgs.Select(epg => {
                     // If scaling is done in the mesh, do it now
                     if (!_context.parms.DisplayTimeScaling) {

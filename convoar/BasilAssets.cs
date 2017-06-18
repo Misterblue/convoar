@@ -43,15 +43,15 @@ namespace org.herbal3d.convoar {
         public abstract void Dispose();
 
         public Dictionary<BHash, DisplayableRenderable> Renderables;
-        public Dictionary<BHash, MeshInfo> Meshes;
-        public Dictionary<BHash, MaterialInfo> Materials;
-        public Dictionary<BHash, ImageInfo> Images;
+        public OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo> Meshes;
+        public OMV.DoubleDictionary<BHash, EntityHandle, MaterialInfo> Materials;
+        public OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo> Images;
 
         public IAssetFetcher() {
             Renderables = new Dictionary<BHash, DisplayableRenderable>();
-            Meshes = new Dictionary<BHash, MeshInfo>();
-            Materials = new Dictionary<BHash, MaterialInfo>();
-            Images = new Dictionary<BHash, ImageInfo>();
+            Meshes = new OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo>();
+            Materials = new OMV.DoubleDictionary<BHash, EntityHandle, MaterialInfo>();
+            Images = new OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo>();
         }
 
         public delegate DisplayableRenderable RenderableBuilder();
@@ -71,7 +71,7 @@ namespace org.herbal3d.convoar {
             lock (Meshes) {
                 if (!Meshes.TryGetValue(hash, out meshInfo)) {
                     meshInfo = builder();
-                    Meshes.Add(hash, meshInfo);
+                    Meshes.Add(hash, meshInfo.handle, meshInfo);
                 }
             }
             return meshInfo;
@@ -82,7 +82,7 @@ namespace org.herbal3d.convoar {
             lock (Materials) {
                 if (!Materials.TryGetValue(hash, out matInfo)) {
                     matInfo = builder();
-                    Materials.Add(hash, matInfo);
+                    Materials.Add(hash, matInfo.handle, matInfo);
                 }
             }
             return matInfo;
@@ -93,7 +93,7 @@ namespace org.herbal3d.convoar {
             lock (Images) {
                 if (!Images.TryGetValue(hash, out imageInfo)) {
                     imageInfo = builder();
-                    Images.Add(hash, imageInfo);
+                    Images.Add(hash, imageInfo.handle, imageInfo);
                 }
             }
             return imageInfo;

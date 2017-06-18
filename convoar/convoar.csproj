@@ -119,6 +119,7 @@
     <Compile Include="BConverter.cs" />
     <Compile Include="BConverterOS.cs" />
     <Compile Include="BHasher.cs" />
+    <Compile Include="BInstance.cs" />
     <Compile Include="Convoar.cs" />
     <Compile Include="ConvoarParams.cs" />
     <Compile Include="ConvoarStats.cs" />
