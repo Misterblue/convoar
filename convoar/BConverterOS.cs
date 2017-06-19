@@ -42,51 +42,53 @@ namespace org.herbal3d.convoar {
 
         private static string _logHeader = "BConverterOS";
 
-        private IAssetFetcher _assetFetcher;
-        private PrimToMesh _mesher;
         private GlobalContext _context;
 
-        public BConverterOS(IAssetFetcher assetFetcher, PrimToMesh mesher, GlobalContext context) {
-            _assetFetcher = assetFetcher;
-            _mesher = mesher;
+        public BConverterOS(GlobalContext context) {
             _context = context;
         }
 
-        // Convert a SceneObjectGroup into an EntityGroup
-        public IPromise<EntityGroup> Convert(SceneObjectGroup sog, IAssetFetcher assetFetcher) {
-            var prom = new Promise<EntityGroup>();
-
-            DisplayableList displayables = new DisplayableList();
-            Displayable rootDisplayable = null;
-            foreach (SceneObjectPart sop in sog.Parts) {
-                OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
-                _mesher.CreateMeshResource(sog, sop, aPrim, _assetFetcher, OMVR.DetailLevel.Highest, _context.stats)
-                    .Catch(e => {
-                        _context.log.LogError("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
-                        prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
-                    })
-                    .Then(dr => {
-                        Displayable dAble = new Displayable(dr);
-                        dAble.offsetPosition = sop.OffsetPosition;
-                        dAble.offsetRotation = sop.RotationOffset;
-                        if (sop.IsRoot) {
-                            rootDisplayable = dAble;
-                        }
-                        displayables.Add(dAble);
-                    });
-            }
+        // Convert a SceneObjectGroup into an instance with displayables
+        public IPromise<BInstance> Convert(SceneObjectGroup sog, IAssetFetcher assetFetcher, PrimToMesh mesher) {
+            var prom = new Promise<BInstance>();
 
             // Create meshes for all the parts of the SOG
             Promise<DisplayableRenderable>.All(
                 sog.Parts.Select(sop => {
                     OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
-                    return _mesher.CreateMeshResource(sog, sop, aPrim, _assetFetcher, OMVR.DetailLevel.Highest, _context.stats);
+                    return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest, _context.stats);
                 } )
             )
-            // Tweak the converted parts individually (scale, texturize, ...)
             .Then(renderables => {
                 // 'renderables' are the DisplayRenderables for all the SOPs in the SOG
-                return epgs.Select(epg => {
+                // Get the root prim of the SOG
+                List<DisplayableRenderable> rootRenderableList = renderables.Where(dr => {
+                    return ((SceneObjectPart)dr.userData).IsRoot;
+                }).ToList();
+                if (rootRenderableList.Count != 1) {
+                    // There should be only one root prim
+                    _context.log.LogError("{0} Found more than one root prim in SOG. ID={1}", _logHeader, sog.UUID);
+                    prom.Reject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
+                }
+
+                // The root of the SOG
+                Displayable rootDisplayable = new Displayable(rootRenderableList.First());
+
+                // Collect all the children prims and add them to the root Displayable
+                rootDisplayable.children = renderables.Where(dr => {
+                        return !((SceneObjectPart)dr.userData).IsRoot;
+                    }).Select(dr => {
+                        Displayable childDisplayable = new Displayable(dr);
+                        SceneObjectPart dSop = dr.userData as SceneObjectPart;
+                        childDisplayable.offsetPosition = dSop.OffsetPosition;
+                        childDisplayable.offsetRotation = dSop.RotationOffset;
+                        return childDisplayable;
+                    }).ToList();
+
+                return rootDisplayable;
+
+                    /*
+                return renderables.Select(epg => {
                     // If scaling is done in the mesh, do it now
                     if (!_context.parms.DisplayTimeScaling) {
                         PrimToMesh.ScaleMeshes(epg);
@@ -100,21 +102,22 @@ namespace org.herbal3d.convoar {
 
                     return epg;
                 });
+                */
             })
             .Catch(e => {
                 _context.log.LogError("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
                 prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
             })
-            .Done (epgs => {
-                prom.Resolve(new EntityGroup(epgs.ToList()));
+            .Done (rootDisplayable => {
+                BInstance inst = new BInstance();
+                inst.Position = sog.AbsolutePosition;
+                inst.Rotation = sog.GroupRotation;
+                inst.Representation = rootDisplayable;
+
+                prom.Resolve(inst);
             }) ;
 
             return prom;
-        }
-
-        // Convert a SceneObjectPart into an ExtendedPrimGroup
-        public IPromise<ExtendedPrimGroup> Convert(SceneObjectGroup sog, SceneObjectPart sop) {
-            return null;
         }
 
         /// <summary>
@@ -124,12 +127,12 @@ namespace org.herbal3d.convoar {
         /// <param name="epGroup">Collections of meshes to update</param>
         /// <param name="assetFetcher">Fetcher for getting images, etc</param>
         /// <param name="pMesher"></param>
-        private void UpdateTextureInfo(ExtendedPrimGroup epGroup, IAssetFetcher assetFetcher) {
+        private void UpdateTextureInfo(ExtendedPrimGroup epGroup, IAssetFetcher assetFetcher, PrimToMesh mesher) {
             ExtendedPrim ep = epGroup.primaryExtendePrim;
             foreach (FaceInfo faceInfo in ep.faces) {
 
                 // While we're in the neighborhood, map the texture coords based on the prim information
-                _mesher.UpdateCoords(faceInfo, ep.fromOS.primitive);
+                mesher.UpdateCoords(faceInfo, ep.fromOS.primitive);
 
                 UpdateFaceInfoWithTexture(faceInfo, assetFetcher);
             }

@@ -26,7 +26,6 @@ namespace org.herbal3d.convoar {
     public class BInstance {
         public OMV.Vector3 Position { get; set; }
         public OMV.Quaternion Rotation { get; set; }
-        public OMV.Vector3 Scale { get; set; }
         public Displayable Representation { get; set; }
 
         public BInstance() {

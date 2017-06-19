@@ -28,8 +28,15 @@ namespace org.herbal3d.convoar {
     public class MaterialInfo {
         public EntityHandle handle;
         public OMV.UUID? textureID;     // UUID of the texture if there is one
+        public EntityHandle image;
         public OMV.Primitive.TextureEntryFace faceTexture;
+        public OMV.MappingType textureMapping;
+        public OMV.Color4 RGBA;
         public bool fullAlpha;
+        public OMV.Bumpiness bump;
+        public float glow;
+        public OMV.Shininess shiny; // None, Low, Medium, High
+
 
         private BHash _hash = null;
 
@@ -43,6 +50,10 @@ namespace org.herbal3d.convoar {
             if (faceTexture.RGBA.A != 1f) {
                 fullAlpha = true;
             }
+            RGBA = faceTexture.RGBA;
+            bump = faceTexture.Bump;
+            glow = faceTexture.Glow;
+            shiny = faceTexture.Shiny;
         }
 
         public BHash GetHash() {

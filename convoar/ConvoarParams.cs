@@ -42,11 +42,14 @@ namespace org.herbal3d.convoar {
         public string GltfTargetDir;    // where to store all the Gltf files
         public bool ExportTextures;     // also export textures to the target dir
         public int MaxTextureSize;      // the maximum pixel dimension for images if exporting
+        public string PreferredTextureFormat;   // "PNG", "JPEG", "GIF", "BMP"
+        public string PreferredTextureFormatIfNoTransparency; // "PNG", "JPEG", "GIF", "BMP"
+
+        public bool HalfRezTerrain;     // whether to reduce the terrain resolution by 2
         public bool AddTerrainMesh;     // whether to create and add a terrain mesh
         public bool CreateTerrainSplat; // whether to generate a terrain mesh splat texture
 
         public int VerticesMaxForBuffer;    // Number of vertices to cause splitting of buffer files
-        public bool HalfRezTerrain;     // whether to reduce the terrain resolution by 2
 
         public bool DisplayTimeScaling; // 'true' if to delay mesh scaling to display/GPU time
 
@@ -57,7 +60,7 @@ namespace org.herbal3d.convoar {
         public bool LogConversionStats; // output numbers about number of entities converted
         public bool LogDetailedSharedFaceStats; // output numbers about face mesh sharing
         public bool LogDetailedEntityInfo;      // output detailed information about each entity
-        #pragma warning restore CS0649
+#pragma warning restore CS0649
 
         // =====================================================================================
         // =====================================================================================
@@ -94,26 +97,35 @@ namespace org.herbal3d.convoar {
                 true ),
             new ParameterDefn<bool>("MergeNonStaticMeshes", "whether to merge meshes within non-static entities ",
                 true ),
+
             new ParameterDefn<string>("GltfTargetDir", "Where to store all the Gltf files",
                 "./gltf" ),
             new ParameterDefn<bool>("ExportTextures", "Convert textures to PNGs and export to target dir",
                 true ),
             new ParameterDefn<int>("MaxTextureSize", "The maximum pixel dimension for images if exporting",
                 256 ),
+            new ParameterDefn<string>("PreferredTextureFormat", "One of: PNG, JPEG, GIF, BMP",
+                "PNG"),
+            new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPEG, GIF, BMP",
+                "JPEG"),
+
             new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
                 true ),
-            new ParameterDefn<bool>("CreateTerrainSplat", "whether to generate a terrain mesh splat texture",
-                true ),
-            new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
-                50000 ),
             new ParameterDefn<bool>("HalfRezTerrain", "Whether to reduce the terrain resolution by 2",
                 false ),
+            new ParameterDefn<bool>("CreateTerrainSplat", "whether to generate a terrain mesh splat texture",
+                true ),
+
+            new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
+                50000 ),
             new ParameterDefn<bool>("DisplayTimeScaling", "If to delay mesh scaling to display/GPU time",
                 false ),
+
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
                 "./" ),
             new ParameterDefn<bool>("UseOpenSimImageDecoder", "Use the OpenSimulator image decoder to process JPEG2000 images",
                 false ),
+
             new ParameterDefn<bool>("LogConversionStats", "output numbers about number of entities converted",
                 true ),
             new ParameterDefn<bool>("LogDetailedSharedFaceStats", "output numbers about face mesh sharing",

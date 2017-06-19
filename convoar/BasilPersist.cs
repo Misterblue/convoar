@@ -50,10 +50,11 @@ namespace org.herbal3d.convoar {
             _context = pContext;
         }
 
-        public void WriteImage(Image image) {
+        public void WriteImage(ImageInfo imageInfo) {
             string texFilename = CreateFilename();
             if (!File.Exists(texFilename)) {
-                Image texImage = ConstrainTextureSize(image);
+                // imageInfo.ConstrainTextureSize(_context.parms.MaxTextureSize);
+                Image texImage = imageInfo.image;
                 try {
                     /*
                     using (Bitmap textureBitmap = new Bitmap(texImage.Width, texImage.Height,
@@ -69,12 +70,36 @@ namespace org.herbal3d.convoar {
                     */
                     // _context.log.DebugFormat("{0} WriteOutImageForEP: id={1}, hasAlpha={2}, format={3}",
                     //                 _logHeader, faceInfo.textureID, faceInfo.hasAlpha, texImage.PixelFormat);
-                    texImage.Save(texFilename, ImageFormat.Png);
+                    if (imageInfo.hasTransprency) {
+                        texImage.Save(texFilename, ConvertNameToFormatCode(_context.parms.PreferredTextureFormat));
+                    }
+                    else {
+                        texImage.Save(texFilename, ConvertNameToFormatCode(_context.parms.PreferredTextureFormatIfNoTransparency));
+                    }
                 }
                 catch (Exception e) {
                     _context.log.LogError("{0} FAILED PNG FILE CREATION: {0}", e);
                 }
             }
+        }
+
+        private ImageFormat ConvertNameToFormatCode(string formatName) {
+            ImageFormat ret = ImageFormat.Png;
+            switch (formatName.ToLower()) {
+                case "png":
+                    ret = ImageFormat.Png;
+                    break;
+                case "gif":
+                    ret = ImageFormat.Gif;
+                    break;
+                case "jpeg":
+                    ret = ImageFormat.Jpeg;
+                    break;
+                case "bmp":
+                    ret = ImageFormat.Bmp;
+                    break;
+            }
+            return ret;
         }
 
         // Keep a cache if image data and either fetch and Image or return a cached instance.

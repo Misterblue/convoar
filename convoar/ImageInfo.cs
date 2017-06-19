@@ -28,17 +28,33 @@ namespace org.herbal3d.convoar {
         public EntityHandle handle;
         public bool hasTransprency;
         public Image image;
+        public int xSize;
+        public int ySize;
 
         public ImageInfo() {
             handle = new EntityHandle();
             hasTransprency = false;
             image = null;
+            xSize = ySize = 0;
         }
 
         public ImageInfo(Image pImage) {
             handle = new EntityHandle();
             hasTransprency = false;
+            this.SetImage(pImage);
+        }
+
+        // Set the image into this structure and update all the auxillery info
+        public void SetImage(Image pImage) {
             image = pImage;
+            xSize = image.Width;
+            ySize = image.Height;
+            this.CheckForTransparency();
+        }
+
+        // The hash code for an image is just the hash of its UUID handle.
+        public BHash GetHash() {
+            return new BHashULong(handle.GetUUID().GetHashCode());
         }
 
         // Check the image in this TextureInfo for transparency and set this.hasTransparency.
