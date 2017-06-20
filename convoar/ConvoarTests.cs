@@ -123,7 +123,7 @@ namespace org.herbal3d.convoar.tests {
         [TestCase("A long string which is much longer than we are willing to test", Result = 12345)]
         [TestCase("A string witA one difference", Result = 12345)]
         [TestCase("A string witB one difference", Result = 12345)]
-        [TestCase("A string witC one differenceC", Result = 12345)]
+        [TestCase("A string witC one difference", Result = 12345)]
         public void BHasherMdjb2Test(string toHash) {
             BHasher hasher = new BHasherMdjb2();
             byte[] byt = Encoding.ASCII.GetBytes(toHash);

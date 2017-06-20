@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 
 using OpenSim.Framework;
 using OpenSim.Services.Interfaces;
@@ -40,6 +41,8 @@ namespace org.herbal3d.convoar {
         public abstract IPromise<OMVA.AssetTexture> FetchTexture(EntityHandle handle);
         public abstract IPromise<Image> FetchTextureAsImage(EntityHandle handle);
         public abstract IPromise<byte[]> FetchRawAsset(EntityHandle handle);
+        public abstract void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data);
+        public abstract void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage);
         public abstract void Dispose();
 
         public Dictionary<BHash, DisplayableRenderable> Renderables;
@@ -129,6 +132,22 @@ namespace org.herbal3d.convoar {
             return prom;
         }
 
+        public override void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data) {
+            AssetBase newAsset = new AssetBase(handle.GetUUID(), name, (sbyte)assetType, creatorID.ToString());
+            _assetService.Store(newAsset);
+
+        }
+
+        public override void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage) {
+            // This application overloads AssetType.TExtureTGA to be our serialized image
+            AssetBase newAsset = new AssetBase(handle.GetUUID(), name, (sbyte)OMV.AssetType.TextureTGA, creatorID.ToString());
+            using (MemoryStream byteStream = new MemoryStream()) {
+                pImage.Save(byteStream, System.Drawing.Imaging.ImageFormat.Png);
+                newAsset.Data = byteStream.ToArray();
+            }
+            _assetService.Store(newAsset);
+        }
+
         /// <summary>
         /// Fetch a texture and return an OMVA.AssetTexture. The only information initialized
         /// in the AssetTexture is the UUID and the binary data.s
@@ -174,9 +193,9 @@ namespace org.herbal3d.convoar {
             // Don't bother with async -- this call will hang until the asset is fetched
             AssetBase asset = _assetService.Get(handle.GetOSAssetString());
             if (asset != null) {
+                Image imageDecoded = null;
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
-                        Image imageDecoded = null;
                         if (_context.parms.UseOpenSimImageDecoder) {
                             IJ2KDecoder imgDecoder = _scene.RequestModuleInterface<IJ2KDecoder>();
                             imageDecoded = imgDecoder.DecodeToImage(asset.Data);
@@ -196,6 +215,17 @@ namespace org.herbal3d.convoar {
                         prom.Reject(new Exception("FetchTextureAsImage: exception decoding JPEG2000 texture. ID=" + handle.ToString()
                                     + ", e=" + e.ToString()));
                     }
+                }
+                // THis application overloads the definition of TextureTGA to be a PNG format bytes
+                else if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.TextureTGA) {
+                    using (Stream byteStream = new MemoryStream(asset.Data)) {
+                        Bitmap readBitmap = new Bitmap(byteStream);
+                        // Doing this clone because of the comment about keeping the stream open for
+                        //     the life if the Bitmap in the MS documentation. Odd but making a copy.
+                        imageDecoded = (Image)readBitmap.Clone();
+                        readBitmap.Dispose();
+                    }
+                    prom.Resolve(imageDecoded);
                 }
                 else {
                     prom.Reject(new Exception("FetchTextureAsImage: asset was not of type texture. ID=" + handle.ToString()));

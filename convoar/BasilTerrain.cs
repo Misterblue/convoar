@@ -37,7 +37,7 @@ namespace org.herbal3d.convoar {
         private static string LogHeader = "BasilTerrain";
 
         // Create a mesh for the terrain of the current scene
-        public static EntityGroup CreateTerrainMesh(GlobalContext context,
+        public static BInstance CreateTerrainMesh(GlobalContext context,
                             Scene scene,
                             PrimToMesh assetMesher, IAssetFetcher assetFetcher) {
 
@@ -69,13 +69,15 @@ namespace org.herbal3d.convoar {
                 }
             }
 
-            context.log.LogDebug("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
-            ExtendedPrimGroup epg = assetMesher.MeshFromHeightMap(heightMap,
-                            terrainDef.Width, terrainDef.Height);
-
             // Number found in RegionSettings.cs as DEFAULT_TERRAIN_TEXTURE_3
+            OMV.UUID convoarID = new OMV.UUID(context.parms.ConvoarID);
+
             OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
-            OMV.Primitive.TextureEntry te = new OMV.Primitive.TextureEntry(defaultTextureID);
+            OMV.Primitive.TextureEntryFace terrainFace = new OMV.Primitive.TextureEntryFace(null);
+            terrainFace.TextureID = defaultTextureID;
+
+            EntityHandle terrainTextureHandle = new EntityHandle();
+            MaterialInfo terrainMaterialInfo = new MaterialInfo(terrainFace);
 
             if (context.parms.CreateTerrainSplat) {
                 // Use the OpenSim maptile generator to create a texture for the terrain
@@ -86,38 +88,41 @@ namespace org.herbal3d.convoar {
                                         System.Drawing.Imaging.PixelFormat.Format24bppRgb);
                 terrainRenderer.TerrainToBitmap(mapbmp);
 
-                // The built terrain mesh will have one face in the mesh
-                OMVR.Face aFace = epg.primaryExtendePrim.fromOS.facetedMesh.Faces.First();
-                FaceInfo fi = new FaceInfo(0, epg.primaryExtendePrim, aFace, te.CreateFace(0));
-                fi.textureID = OMV.UUID.Random();
-                fi.faceImage = mapbmp;
-                fi.hasAlpha = false;
-                fi.persist = new BasilPersist(Gltf.MakeAssetURITypeImage, fi.textureID.ToString(), context);
-                epg.primaryExtendePrim.faces.Add(fi);
+                // Place the newly created image into the Displayable caches
+                ImageInfo terrainImageInfo = new ImageInfo();
+                terrainImageInfo.handle = terrainTextureHandle;
+                terrainImageInfo.image = mapbmp;
+                assetFetcher.Images.Add(new BHashULong(terrainTextureHandle.GetHashCode()), terrainTextureHandle, terrainImageInfo);
+                // Store the new image into the asset system so it can be read later.
+                assetFetcher.StoreTextureImage(terrainTextureHandle, scene.Name + " Terrain", convoarID, mapbmp);
+                // Link this image to the material
+                terrainFace.TextureID = terrainTextureHandle.GetUUID();
             }
             else {
-                // Fabricate a texture
-                // The built terrain mesh will have one face in the mesh
-                OMVR.Face aFace = epg.primaryExtendePrim.fromOS.facetedMesh.Faces.First();
-                FaceInfo fi = new FaceInfo(0, epg.primaryExtendePrim, aFace, te.CreateFace(0));
-                fi.textureID = defaultTextureID;
-                assetFetcher.FetchTextureAsImage(new EntityHandle(defaultTextureID))
-                    .Catch(e => {
-                        context.log.LogError("{0} CreateTerrainMesh: unable to fetch default terrain texture: id={1}: {2}",
-                                    LogHeader, defaultTextureID, e);
-                    })
-                    .Then(theImage => {
-                        // This will happen later so hopefully soon enough for anyone using the image
-                        fi.faceImage = theImage;
+                // Use the default texture code for terrain
+                terrainTextureHandle = new EntityHandle(defaultTextureID);
+                BHash terrainHash = new BHashULong(defaultTextureID.GetHashCode());
+                assetFetcher.GetImageInfo(terrainHash, () => {
+                    ImageInfo terrainImageInfo = new ImageInfo();
+                    terrainImageInfo.handle = terrainTextureHandle;
+                    assetFetcher.FetchTextureAsImage(terrainTextureHandle)
+                    .Then(img => {
+                        terrainImageInfo.image = img;
                     });
-                fi.hasAlpha = false;
-                epg.primaryExtendePrim.faces.Add(fi);
+                    return terrainImageInfo;
+                });
             }
 
-            EntityGroup eg = new EntityGroup();
-            eg.Add(epg);
+            // The above has created a MaterialInfo for the terrain texture
 
-            return eg;
+            context.log.LogDebug("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
+            DisplayableRenderable terrainDisplayable = assetMesher.MeshFromHeightMap(heightMap,
+                            terrainDef.Width, terrainDef.Height, assetFetcher, terrainFace);
+
+            BInstance terrainInstance = new BInstance();
+            terrainInstance.Representation = new Displayable(terrainDisplayable);
+
+            return terrainInstance;
         }
 
         // A structure to hold vertex information that also includes the index for building indices.

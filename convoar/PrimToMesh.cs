@@ -108,55 +108,6 @@ namespace org.herbal3d.convoar {
             return renderable;
         }
 
-        private DisplayableRenderable ConvertFacetedMeshToDisplayable(IAssetFetcher assetFetcher, OMVR.FacetedMesh fmesh,
-                        OMV.Primitive.TextureEntryFace defaultTexture, OMV.Vector3 primScale) {
-            RenderableMeshGroup ret = new RenderableMeshGroup();
-            foreach (OMVR.Face face in fmesh.Faces) {
-                RenderableMesh rmesh = new RenderableMesh();
-                rmesh.num = face.ID;
-
-                // Copy one face's mesh imformation from the FacetedMesh into a MeshInfo
-                MeshInfo meshInfo = new MeshInfo();
-                meshInfo.vertexs = face.Vertices;
-                meshInfo.indices = new List<int>();
-                face.Indices.ForEach(ind => { meshInfo.indices.Add((int)ind); });
-                meshInfo.faceCenter = face.Center;
-
-                // Find or create the MaterialInfo for this face.
-                MaterialInfo matInfo = new MaterialInfo(face, defaultTexture);
-                if (matInfo.textureID != null
-                            && matInfo.textureID != OMV.UUID.Zero
-                            && matInfo.textureID != OMV.Primitive.TextureEntry.WHITE_TEXTURE) {
-                    // Textures/images use the UUID from OpenSim and the hash is just the hash of the UUID
-                    EntityHandle textureHandle = new EntityHandle((OMV.UUID)matInfo.textureID);
-                    BHash textureHash = new BHashULong(textureHandle.GetUUID().GetHashCode());
-                    ImageInfo lookupImageInfo = assetFetcher.GetImageInfo(textureHash, () => {
-                        // The image is not in the cache yet so create an ImageInfo entry for it
-                        ImageInfo imageInfo = new ImageInfo();
-                        assetFetcher.FetchTextureAsImage(textureHandle)
-                            .Then( img => {
-                                imageInfo.SetImage(img);
-                            });
-                        imageInfo.handle = textureHandle;
-                        return imageInfo;
-                    });
-
-                    // Update the UV information for the texture mapping
-                    m_mesher.TransformTexCoords(meshInfo.vertexs, meshInfo.faceCenter, face.TextureFace,  primScale);
-                }
-
-                MaterialInfo lookupMatInfo = assetFetcher.GetMaterialInfo(matInfo.GetHash(), () => { return matInfo; });
-                rmesh.material = lookupMatInfo.handle;
-
-                MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetHash(), () => { return meshInfo; });
-                rmesh.mesh = lookupMeshInfo.handle;
-
-                // add this MeshInfo to the RenderableMesh
-                ret.meshes.Add(rmesh);
-            }
-            return ret;
-        }
-
         private IPromise<DisplayableRenderable> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
 
@@ -211,35 +162,100 @@ namespace org.herbal3d.convoar {
             return prom;
         }
 
+        /// <summary>
+        /// Given a FacetedMesh, create a DisplayableRenderable (a list of RenderableMesh's with materials).
+        /// This also creates underlying MesnInfo, MaterialInfo, and ImageInfo in the AssetFetcher.
+        /// </summary>
+        /// <param name="assetFetcher"></param>
+        /// <param name="fmesh">The FacetedMesh to convert into Renderables</param>
+        /// <param name="defaultTexture">If a face doesn't have a texture defined, use this one.
+        /// This is an OMV.Primitive.TextureEntryFace that includes a lot of OpenSimulator material info.</param>
+        /// <param name="primScale">Scaling for the base prim that is used when appliying any texture
+        /// to the face (updating UV).</param>
+        /// <returns></returns>
+        private DisplayableRenderable ConvertFacetedMeshToDisplayable(IAssetFetcher assetFetcher, OMVR.FacetedMesh fmesh,
+                        OMV.Primitive.TextureEntryFace defaultTexture, OMV.Vector3 primScale) {
+            RenderableMeshGroup ret = new RenderableMeshGroup();
+            foreach (OMVR.Face face in fmesh.Faces) {
+                RenderableMesh rmesh = ConvertFaceToRenderableMesh(face, assetFetcher, defaultTexture, primScale);
+                ret.meshes.Add(rmesh);
+            }
+            return ret;
+        }
+
+        private RenderableMesh ConvertFaceToRenderableMesh(OMVR.Face face, IAssetFetcher assetFetcher,
+                        OMV.Primitive.TextureEntryFace defaultTexture, OMV.Vector3 primScale) {
+            RenderableMesh rmesh = new RenderableMesh();
+            rmesh.num = face.ID;
+
+            // Copy one face's mesh imformation from the FacetedMesh into a MeshInfo
+            MeshInfo meshInfo = new MeshInfo();
+            meshInfo.vertexs = face.Vertices;
+            meshInfo.indices = new List<int>();
+            face.Indices.ForEach(ind => { meshInfo.indices.Add((int)ind); });
+            meshInfo.faceCenter = face.Center;
+
+            // Find or create the MaterialInfo for this face.
+            MaterialInfo matInfo = new MaterialInfo(face, defaultTexture);
+            if (matInfo.textureID != null
+                        && matInfo.textureID != OMV.UUID.Zero
+                        && matInfo.textureID != OMV.Primitive.TextureEntry.WHITE_TEXTURE) {
+                // Textures/images use the UUID from OpenSim and the hash is just the hash of the UUID
+                EntityHandle textureHandle = new EntityHandle((OMV.UUID)matInfo.textureID);
+                BHash textureHash = new BHashULong(textureHandle.GetUUID().GetHashCode());
+                ImageInfo lookupImageInfo = assetFetcher.GetImageInfo(textureHash, () => {
+                    // The image is not in the cache yet so create an ImageInfo entry for it
+                    ImageInfo imageInfo = new ImageInfo();
+                    assetFetcher.FetchTextureAsImage(textureHandle)
+                        .Then( img => {
+                            imageInfo.SetImage(img);
+                        });
+                    imageInfo.handle = textureHandle;
+                    return imageInfo;
+                });
+
+                // Update the UV information for the texture mapping
+                m_mesher.TransformTexCoords(meshInfo.vertexs, meshInfo.faceCenter, face.TextureFace,  primScale);
+            }
+
+            MaterialInfo lookupMatInfo = assetFetcher.GetMaterialInfo(matInfo.GetHash(), () => { return matInfo; });
+            rmesh.material = lookupMatInfo.handle;
+
+            MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetHash(), () => { return meshInfo; });
+            rmesh.mesh = lookupMeshInfo.handle;
+
+            return rmesh;
+        }
+
         // Returns an ExtendedPrimGroup with a mesh for the passed heightmap.
         // Note that the returned EPG does not include any face information -- the caller must add a texture.
-        public ExtendedPrimGroup MeshFromHeightMap( float[,] pHeightMap, int regionSizeX, int regionSizeY) {
+        public DisplayableRenderable MeshFromHeightMap( float[,] pHeightMap, int regionSizeX, int regionSizeY,
+                    IAssetFetcher assetFetcher, OMV.Primitive.TextureEntryFace defaultTexture) {
 
             // OMVR.Face rawMesh = m_mesher.TerrainMesh(pHeightMap, 0, pHeightMap.GetLength(0)-1, 0, pHeightMap.GetLength(1)-1);
             _log.DebugFormat("{0} MeshFromHeightMap: heightmap=<{1},{2}>, regionSize=<{3},{4}>",
                     _logHeader, pHeightMap.GetLength(0), pHeightMap.GetLength(1), regionSizeX, regionSizeY);
             OMVR.Face rawMesh = BasilTerrain.TerrainMesh(pHeightMap, (float)regionSizeX, (float)regionSizeY, _log);
-            OMVR.FacetedMesh facetMesh = new OMVR.FacetedMesh();
-            facetMesh.Faces = new List<OMVR.Face>() { rawMesh };
 
-            ExtendedPrim ep = new ExtendedPrim(null, null, null, facetMesh);
-            ep.faces = new List<FaceInfo>();
+            RenderableMesh rm = ConvertFaceToRenderableMesh(rawMesh, assetFetcher, defaultTexture, new OMV.Vector3(1, 1, 1));
 
-            ExtendedPrimGroup epg = new ExtendedPrimGroup(ep);
+            RenderableMeshGroup rmg = new RenderableMeshGroup();
+            rmg.meshes.Add(rm);
 
-            return epg;
+            return rmg;
         }
-
 
         public void Dispose() {
             m_mesher = null;
         }
 
+        /*
         public void UpdateCoords(FaceInfo faceInfo, OMV.Primitive prim) {
             if (faceInfo.vertexs != null) {
                 m_mesher.TransformTexCoords(faceInfo.vertexs, faceInfo.faceCenter, faceInfo.textureEntry,  prim.Scale);
             }
         }
+        */
 
         // Walk through all the vertices and scale the included meshes
         public static void ScaleMeshes(ExtendedPrimGroup ePG) {

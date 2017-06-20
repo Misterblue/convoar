@@ -128,6 +128,7 @@ convoar
                 _context.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
 
                 // Convert all the loaded SOGs and images into meshes and our format
+
             }
         }
 

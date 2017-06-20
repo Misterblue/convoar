@@ -27,32 +27,32 @@ namespace org.herbal3d.convoar {
     // At the moment, an entity just has a UUID
     public class EntityHandle : IEqualityComparer<EntityHandle> {
 
-        OMV.UUID m_uuid;
+        OMV.UUID _uuid;
 
         public EntityHandle() {
-            m_uuid = OMV.UUID.Random();
+            _uuid = OMV.UUID.Random();
         }
 
         public EntityHandle(OMV.UUID id) {
-            m_uuid = id;
+            _uuid = id;
         }
 
         // OpenSim likes to specify assets with a simple string of the asset's UUID
         public string GetOSAssetString() {
-            return m_uuid.ToString();
+            return _uuid.ToString();
         }
 
         public OMV.UUID GetUUID() {
-            return m_uuid;
+            return _uuid;
         }
 
         public override string ToString() {
-            return m_uuid.ToString();
+            return _uuid.ToString();
         }
 
         public byte[] ToBytes() {
             byte[] ret = new byte[24];
-            return m_uuid.GetBytes();
+            return _uuid.GetBytes();
         }
 
         // IComparable
@@ -62,9 +62,9 @@ namespace org.herbal3d.convoar {
             if (other == null) {
                 throw new ArgumentException("CompareTo in EntityHandle: other type not EntityHandle");
             }
-            if (this.m_uuid != other.m_uuid) {
-                string thisOne = this.m_uuid.ToString();
-                string otherOne = this.m_uuid.ToString();
+            if (this._uuid != other._uuid) {
+                string thisOne = this._uuid.ToString();
+                string otherOne = this._uuid.ToString();
                 ret = thisOne.CompareTo(otherOne);
             }
             return ret;
@@ -72,17 +72,17 @@ namespace org.herbal3d.convoar {
 
         // System.Object.GetHashCode()
         public override int GetHashCode() {
-            return m_uuid.GetHashCode();
+            return _uuid.GetHashCode();
         }
 
         // IEqualityComparer.Equals
         public bool Equals(EntityHandle x, EntityHandle y) {
-            return x.m_uuid.CompareTo(y.m_uuid) == 0;
+            return x._uuid.CompareTo(y._uuid) == 0;
         }
 
         // IEqualityComparer.GetHashCode
         public int GetHashCode(EntityHandle obj) {
-            return obj.m_uuid.GetHashCode();
+            return obj._uuid.GetHashCode();
         }
     }
 }

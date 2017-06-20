@@ -36,6 +36,8 @@ namespace org.herbal3d.convoar {
         public string Displacement;
         public string Rotation;
 
+        public string ConvoarID;    // GUID for 'convoar' identity (used for CreatorID, ...)
+
         public bool MergeStaticMeshes;      // whether to merge meshes with similar materials
         public bool MergeNonStaticMeshes;      // whether to merge meshes with non-static entities
 
@@ -92,6 +94,9 @@ namespace org.herbal3d.convoar {
                 null ),
             new ParameterDefn<string>("Rotation", "Optional rotation to add to OAR entites",
                 null ),
+
+            new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",
+                "e67a2ff8-597d-4f03-b559-930aeaf4836b"),
 
             new ParameterDefn<bool>("MergeStaticMeshes", "whether to merge meshes with similar materials",
                 true ),

@@ -40,6 +40,10 @@ namespace org.herbal3d.convoar {
 
         private BHash _hash = null;
 
+        public MaterialInfo(OMV.Primitive.TextureEntryFace defaultTexture) {
+            faceTexture = new OMV.Primitive.TextureEntryFace(defaultTexture);
+        }
+
         public MaterialInfo(OMVR.Face face, OMV.Primitive.TextureEntryFace defaultTexture) {
             handle = new EntityHandle();
             faceTexture = face.TextureFace;

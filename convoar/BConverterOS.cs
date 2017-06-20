@@ -120,6 +120,7 @@ namespace org.herbal3d.convoar {
             return prom;
         }
 
+        /*
         /// <summary>
         /// Scan through all the ExtendedPrims and finish any texture updating.
         /// This includes UV coordinate mappings and fetching any image that goes with the texture.
@@ -166,5 +167,6 @@ namespace org.herbal3d.convoar {
                                     _logHeader, texID, e);
             }
         }
+        */
     }
 }
