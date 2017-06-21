@@ -189,6 +189,34 @@ namespace org.herbal3d.convoar.tests {
             System.Console.WriteLine("BHasherSHA256 hash output = " + hash.ToString());
             return hash.ToString();
         }
+
+        // Test that passing the hashing input in parts is the same as passing it all at once.
+        [TestCase]
+        public void BHasherParameterParts() {
+            byte[] testBytes = new byte[100];
+            Random rand = new Random();
+            rand.NextBytes(testBytes);
+            BHasher hasher1 = new BHasherMdjb2();
+            BHasher hasher2 = new BHasherMdjb2();
+            TestHasher("Mdjb2", hasher1, hasher2, testBytes);
+            hasher1 = new BHasherMD5();
+            hasher2 = new BHasherMD5();
+            TestHasher("MD5", hasher1, hasher2, testBytes);
+            hasher1 = new BHasherSHA256();
+            hasher2 = new BHasherSHA256();
+            TestHasher("SHA256", hasher1, hasher2, testBytes);
+        }
+
+        private void TestHasher(string name, BHasher hasher1, BHasher hasher2, byte[] testBytes) {
+            hasher1.Add(testBytes, 0, testBytes.Length);
+            BHash hash1 = hasher1.Finish();
+            hasher2.Add(testBytes[0]);
+            hasher2.Add(testBytes, 1, 10);
+            hasher2.Add(testBytes[11]);
+            hasher2.Add(testBytes, 12, testBytes.Length - 12);
+            BHash hash2 = hasher2.Finish();
+            Assert.AreEqual(hash1.ToString(), hash2.ToString(), "Adding bytes in different order gave different results in " + name);
+        }
     }
 
     // =========================================================================================

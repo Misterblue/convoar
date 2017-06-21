@@ -220,7 +220,7 @@ namespace org.herbal3d.convoar {
 
         public override void Add(byte c) {
             byte[] bytes = BitConverter.GetBytes(c);
-            AddBytes(bytes, 0, bytes.Length);
+            AddBytes(bytes, 0, 1);
         }
 
         public override void Add(ushort c) {
@@ -244,7 +244,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void Add(byte[] c, int offset, int len) {
-            AddBytes(c, 0, c.Length);
+            AddBytes(c, offset, len);
         }
 
         // Implemented by derived class
@@ -263,6 +263,10 @@ namespace org.herbal3d.convoar {
 
         // Add the given number of bytes to the byte array being built
         protected void AddBytes(byte[] addition, int offset, int len) {
+            // byte[] tempBytes = new byte[len];                   // DEBUG DEBUG
+            // Array.Copy(addition, offset, tempBytes, 0, len);    // DEBUG DEBUG
+            // System.Console.WriteLine(String.Format("AddBytes: offset={0}, len={1}, bytes={2}",  // DEBUG DEBUG
+            //    offset, len, BitConverter.ToString(tempBytes).Replace("-", String.Empty)));      // DEBUG DEBUG
             if (offset + len > addition.Length) {
                 throw new ArgumentException(String.Format("BHasherBytes.AddBytes: addition parameters off end of array. addition.len={0}, offset={1}, len={2}",
                                 addition.Length, offset, len));
