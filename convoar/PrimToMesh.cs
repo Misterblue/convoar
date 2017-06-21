@@ -36,12 +36,11 @@ namespace org.herbal3d.convoar {
 
     public class PrimToMesh : IDisposable {
         private OMVR.MeshmerizerR m_mesher;
-        ILog _log;
+        private GlobalContext _context;
         String _logHeader = "[Basil.PrimToMesh]";
 
-        public PrimToMesh(ILog logger) {
+        public PrimToMesh(GlobalContext pContext) {
             m_mesher = new OMVR.MeshmerizerR();
-            _log = logger;
         }
 
         /// <summary>
@@ -58,7 +57,7 @@ namespace org.herbal3d.convoar {
             try {
                 if (prim.Sculpt != null) {
                     if (prim.Sculpt.Type == OMV.SculptType.Mesh) {
-                        // m_log.DebugFormat("{0}: CreateMeshResource: creating mesh", LogHeader);
+                        // _context.log.DebugFormat("{0}: CreateMeshResource: creating mesh", LogHeader);
                         stats.numMeshAssets++;
                         MeshFromPrimMeshData(sog, sop, prim, assetFetcher, lod)
                             .Catch(e => {
@@ -70,7 +69,7 @@ namespace org.herbal3d.convoar {
                             });
                     }
                     else {
-                        // m_log.DebugFormat("{0}: CreateMeshResource: creating sculpty", LogHeader);
+                        // _context.log.DebugFormat("{0}: CreateMeshResource: creating sculpty", LogHeader);
                         stats.numSculpties++;
                         MeshFromPrimSculptData(sog, sop, prim, assetFetcher, lod)
                             .Catch(e => {
@@ -83,7 +82,7 @@ namespace org.herbal3d.convoar {
                     }
                 }
                 else {
-                    // m_log.DebugFormat("{0}: CreateMeshResource: creating primshape", LogHeader);
+                    // _context.log.DebugFormat("{0}: CreateMeshResource: creating primshape", LogHeader);
                     stats.numSimplePrims++;
                     DisplayableRenderable dispable = MeshFromPrimShapeData(sog, sop, prim, assetFetcher, lod);
                     dispable.userData = sop;
@@ -122,7 +121,7 @@ namespace org.herbal3d.convoar {
                     prom.Resolve(dr);
                 })
                 .Catch((e) => {
-                    _log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}: {2}", _logHeader, texHandle, e);
+                    _context.log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}: {2}", _logHeader, texHandle, e);
                     prom.Reject(e);
                 });
 
@@ -151,7 +150,7 @@ namespace org.herbal3d.convoar {
                         }
                     })
                     .Catch((e) => {
-                        _log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}", _logHeader, e);
+                        _context.log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}", _logHeader, e);
                         prom.Reject(e);
                     });
             }
@@ -233,9 +232,9 @@ namespace org.herbal3d.convoar {
                     IAssetFetcher assetFetcher, OMV.Primitive.TextureEntryFace defaultTexture) {
 
             // OMVR.Face rawMesh = m_mesher.TerrainMesh(pHeightMap, 0, pHeightMap.GetLength(0)-1, 0, pHeightMap.GetLength(1)-1);
-            _log.DebugFormat("{0} MeshFromHeightMap: heightmap=<{1},{2}>, regionSize=<{3},{4}>",
+            _context.log.DebugFormat("{0} MeshFromHeightMap: heightmap=<{1},{2}>, regionSize=<{3},{4}>",
                     _logHeader, pHeightMap.GetLength(0), pHeightMap.GetLength(1), regionSizeX, regionSizeY);
-            OMVR.Face rawMesh = BasilTerrain.TerrainMesh(pHeightMap, (float)regionSizeX, (float)regionSizeY, _log);
+            OMVR.Face rawMesh = BasilTerrain.TerrainMesh(pHeightMap, (float)regionSizeX, (float)regionSizeY, _context);
 
             RenderableMesh rm = ConvertFaceToRenderableMesh(rawMesh, assetFetcher, defaultTexture, new OMV.Vector3(1, 1, 1));
 

@@ -132,11 +132,8 @@ namespace org.herbal3d.convoar {
             _hash = initialHash;
         }
         public override string ToString() {
-            // code found in FSAssetService -- is removing hyphen the right thing to do?
-            // return BitConverter.ToString(hash).Replace("-", String.Empty);
-            // Decided to leave removing the hyphen to the caller -- depends on what they
-            //     are using the string for.
-            return BitConverter.ToString(_hash);
+            // BitConverter puts a hyphen between each byte. Remove them
+            return BitConverter.ToString(_hash).Replace("-", String.Empty);
         }
         public override byte[] ToBytes() {
             return _hash;

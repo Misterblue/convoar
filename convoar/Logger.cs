@@ -23,41 +23,78 @@ using log4net;
 
 namespace org.herbal3d.convoar {
 
-    // One place to put all the logging routines
-    public class Logger {
+    public abstract class Logger {
+        public abstract void SetVerbose(bool val);
+        public abstract void Log(string msg, params Object[] args);
+        public abstract void DebugFormat(string msg, params Object[] args);
+        public abstract void ErrorFormat(string msg, params Object[] args);
+    }
+
+    public class LoggerConsole : Logger {
         private static readonly ILog _log = LogManager.GetLogger("convoar");
 
         private bool _verbose = false;
-        public bool Verbose {
-            get { return _verbose; }
-            set {
-                bool nextValue = value;
-                if (!_verbose && nextValue) {
-                    // turning Verbose on
-                    LogManager.GetRepository().Threshold = log4net.Core.Level.Debug;
-                }
-                if (_verbose && !nextValue) {
-                    // turning Verbose off
-                    LogManager.GetRepository().Threshold = log4net.Core.Level.Info;
-                }
-                _verbose = nextValue;
+        public override void SetVerbose(bool value) {
+            bool nextValue = value;
+            if (!_verbose && nextValue) {
+                // turning Verbose on
+                LogManager.GetRepository().Threshold = log4net.Core.Level.Debug;
+            }
+            if (_verbose && !nextValue) {
+                // turning Verbose off
+                LogManager.GetRepository().Threshold = log4net.Core.Level.Info;
+            }
+            _verbose = nextValue;
+        }
+
+        public override void Log(string msg, params Object[] args) {
+            System.Console.WriteLine(msg, args);
+        }
+
+        // Output the message if 'Verbose' is true
+        public override void DebugFormat(string msg, params Object[] args) {
+            if (_verbose) {
+                System.Console.WriteLine(msg, args);
             }
         }
 
-        public void Log(string msg, params Object[] args) {
+        public override void ErrorFormat(string msg, params Object[] args) {
+            System.Console.WriteLine(msg, args);
+        }
+    }
+
+    // Do logging with Log4net
+    public class LoggerLog4Net : Logger {
+        private static readonly ILog _log = LogManager.GetLogger("convoar");
+
+        private bool _verbose = false;
+        public override void SetVerbose(bool value) {
+            bool nextValue = value;
+            if (!_verbose && nextValue) {
+                // turning Verbose on
+                LogManager.GetRepository().Threshold = log4net.Core.Level.Debug;
+            }
+            if (_verbose && !nextValue) {
+                // turning Verbose off
+                LogManager.GetRepository().Threshold = log4net.Core.Level.Info;
+            }
+            _verbose = nextValue;
+        }
+
+        public override void Log(string msg, params Object[] args) {
             _log.InfoFormat(msg, args);
             // System.Console.WriteLine(msg, args);
         }
 
         // Output the message if 'Verbose' is true
-        public void LogDebug(string msg, params Object[] args) {
+        public override void DebugFormat(string msg, params Object[] args) {
             _log.DebugFormat(msg, args);
             // if (Verbose) {
             //     System.Console.WriteLine(msg, args);
             // }
         }
 
-        public void LogError(string msg, params Object[] args) {
+        public override void ErrorFormat(string msg, params Object[] args) {
             _log.ErrorFormat(msg, args);
             // System.Console.WriteLine(msg, args);
         }

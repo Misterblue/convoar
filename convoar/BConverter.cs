@@ -172,7 +172,7 @@ namespace org.herbal3d.convoar {
                 newEp.translation = rootEp.fromOS.SOP.GetWorldPosition();
             }
             else {
-                _context.log.LogDebug("{0} CreateExtendedPrimFromSimilarFaces: no OS link. Assuming translation of zero", _logHeader);
+                _context.log.DebugFormat("{0} CreateExtendedPrimFromSimilarFaces: no OS link. Assuming translation of zero", _logHeader);
                 newEp.translation = OMV.Vector3.Zero;
             }
             newEp.rotation = OMV.Quaternion.Identity;

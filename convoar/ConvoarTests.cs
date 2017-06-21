@@ -20,6 +20,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using OpenSim.Region.Framework.Scenes;
+
+using OMV = OpenMetaverse;
+using OMVR = OpenMetaverse.Rendering;
+
 using org.herbal3d.convoar;
 
 using NUnit.Framework;
@@ -54,25 +59,48 @@ namespace org.herbal3d.convoar.tests {
     [TestFixture]
     public class TerrainMeshGeneration : ConvoarTestCase {
 
+        ConvoarParams _parms;
+        Logger _log;
+        private GlobalContext _context = null;
+        MemAssetService _assetService;
+        Scene _scene;
+        private IAssetFetcher _assetFetcher = null;
+        private OMV.Primitive.TextureEntryFace _defaultTexture = null;
+
         [TestFixtureSetUp]
         public void Init() {
+            _parms = new ConvoarParams();
+            _log = new LoggerConsole();
+            _context = new GlobalContext(_parms, _log);
+            _assetService = new MemAssetService();
+            _scene = ConvOAR.CreateScene(_assetService);
+            _assetFetcher = new OSAssetFetcher(_scene, _assetService, _context);
+            OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
+            _defaultTexture = new OMV.Primitive.TextureEntryFace(null);
+            _defaultTexture.TextureID = defaultTextureID;
         }
 
         [TestFixtureTearDown]
         public void TearDown() {
+            _scene.Close();
+            _assetFetcher.Dispose();
+            _assetService.Dispose();
         }
 
         [TestCase]
         public void VerifyHeightmapMatchesMesh() {
         }
 
-        [TestCase(100.0, 200.0)]
-        public void VerifyMeshCoversWholeRegion(float pHeightmapSize, float pRegionSize) {
-            int heightmapSize = (int)pHeightmapSize;
-            int regionSize = (int)pRegionSize;
+        [TestCase(100, 200)]
+        public void VerifyMeshCoversWholeRegion(int heightmapSize, int regionSize) {
             float[,] heightMap = CreateHeightmap(heightmapSize);
-
-            // ExtendedPrimGroup epg = assetMesher.MeshFromHeightMap(heightMap, regionSize, regionSize);
+            using (PrimToMesh mesher = new PrimToMesh(_context)) {
+                DisplayableRenderable dr = mesher.MeshFromHeightMap(heightMap, regionSize, regionSize,
+                                        _assetFetcher, _defaultTexture);
+                RenderableMeshGroup rmg = dr as RenderableMeshGroup;
+                Assert.IsTrue(rmg != null, "MeshFromHeightMap did not return a RenderableMeshGroup");
+                Assert.AreEqual(rmg.meshes.Count, 1, "MeshFromHeightMap returned more than one mesh");
+            }
         }
 
         // Creates a heightmap of specificed size with a simple gradient from on corner to the
@@ -106,8 +134,8 @@ namespace org.herbal3d.convoar.tests {
         public void TearDown() {
         }
 
-        [TestCase]
-        public void BHasherMdjb2TestParams() {
+        [TestCase(Result = 8511673652397437578L)]
+        public ulong BHasherMdjb2TestParams() {
             BHasher hasher = new BHasherMdjb2();
             hasher.Add('c');
             hasher.Add((ushort)6);
@@ -116,28 +144,50 @@ namespace org.herbal3d.convoar.tests {
             byte[] byt = Encoding.ASCII.GetBytes("This is a string");
             hasher.Add(byt, 0, byt.Length);
             BHash hash = hasher.Finish();
-            System.Console.WriteLine("BHasher hash output = " + hash.ToString());
+            // System.Console.WriteLine("BHasher hash output = " + hash.ToString());
+            return hash.ToULong();
         }
 
-        [TestCase("This is a string", Result = 12345)]
-        [TestCase("A long string which is much longer than we are willing to test", Result = 12345)]
-        [TestCase("A string witA one difference", Result = 12345)]
-        [TestCase("A string witB one difference", Result = 12345)]
-        [TestCase("A string witC one difference", Result = 12345)]
-        public void BHasherMdjb2Test(string toHash) {
+        [TestCase("This is a string", Result = "1036731341136637329")]
+        [TestCase("A long string which is much longer than we are willing to test", Result = "6489722179198911432")]
+        [TestCase("A string witA one difference", Result = "254346540298589279")]
+        [TestCase("A string witB one difference", Result = "5728349923385932352")]
+        [TestCase("A string witC one difference", Result = "11202353306473275425")]
+        public string BHasherMdjb2Test(string toHash) {
             BHasher hasher = new BHasherMdjb2();
             byte[] byt = Encoding.ASCII.GetBytes(toHash);
             hasher.Add(byt, 0, byt.Length);
             BHash hash = hasher.Finish();
-            System.Console.WriteLine("BHasher hash output = " + hash.ToString());
+            // System.Console.WriteLine("BHasherMdjb2 hash output = " + hash.ToString());
+            return hash.ToString();
         }
 
-        [TestCase]
-        public void BHasherMD5Test() {
+        [TestCase("This is a string", Result = "41FB5B5AE4D57C5EE528ADB00E5E8E74")]
+        [TestCase("A long string which is much longer than we are willing to test", Result = "7DA9312B687AEF9E776DD9F441254437")]
+        [TestCase("A string witA one difference", Result = "D3E5DC1272277204DEC8B8009AC31CE7")]
+        [TestCase("A string witB one difference", Result = "AF4F00FE82C49DA99623911BA79B61A4")]
+        [TestCase("A string witC one difference", Result = "B7954F90F15DBEB6EE4974F38895D8C8")]
+        public string BHasherMD5Test(string toHash) {
+            BHasher hasher = new BHasherMD5();
+            byte[] byt = Encoding.ASCII.GetBytes(toHash);
+            hasher.Add(byt, 0, byt.Length);
+            BHash hash = hasher.Finish();
+            System.Console.WriteLine("BHasherMD5 hash output = " + hash.ToString());
+            return hash.ToString();
         }
 
-        [TestCase]
-        public void BHasherSHA256Test() {
+        [TestCase("This is a string", Result = "4E9518575422C9087396887CE20477AB5F550A4AA3D161C5C22A996B0ABB8B35")]
+        [TestCase("A long string which is much longer than we are willing to test", Result = "312BB2AFFEF9E276C83C30342A742CD05CE51BDB7E15DB5209B3CCADDBBDF3B5")]
+        [TestCase("A string witA one difference", Result = "D0E312AC7CA43B85822A95ADB1D12014EF5DE6B66F4F7A4905078941BB0C27C1")]
+        [TestCase("A string witB one difference", Result = "59129922BEBED4D0F9EBF1C450D77C3C3600D6535E0F6E39CB270898A3865369")]
+        [TestCase("A string witC one difference", Result = "D260E15C2F3251F1D8AD037418B39311BBE2AA828E914415408A3E60F0AC84EF")]
+        public string BHasherSHA256Test(string toHash) {
+            BHasher hasher = new BHasherSHA256();
+            byte[] byt = Encoding.ASCII.GetBytes(toHash);
+            hasher.Add(byt, 0, byt.Length);
+            BHash hash = hasher.Finish();
+            System.Console.WriteLine("BHasherSHA256 hash output = " + hash.ToString());
+            return hash.ToString();
         }
     }
 

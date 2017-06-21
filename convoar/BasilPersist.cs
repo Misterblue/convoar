@@ -78,7 +78,7 @@ namespace org.herbal3d.convoar {
                     }
                 }
                 catch (Exception e) {
-                    _context.log.LogError("{0} FAILED PNG FILE CREATION: {0}", e);
+                    _context.log.ErrorFormat("{0} FAILED PNG FILE CREATION: {0}", e);
                 }
             }
         }

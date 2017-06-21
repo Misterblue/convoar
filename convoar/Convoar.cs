@@ -81,26 +81,26 @@ convoar
         }
 
         public void Start(string[] args) {
-            _context = new GlobalContext(new ConvoarParams(), new Logger());
+            _context = new GlobalContext(new ConvoarParams(), new LoggerLog4Net());
 
             try {
                 _context.parms.MergeCommandLine(args, null, "InputOAR");
             }
             catch (Exception e) {
-                _context.log.LogError("ERROR: bad parameters: " + e.Message);
-                _context.log.LogError(Invocation());
+                _context.log.ErrorFormat("ERROR: bad parameters: " + e.Message);
+                _context.log.ErrorFormat(Invocation());
                 return;
             }
 
             // Validate parameters
             if (String.IsNullOrEmpty(_context.parms.InputOAR)) {
-                _context.log.LogError("An input OAR file must be specified");
-                _context.log.LogError(Invocation());
+                _context.log.ErrorFormat("An input OAR file must be specified");
+                _context.log.ErrorFormat(Invocation());
                 return;
             }
             if (String.IsNullOrEmpty(_context.parms.OutputDirectory)) {
                 _outputDir = "./out";
-                _context.log.LogDebug("Output directory defaulting to {0}", _outputDir);
+                _context.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
             }
 
             // Read in OAR
@@ -134,7 +134,7 @@ convoar
 
         // Create an OpenSimulator Scene and add enough auxillery services and objects
         //   to it so it will do a asset load;
-        public Scene CreateScene(MemAssetService memAssetService) {
+        public static Scene CreateScene(MemAssetService memAssetService) {
             RegionInfo regionInfo = new RegionInfo(0, 0, null, "convoar");
             regionInfo.RegionName = "convoar";
             regionInfo.RegionSizeX = regionInfo.RegionSizeY = Constants.RegionSize;
@@ -171,7 +171,7 @@ convoar
             return scene;
         }
 
-        public PhysicsScene CreateSimplePhysicsEngine() {
+        public static PhysicsScene CreateSimplePhysicsEngine() {
             Nini.Config.IConfigSource config = new Nini.Config.IniConfigSource();
             config.AddConfig("Startup");
             config.Configs["Startup"].Set("physics", "basicphysics");

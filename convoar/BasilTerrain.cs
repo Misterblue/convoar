@@ -47,7 +47,7 @@ namespace org.herbal3d.convoar {
 
             float[,] heightMap = new float[XSize, YSize];
             if (context.parms.HalfRezTerrain) {
-                context.log.LogDebug("{0}: CreateTerrainMesh. creating half sized terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
+                context.log.DebugFormat("{0}: CreateTerrainMesh. creating half sized terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
                 // Half resolution mesh that approximates the heightmap
                 heightMap = new float[XSize/2, YSize/2];
                 for (int xx = 0; xx < XSize; xx += 2) {
@@ -61,7 +61,7 @@ namespace org.herbal3d.convoar {
                 }
             }
             else {
-                context.log.LogDebug("{0}: CreateTerrainMesh. creating terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
+                context.log.DebugFormat("{0}: CreateTerrainMesh. creating terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
                 for (int xx = 0; xx < XSize; xx++) {
                     for (int yy = 0; yy < YSize; yy++) {
                         heightMap[xx, yy] = terrainDef.GetHeightAtXYZ(xx, yy, 26);
@@ -115,7 +115,7 @@ namespace org.herbal3d.convoar {
 
             // The above has created a MaterialInfo for the terrain texture
 
-            context.log.LogDebug("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
+            context.log.DebugFormat("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
             DisplayableRenderable terrainDisplayable = assetMesher.MeshFromHeightMap(heightMap,
                             terrainDef.Width, terrainDef.Height, assetFetcher, terrainFace);
 
@@ -148,7 +148,7 @@ namespace org.herbal3d.convoar {
         // PrimMesher has a terrain mesh generator but it doesn't compute normals.
         // TODO: Optimize by removing vertices that are just mid points.
         //    Having a vertex for every height is very inefficient especially for flat areas.
-        public static OMVR.Face TerrainMesh(float[,] heights, float realSizeX, float realSizeY, ILog log) {
+        public static OMVR.Face TerrainMesh(float[,] heights, float realSizeX, float realSizeY, GlobalContext context) {
 
             List<ushort> indices = new List<ushort>();
 

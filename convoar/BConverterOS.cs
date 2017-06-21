@@ -67,7 +67,7 @@ namespace org.herbal3d.convoar {
                 }).ToList();
                 if (rootRenderableList.Count != 1) {
                     // There should be only one root prim
-                    _context.log.LogError("{0} Found more than one root prim in SOG. ID={1}", _logHeader, sog.UUID);
+                    _context.log.ErrorFormat("{0} Found more than one root prim in SOG. ID={1}", _logHeader, sog.UUID);
                     prom.Reject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
                 }
 
@@ -105,7 +105,7 @@ namespace org.herbal3d.convoar {
                 */
             })
             .Catch(e => {
-                _context.log.LogError("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
+                _context.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
                 prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
             })
             .Done (rootDisplayable => {
@@ -154,7 +154,7 @@ namespace org.herbal3d.convoar {
                             // Could not get the texture. Print error and otherwise blank out the texture
                             faceInfo.textureID = null;
                             faceInfo.faceImage = null;
-                            _context.log.LogError("{0} UpdateTextureInfo. {1}", _logHeader, e);
+                            _context.log.ErrorFormat("{0} UpdateTextureInfo. {1}", _logHeader, e);
                         })
                         .Then(imgInfo => {
                             faceInfo.faceImage = imgInfo.image;
@@ -163,7 +163,7 @@ namespace org.herbal3d.convoar {
                 }
             }
             catch (Exception e) {
-                _context.log.LogError("{0}: UpdateFaceInfoWithTexture: exception updating faceInfo. id={1}: {2}",
+                _context.log.ErrorFormat("{0}: UpdateFaceInfoWithTexture: exception updating faceInfo. id={1}: {2}",
                                     _logHeader, texID, e);
             }
         }
