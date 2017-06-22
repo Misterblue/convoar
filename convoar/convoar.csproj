@@ -132,9 +132,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BasilAssets.cs" />
+    <Compile Include="BAssets.cs" />
     <Compile Include="BasilPersist.cs" />
-    <Compile Include="BasilTerrain.cs" />
+    <Compile Include="ConvoarTerrain.cs" />
     <Compile Include="BConverter.cs" />
     <Compile Include="BConverterOS.cs" />
     <Compile Include="BHasher.cs" />

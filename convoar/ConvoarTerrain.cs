@@ -32,9 +32,9 @@ using OMVA = OpenMetaverse.Assets;
 using OMVR = OpenMetaverse.Rendering;
 
 namespace org.herbal3d.convoar {
-    public class BasilTerrain {
+    public class ConvoarTerrain {
 
-        private static string LogHeader = "BasilTerrain";
+        private static string LogHeader = "ConvoarTerrain";
 
         // Create a mesh for the terrain of the current scene
         public static BInstance CreateTerrainMesh(GlobalContext context,
