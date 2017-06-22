@@ -146,6 +146,7 @@ namespace org.herbal3d.convoar {
         public abstract class ParameterDefnBase {
             public string name;         // string name of the parameter
             public string desc;         // a short description of what the parameter means
+            public abstract Type GetValueType();
             public string[] symbols;    // command line symbols for this parameter (short forms)
             public ConvoarParams context; // context for setting and getting values
             public ParameterDefnBase(string pName, string pDesc, string[] pSymbols) {
@@ -165,7 +166,10 @@ namespace org.herbal3d.convoar {
         public delegate T PGetValue<T>();
         public delegate void PSetValue<T>(T val);
         public sealed class ParameterDefn<T> : ParameterDefnBase {
-            private T defaultValue;
+            public T defaultValue;
+            public override Type GetValueType() {
+                return typeof(T);
+            }
             private PSetValue<T> setter;
             private PGetValue<T> getter;
             public ParameterDefn(string pName, string pDesc, T pDefault, PGetValue<T> pGetter, PSetValue<T> pSetter, params string[] symbols)
@@ -211,7 +215,7 @@ namespace org.herbal3d.convoar {
             public override string GetValue() {
                 return getter().ToString();
             }
-            public override void SetValue(string valAsString) {
+            public override void SetValue(String valAsString) {
                 // Get the generic type of the setter
                 Type genericType = setter.GetType().GetGenericArguments()[0];
                 // Find the 'Parse' method on that type
@@ -220,23 +224,30 @@ namespace org.herbal3d.convoar {
                     parser = genericType.GetMethod("Parse", new Type[] { typeof(String) } );
                 }
                 catch (Exception e) {
-                    System.Console.WriteLine("{0} Exception getting parser for type '{1}': {2}", _logHeader, genericType, e);
                     parser = null;
                 }
                 if (parser != null) {
                     // Parse the input string
                     try {
                         T setValue = (T)parser.Invoke(genericType, new Object[] { valAsString });
+                        // System.Console.WriteLine("SetValue: setting value on {0} to {1}", this.name, setValue);
                         // Store the parsed value
                         setter(setValue);
-                        // // m_log.DebugFormat("{0} Parameter {1} = {2}", LogHeader, name, setValue);
+                        // m_log.DebugFormat("{0} Parameter {1} = {2}", LogHeader, name, setValue);
                     }
                     catch {
                         // m_log.ErrorFormat("{0} Failed parsing parameter value '{1}' as type '{2}'", LogHeader, valAsString, genericType);
                     }
                 }
                 else {
-                    // m_log.ErrorFormat("{0} Could not find parameter parser for type '{1}'", LogHeader, genericType);
+                    // If there is not a parser, try doing a conversion
+                    try {
+                        T setValue = (T)Convert.ChangeType(valAsString, genericType);
+                        setter(setValue);
+                    }
+                    catch (Exception e) {
+                        System.Console.WriteLine("{0} Conversion failed for {1}", _logHeader, this.name);
+                    }
                 }
             }
         }
@@ -256,9 +267,9 @@ namespace org.herbal3d.convoar {
                     foundDefn = parm;
                     ret = true;
                 }
-                if (parm.symbols != null) {
+                if (ret == false && parm.symbols != null) {
                     foreach (string sym in parm.symbols) {
-                        if (sym == parmL) {
+                        if (sym == pName) {
                             foundDefn = parm;
                             ret = true;
                             break;
@@ -313,21 +324,13 @@ namespace org.herbal3d.convoar {
                 multipleLast = true;
             }
 
-
             for (int ii = 0; ii < args.Length; ii++) {
                 string para = args[ii];
                 // is this a parameter?
                 if (para[0] == '-') {
                     // is the next one a parameter?
-                    if (ii == (args.Length - 1) || args[ii + 1][0] == '-') {
-                        // two parameters in a row. this must be a toggle parameter
-                        AddCommandLineParameter(para, null);
-                    }
-                    else {
-                        // looks like a parameter followed by a value
-                        AddCommandLineParameter(para, args[ii + 1]);
-                        ii++;       // skip the value we just added to the dictionary
-                    }
+                    // looks like a parameter followed by a value
+                    ii += AddCommandLineParameter(para, (ii==(args.Length-1)) ? null : args[ii + 1]);
                 }
                 else {
                     if (ii == 0 && firstOpFlag) {
@@ -344,7 +347,7 @@ namespace org.herbal3d.convoar {
                                 }
                                 multFiles.Append(args[jj]);
                             }
-                            AddCommandLineParameter(multipleLastParameters, multipleLast.ToString());
+                            AddCommandLineParameter(multipleLastParameters, multFiles.ToString());
 
                             // Skip them all
                             ii = args.Length;
@@ -359,12 +362,35 @@ namespace org.herbal3d.convoar {
             return ret;
         }
 
-        private bool AddCommandLineParameter(string parm, string val) {
-            bool ret = false;
+        // Store the value for the parameter.
+        // If we accept the value as a good value for the parameter, return 1 else 0.
+        // A 'good value' is one that does not start with '-' or is not after a boolean parameter.
+        private int AddCommandLineParameter(string parm, string val) {
+            int ret = 1;
+            // Strip leading hyphens
+            while (parm[0] == '-') {
+                parm = parm.Substring(1);
+            }
+            // If the next token starts with a parameter mark, it's not really a value
+            if (val[0] == '-') {
+                val = null;
+                ret = 0;
+            }
             ParameterDefnBase parmDefn;
             if (TryGetParameter(parm, out parmDefn)) {
+                // If the parameter is a boolean type and the next value is not a parameter,
+                //      don't try to take up the next value.
+                if (parmDefn.GetValueType() == typeof(Boolean) && val != null) {
+                    string valL = val.ToLower();
+                    if (valL != "true" && valL != "t" && valL != "false" && valL != "f") {
+                        val = null;
+                        ret = 0;
+                    }
+                }
                 parmDefn.SetValue(val);
-                ret = true;
+            }
+            else {
+                throw new ArgumentException("Unknown parameter " + parm);
             }
             return ret;
         }

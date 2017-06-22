@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2016 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,6 +52,47 @@ namespace org.herbal3d.convoar.tests {
         [TestFixtureTearDown]
         public void TearDown() {
         }
+
+        [TestCase]
+        public void ProcessArgsParameter() {
+            ConvoarParams parms = new ConvoarParams();
+            bool oldExportTextures = parms.ExportTextures;
+            string inputOARFileParameterName = "InputOAR";
+            string inputOARFile = "AnOARFileToRead.oar";
+            string outputDirectory = "this/that";
+            string[] args = new string[] {
+                "-d", outputDirectory,
+                "--exporttextures",
+                "--preferredTextureFormat", "GIF",
+                "--mergeStaticMeshes",
+                "--verticesmaxForBuffer", "1234",
+                "--logConversionStats",
+                inputOARFile
+            };
+
+            Exception exceptionCode = null;
+            try {
+                parms.MergeCommandLine(args, null, inputOARFileParameterName);
+            }
+            catch (Exception e) {
+                exceptionCode = e;
+            }
+
+            if (exceptionCode != null) {
+                Assert.Fail("Exception merging parameters: " + exceptionCode.ToString());
+            }
+            else {
+                Assert.AreEqual(outputDirectory, parms.OutputDirectory, "Output directory specification short form was not set");
+                Assert.AreEqual(true, parms.ExportTextures, "ExportTextures was not parameterized properly");
+                Assert.AreEqual("GIF", parms.PreferredTextureFormat, "Preferred texture format was not set");
+                Assert.AreEqual(true, parms.MergeStaticMeshes, "MergeStaticMeshes was not set");
+                Assert.AreEqual(1234, parms.VerticesMaxForBuffer, "VerticesMaxForBuffer was not set");
+                Assert.AreEqual(true, parms.LogConversionStats, "LogConversionStats was not set");
+                Assert.AreEqual(inputOARFile, parms.InputOAR, "The trailing filename was not set");
+            }
+        }
+
+
     }
 
     // =========================================================================================
