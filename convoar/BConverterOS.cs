@@ -37,7 +37,7 @@ using OMVR = OpenMetaverse.Rendering;
 
 
 namespace org.herbal3d.convoar {
-    // Convert things from OpenSimulator to EntityGroup things
+    // Convert things from OpenSimulator to Instances and Displayables things
     public class BConverterOS {
 
         private static string _logHeader = "BConverterOS";
@@ -72,7 +72,12 @@ namespace org.herbal3d.convoar {
                 }
 
                 // The root of the SOG
-                Displayable rootDisplayable = new Displayable(rootRenderableList.First());
+                DisplayableRenderable rootDisplayableRenderable = rootRenderableList.First();
+                SceneObjectPart rootSop = rootDisplayableRenderable.userData as SceneObjectPart;
+                Displayable rootDisplayable = new Displayable(rootDisplayableRenderable);
+                if (_context.parms.DisplayTimeScaling) {
+                    rootDisplayable.scale = rootSop.Scale;
+                }
 
                 // Collect all the children prims and add them to the root Displayable
                 rootDisplayable.children = renderables.Where(dr => {
@@ -82,6 +87,9 @@ namespace org.herbal3d.convoar {
                         SceneObjectPart dSop = dr.userData as SceneObjectPart;
                         childDisplayable.offsetPosition = dSop.OffsetPosition;
                         childDisplayable.offsetRotation = dSop.RotationOffset;
+                        if (_context.parms.DisplayTimeScaling) {
+                            childDisplayable.scale = dSop.Scale;
+                        }
                         return childDisplayable;
                     }).ToList();
 

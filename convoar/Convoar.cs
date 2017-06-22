@@ -34,6 +34,8 @@ using OpenSim.Region.PhysicsModules.SharedBase;
 
 using Nini;
 
+using RSG;
+
 using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
@@ -128,6 +130,23 @@ convoar
                 _context.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
 
                 // Convert all the loaded SOGs and images into meshes and our format
+                BConverterOS converter = new BConverterOS(_context);
+
+                IAssetFetcher assetFetcher = new OSAssetFetcher(scene, memAssetService, _context);
+
+                PrimToMesh mesher = new PrimToMesh(_context);
+
+                Promise<BInstance>.All(
+                    scene.GetSceneObjectGroups().Select(sog => {
+                        return converter.Convert(sog, assetFetcher, mesher);
+                    })
+                )
+                .Catch(e => {
+                })
+                .Done(instances => {
+                    _context.log.Log("Num instances = {0}", instances.ToList().Count);
+                    
+                });
 
             }
         }

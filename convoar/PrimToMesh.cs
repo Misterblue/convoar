@@ -40,6 +40,7 @@ namespace org.herbal3d.convoar {
         String _logHeader = "[Basil.PrimToMesh]";
 
         public PrimToMesh(GlobalContext pContext) {
+            _context = pContext;
             m_mesher = new OMVR.MeshmerizerR();
         }
 
@@ -194,6 +195,10 @@ namespace org.herbal3d.convoar {
             face.Indices.ForEach(ind => { meshInfo.indices.Add((int)ind); });
             meshInfo.faceCenter = face.Center;
 
+            if (!_context.parms.DisplayTimeScaling) {
+                ScaleMeshes(meshInfo, primScale);
+            }
+
             // Find or create the MaterialInfo for this face.
             MaterialInfo matInfo = new MaterialInfo(face, defaultTexture);
             if (matInfo.textureID != null
@@ -257,29 +262,14 @@ namespace org.herbal3d.convoar {
         */
 
         // Walk through all the vertices and scale the included meshes
-        public static void ScaleMeshes(ExtendedPrimGroup ePG) {
-            foreach (ExtendedPrim ep in ePG.Values) {
-                OMV.Vector3 scale = ep.fromOS.primitive.Scale;
-                if (scale.X != 1.0 || scale.Y != 1.0 || scale.Z != 1.0) {
-                    OnAllVertex(ep, delegate (ref OMVR.Vertex vert) {
-                        vert.Position *= scale;
-                    });
+        public static void ScaleMeshes(MeshInfo meshInfo, OMV.Vector3 scale) {
+            if (scale.X != 1.0 || scale.Y != 1.0 || scale.Z != 1.0) {
+                for (int ii = 0; ii < meshInfo.vertexs.Count; ii++) {
+                    OMVR.Vertex aVert = meshInfo.vertexs[ii];
+                    aVert.Position *= scale;
+                    meshInfo.vertexs[ii] = aVert;
                 }
             }
         }
-
-        // Loop over all the vertices in an ExtendedPrim and perform some operation on them
-        public delegate void OperateOnVertex(ref OMVR.Vertex vert);
-        public static void OnAllVertex(ExtendedPrim ep, OperateOnVertex vertOp) {
-            foreach (FaceInfo aFace in ep.faces) {
-                for (int jj = 0; jj < aFace.vertexs.Count; jj++) {
-                    OMVR.Vertex aVert = aFace.vertexs[jj];
-                    vertOp(ref aVert);
-                    aFace.vertexs[jj] = aVert;
-                }
-            }
-        }
-
-
     }
 }

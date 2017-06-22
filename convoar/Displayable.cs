@@ -20,6 +20,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using OpenSim.Region.Framework.Scenes;
+
 using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
@@ -43,6 +45,14 @@ namespace org.herbal3d.convoar {
         }
 
         public Displayable(DisplayableRenderable pRenderable) {
+            offsetPosition = OMV.Vector3.Zero;
+            offsetRotation = OMV.Quaternion.Identity;
+            scale = new OMV.Vector3(1, 1, 1);
+            renderable = pRenderable;
+            children = new List<Displayable>();
+        }
+
+        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop) {
             offsetPosition = OMV.Vector3.Zero;
             offsetRotation = OMV.Quaternion.Identity;
             scale = new OMV.Vector3(1, 1, 1);

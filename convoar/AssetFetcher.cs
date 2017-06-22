@@ -106,7 +106,7 @@ namespace org.herbal3d.convoar {
 
     // Fetch an asset from  the OpenSimulator asset system
     public class OSAssetFetcher : IAssetFetcher {
-        private string _logHeader = "[OSAssetFetcher]";
+        // private string _logHeader = "[OSAssetFetcher]";
         private GlobalContext _context;
 
         private Scene _scene;

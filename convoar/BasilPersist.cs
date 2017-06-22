@@ -39,7 +39,7 @@ namespace org.herbal3d.convoar {
         private string _assetInfo;
         private GlobalContext _context;
 
-        private static string _logHeader = "BasilPersist";
+        private static string _logHeader = "[BasilPersist]";
 
         // Texture cache used when processing one region
         private static Dictionary<int, ImageInfo> textureCache = new Dictionary<int, ImageInfo>();

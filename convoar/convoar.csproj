@@ -132,7 +132,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BAssets.cs" />
+    <Compile Include="AssetFetcher.cs" />
     <Compile Include="BasilPersist.cs" />
     <Compile Include="ConvoarTerrain.cs" />
     <Compile Include="BConverter.cs" />

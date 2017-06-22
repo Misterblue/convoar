@@ -223,7 +223,7 @@ namespace org.herbal3d.convoar {
                 try {
                     parser = genericType.GetMethod("Parse", new Type[] { typeof(String) } );
                 }
-                catch (Exception e) {
+                catch {
                     parser = null;
                 }
                 if (parser != null) {
