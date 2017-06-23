@@ -30,34 +30,36 @@ namespace org.herbal3d.convoar {
     /// meshes, procedures, or whatever.
     /// </summary>
     public class Displayable {
-        public OMV.Vector3 offsetPosition;
-        public OMV.Quaternion offsetRotation;
-        public OMV.Vector3 scale;
-        public DisplayableRenderable renderable;
-        public List<Displayable> children;
+        public string name = "no name";
+        public OMV.UUID baseUUID = OMV.UUID.Zero;   // the UUID of the original object that careated is displayable
+        public OMV.Vector3 offsetPosition = OMV.Vector3.Zero;
+        public OMV.Quaternion offsetRotation = OMV.Quaternion.Identity;
+        public OMV.Vector3 scale = new OMV.Vector3(1,1,1);
+        public DisplayableRenderable renderable = null;
+        public List<Displayable> children = new List<Displayable>();
+        public SceneObjectPart baseSOP = null;
 
-        public Displayable() {
-            offsetPosition = OMV.Vector3.Zero;
-            offsetRotation = OMV.Quaternion.Identity;
-            scale = new OMV.Vector3(1, 1, 1);
-            renderable = null;
-            children = new List<Displayable>();
+        private GlobalContext _context;
+
+        public Displayable(GlobalContext pContext) {
+            _context = pContext;
         }
 
-        public Displayable(DisplayableRenderable pRenderable) {
-            offsetPosition = OMV.Vector3.Zero;
-            offsetRotation = OMV.Quaternion.Identity;
-            scale = new OMV.Vector3(1, 1, 1);
+        public Displayable(DisplayableRenderable pRenderable, GlobalContext pContext) {
+            _context = pContext;
             renderable = pRenderable;
-            children = new List<Displayable>();
         }
 
-        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop) {
-            offsetPosition = OMV.Vector3.Zero;
-            offsetRotation = OMV.Quaternion.Identity;
-            scale = new OMV.Vector3(1, 1, 1);
+        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop, GlobalContext pContext) {
+            _context = pContext;
+            name = sop.Name;
+            baseSOP = sop;
+            offsetPosition = baseSOP.OffsetPosition;
+            offsetRotation = baseSOP.RotationOffset;
+            if (_context.parms.DisplayTimeScaling) {
+                scale = sop.Scale;
+            }
             renderable = pRenderable;
-            children = new List<Displayable>();
         }
     }
 
@@ -66,14 +68,15 @@ namespace org.herbal3d.convoar {
     /// Could be a mesh or procedure or whatever.
     /// </summary>
     public abstract class DisplayableRenderable {
-        public Object userData;   // usually a reference to the source object when creating the Renderable
     }
 
     /// <summary>
-    /// A group of meshes that make up a renderable item
+    /// A group of meshes that make up a renderable item.
+    /// For OpenSimulator conversions, this is usually prim faces.
     /// </summary>
     public class RenderableMeshGroup : DisplayableRenderable {
-        public List<RenderableMesh> meshes; // The meshes that make up this Renderable
+        // The meshes that make up this Renderable
+        public List<RenderableMesh> meshes = new List<RenderableMesh>();
     }
         
     public class RenderableMesh {

@@ -35,8 +35,8 @@ using OpenSim.Region.Framework.Scenes;
 namespace org.herbal3d.convoar {
 
     public class PrimToMesh : IDisposable {
-        private OMVR.MeshmerizerR m_mesher;
         private GlobalContext _context;
+        private OMVR.MeshmerizerR m_mesher;
         String _logHeader = "[Basil.PrimToMesh]";
 
         public PrimToMesh(GlobalContext pContext) {
@@ -50,44 +50,41 @@ namespace org.herbal3d.convoar {
         ///    into the caches.
         /// The SOP is put in the 'userData' of the returned Displayables.
         /// </summary>
-        public IPromise<DisplayableRenderable> CreateMeshResource(SceneObjectGroup sog, SceneObjectPart sop,
-                    OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod, BasilStats stats) {
+        public IPromise<Displayable> CreateMeshResource(SceneObjectGroup sog, SceneObjectPart sop,
+                    OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
 
-            var prom = new Promise<DisplayableRenderable>();
+            var prom = new Promise<Displayable>();
 
             try {
                 if (prim.Sculpt != null) {
                     if (prim.Sculpt.Type == OMV.SculptType.Mesh) {
-                        // _context.log.DebugFormat("{0}: CreateMeshResource: creating mesh", LogHeader);
-                        stats.numMeshAssets++;
+                        // _context.log.DebugFormat("{0}: CreateMeshResource: creating mesh", _logHeader);
+                        _context.stats.numMeshAssets++;
                         MeshFromPrimMeshData(sog, sop, prim, assetFetcher, lod)
                             .Catch(e => {
                                 prom.Reject(e);
                             })
                             .Then(dispable => {
-                                dispable.userData = sop;
-                                prom.Resolve(dispable);
+                                prom.Resolve(new Displayable(dispable, sop, _context));
                             });
                     }
                     else {
-                        // _context.log.DebugFormat("{0}: CreateMeshResource: creating sculpty", LogHeader);
-                        stats.numSculpties++;
+                        // _context.log.DebugFormat("{0}: CreateMeshResource: creating sculpty", _logHeader);
+                        _context.stats.numSculpties++;
                         MeshFromPrimSculptData(sog, sop, prim, assetFetcher, lod)
                             .Catch(e => {
                                 prom.Reject(e);
                             })
                             .Then(dispable => {
-                                dispable.userData = sop;
-                                prom.Resolve(dispable);
+                                prom.Resolve(new Displayable(dispable, sop, _context));
                             });
                     }
                 }
                 else {
-                    // _context.log.DebugFormat("{0}: CreateMeshResource: creating primshape", LogHeader);
-                    stats.numSimplePrims++;
+                    // _context.log.DebugFormat("{0}: CreateMeshResource: creating primshape", _logHeader);
+                    _context.stats.numSimplePrims++;
                     DisplayableRenderable dispable = MeshFromPrimShapeData(sog, sop, prim, assetFetcher, lod);
-                    dispable.userData = sop;
-                    prom.Resolve(dispable);
+                    prom.Resolve(new Displayable(dispable, sop, _context));
                 }
             }
             catch (Exception e) {
@@ -180,6 +177,7 @@ namespace org.herbal3d.convoar {
                 RenderableMesh rmesh = ConvertFaceToRenderableMesh(face, assetFetcher, defaultTexture, primScale);
                 ret.meshes.Add(rmesh);
             }
+            // _context.log.DebugFormat("{0} ConvertFacetedMeshToDisplayable: complete. numMeshes={1}", _logHeader, ret.meshes.Count);
             return ret;
         }
 
@@ -194,6 +192,8 @@ namespace org.herbal3d.convoar {
             meshInfo.indices = new List<int>();
             face.Indices.ForEach(ind => { meshInfo.indices.Add((int)ind); });
             meshInfo.faceCenter = face.Center;
+            // _context.log.DebugFormat("{0} ConvertFaceToRenderableMesh: faceId={1}, numVert={2}, numInd={3}",
+            //     _logHeader, face.ID, meshInfo.vertexs.Count, meshInfo.indices.Count);
 
             if (!_context.parms.DisplayTimeScaling) {
                 ScaleMeshes(meshInfo, primScale);
@@ -227,6 +227,9 @@ namespace org.herbal3d.convoar {
 
             MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetHash(), () => { return meshInfo; });
             rmesh.mesh = lookupMeshInfo.handle;
+
+            // _context.log.DebugFormat("{0} ConvertFaceToRenderableMesh: rmesh.mesh={1}, rmesh.material={2}",
+            //                 _logHeader, rmesh.mesh.GetUUID(), rmesh.material.GetUUID());
 
             return rmesh;
         }

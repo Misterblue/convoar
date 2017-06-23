@@ -120,7 +120,7 @@ namespace org.herbal3d.convoar {
                             terrainDef.Width, terrainDef.Height, assetFetcher, terrainFace);
 
             BInstance terrainInstance = new BInstance();
-            terrainInstance.Representation = new Displayable(terrainDisplayable);
+            terrainInstance.Representation = new Displayable(terrainDisplayable, context);
 
             return terrainInstance;
         }

@@ -26,24 +26,19 @@ using OMV = OpenMetaverse;
 using OMVR = OpenMetaverse.Rendering;
 
 namespace org.herbal3d.convoar {
-    public class BasilStats : IDisposable {
+    public class ConvoarStats {
 
         public int numSimplePrims = 0;
         public int numMeshAssets = 0;
         public int numSculpties = 0;
 
-        EntityGroupStats staticStats = null;
-        EntityGroupStats nonStaticStats = null;
-        EntityGroupStats rebuiltStats = null;
-        EntityGroupStats rebuiltNonStaticStats = null;
+        private GlobalContext _context;
 
         public Scene m_scene;
-        public ILog m_log;
         private static string _logHeader = "[Stats]";
 
-        public BasilStats(Scene pScene, ILog pLog) {
-            m_scene = pScene;
-            m_log = pLog;
+        public ConvoarStats(GlobalContext pContext) {
+            _context = pContext;
         }
 
         /*  TODO: figure out what statistics are wanted
@@ -56,6 +51,7 @@ namespace org.herbal3d.convoar {
         }
         */
 
+        /*
         public class EntityGroupStats {
             public int numEntities = 0;
             public int numMeshes = 0;
@@ -65,6 +61,12 @@ namespace org.herbal3d.convoar {
             public int numMaterials = 0;
             public int numTextures = 0;
         }
+
+        EntityGroupStats staticStats = null;
+        EntityGroupStats nonStaticStats = null;
+        EntityGroupStats rebuiltStats = null;
+        EntityGroupStats rebuiltNonStaticStats = null;
+
 
         public EntityGroupStats StatsFromEntityGroupList(string listName, EntityGroupList entityList) {
             EntityGroupStats egs = new EntityGroupStats();
@@ -187,31 +189,6 @@ namespace org.herbal3d.convoar {
             }
             m_log.Debug(buff.ToString());
         }
-
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing) {
-            if (!disposedValue) {
-                if (disposing) {
-                }
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~BasilStats() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose() {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
+    */
     }
 }

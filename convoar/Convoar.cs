@@ -45,7 +45,7 @@ namespace org.herbal3d.convoar {
     //    parameters, statistics, and the such.
     public class GlobalContext {
         public ConvoarParams parms;
-        public BasilStats stats;
+        public ConvoarStats stats;
         public Logger log;
         public string contextName;  // a unique identifier for this context -- used in filenames, ...
 
@@ -84,6 +84,7 @@ convoar
 
         public void Start(string[] args) {
             _context = new GlobalContext(new ConvoarParams(), new LoggerLog4Net());
+            _context.stats = new ConvoarStats(_context);
 
             try {
                 _context.parms.MergeCommandLine(args, null, "InputOAR");

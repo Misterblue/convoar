@@ -52,65 +52,45 @@ namespace org.herbal3d.convoar {
         public IPromise<BInstance> Convert(SceneObjectGroup sog, IAssetFetcher assetFetcher, PrimToMesh mesher) {
             var prom = new Promise<BInstance>();
 
+            /* DEBUG DEBUG
+            _context.log.ErrorFormat("{0} Convert SOG. ID={1}", _logHeader, sog.UUID);
+            foreach (SceneObjectPart Xsop in sog.Parts) {
+                _context.log.ErrorFormat("{0} ... SOP ID={1}, isRoot={2}", _logHeader, Xsop.UUID, Xsop.IsRoot);
+            }
+            // end of DEBUG DEBUG */
             // Create meshes for all the parts of the SOG
-            Promise<DisplayableRenderable>.All(
+            Promise<Displayable>.All(
                 sog.Parts.Select(sop => {
+                    // _context.log.DebugFormat("{0} calling CreateMeshResource for sog={1}, sop={2}",
+                    //             _logHeader, sog.UUID, sop.UUID);
                     OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
-                    return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest, _context.stats);
+                    return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest);
                 } )
             )
             .Then(renderables => {
                 // 'renderables' are the DisplayRenderables for all the SOPs in the SOG
                 // Get the root prim of the SOG
-                List<DisplayableRenderable> rootRenderableList = renderables.Where(dr => {
-                    return ((SceneObjectPart)dr.userData).IsRoot;
+                List<Displayable> rootDisplayableList = renderables.Where(disp => {
+                    return disp.baseSOP.IsRoot;
                 }).ToList();
-                if (rootRenderableList.Count != 1) {
+                if (rootDisplayableList.Count != 1) {
                     // There should be only one root prim
-                    _context.log.ErrorFormat("{0} Found more than one root prim in SOG. ID={1}", _logHeader, sog.UUID);
+                    _context.log.ErrorFormat("{0} Found not one root prim in SOG. ID={1}, numRoots={2}",
+                                _logHeader, sog.UUID, rootDisplayableList.Count);
                     prom.Reject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
+                    return null;
                 }
 
                 // The root of the SOG
-                DisplayableRenderable rootDisplayableRenderable = rootRenderableList.First();
-                SceneObjectPart rootSop = rootDisplayableRenderable.userData as SceneObjectPart;
-                Displayable rootDisplayable = new Displayable(rootDisplayableRenderable);
-                if (_context.parms.DisplayTimeScaling) {
-                    rootDisplayable.scale = rootSop.Scale;
-                }
+                Displayable rootDisplayable = rootDisplayableList.First();
 
                 // Collect all the children prims and add them to the root Displayable
-                rootDisplayable.children = renderables.Where(dr => {
-                        return !((SceneObjectPart)dr.userData).IsRoot;
-                    }).Select(dr => {
-                        Displayable childDisplayable = new Displayable(dr);
-                        SceneObjectPart dSop = dr.userData as SceneObjectPart;
-                        childDisplayable.offsetPosition = dSop.OffsetPosition;
-                        childDisplayable.offsetRotation = dSop.RotationOffset;
-                        if (_context.parms.DisplayTimeScaling) {
-                            childDisplayable.scale = dSop.Scale;
-                        }
-                        return childDisplayable;
-                    }).ToList();
+                rootDisplayable.children = renderables.Where(disp => {
+                    return !disp.baseSOP.IsRoot;
+                }).ToList();
 
                 return rootDisplayable;
 
-                    /*
-                return renderables.Select(epg => {
-                    // If scaling is done in the mesh, do it now
-                    if (!_context.parms.DisplayTimeScaling) {
-                        PrimToMesh.ScaleMeshes(epg);
-                        foreach (ExtendedPrim ep in epg.Values) {
-                            ep.scale = new OMV.Vector3(1, 1, 1);
-                        }
-                    }
-
-                    // The prims in the group need to be decorated with texture/image information
-                    UpdateTextureInfo(epg, assetFetcher);
-
-                    return epg;
-                });
-                */
             })
             .Catch(e => {
                 _context.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
