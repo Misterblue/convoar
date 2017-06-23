@@ -42,10 +42,7 @@ namespace org.herbal3d.convoar {
 
         private static string _logHeader = "BConverterOS";
 
-        private GlobalContext _context;
-
-        public BConverterOS(GlobalContext context) {
-            _context = context;
+        public BConverterOS() {
         }
 
         // Convert a SceneObjectGroup into an instance with displayables
@@ -53,15 +50,15 @@ namespace org.herbal3d.convoar {
             var prom = new Promise<BInstance>();
 
             /* DEBUG DEBUG
-            _context.log.ErrorFormat("{0} Convert SOG. ID={1}", _logHeader, sog.UUID);
+            ConvOAR.Globals.log.ErrorFormat("{0} Convert SOG. ID={1}", _logHeader, sog.UUID);
             foreach (SceneObjectPart Xsop in sog.Parts) {
-                _context.log.ErrorFormat("{0} ... SOP ID={1}, isRoot={2}", _logHeader, Xsop.UUID, Xsop.IsRoot);
+                ConvOAR.Globals.log.ErrorFormat("{0} ... SOP ID={1}, isRoot={2}", _logHeader, Xsop.UUID, Xsop.IsRoot);
             }
             // end of DEBUG DEBUG */
             // Create meshes for all the parts of the SOG
             Promise<Displayable>.All(
                 sog.Parts.Select(sop => {
-                    // _context.log.DebugFormat("{0} calling CreateMeshResource for sog={1}, sop={2}",
+                    // ConvOAR.Globals.log.DebugFormat("{0} calling CreateMeshResource for sog={1}, sop={2}",
                     //             _logHeader, sog.UUID, sop.UUID);
                     OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
                     return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest);
@@ -75,7 +72,7 @@ namespace org.herbal3d.convoar {
                 }).ToList();
                 if (rootDisplayableList.Count != 1) {
                     // There should be only one root prim
-                    _context.log.ErrorFormat("{0} Found not one root prim in SOG. ID={1}, numRoots={2}",
+                    ConvOAR.Globals.log.ErrorFormat("{0} Found not one root prim in SOG. ID={1}, numRoots={2}",
                                 _logHeader, sog.UUID, rootDisplayableList.Count);
                     prom.Reject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
                     return null;
@@ -87,13 +84,16 @@ namespace org.herbal3d.convoar {
                 // Collect all the children prims and add them to the root Displayable
                 rootDisplayable.children = renderables.Where(disp => {
                     return !disp.baseSOP.IsRoot;
+                }).Select(disp => {
+                    disp.positionIsParentRelative = true;
+                    return disp;
                 }).ToList();
 
                 return rootDisplayable;
 
             })
             .Catch(e => {
-                _context.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
+                ConvOAR.Globals.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
                 prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
             })
             .Done (rootDisplayable => {
@@ -136,13 +136,13 @@ namespace org.herbal3d.convoar {
                 faceInfo.hasAlpha = (faceInfo.textureEntry.RGBA.A != 1.0f);
                 if (texID != OMV.UUID.Zero && texID != OMV.Primitive.TextureEntry.WHITE_TEXTURE) {
                     faceInfo.textureID = texID;
-                    faceInfo.persist = new BasilPersist(Gltf.MakeAssetURITypeImage, texID.ToString(), _context);
+                    faceInfo.persist = new BasilPersist(Gltf.MakeAssetURITypeImage, texID.ToString());
                     faceInfo.persist.GetUniqueTextureData(faceInfo, assetFetcher)
                         .Catch(e => {
                             // Could not get the texture. Print error and otherwise blank out the texture
                             faceInfo.textureID = null;
                             faceInfo.faceImage = null;
-                            _context.log.ErrorFormat("{0} UpdateTextureInfo. {1}", _logHeader, e);
+                            ConvOAR.Globals.log.ErrorFormat("{0} UpdateTextureInfo. {1}", _logHeader, e);
                         })
                         .Then(imgInfo => {
                             faceInfo.faceImage = imgInfo.image;
@@ -151,7 +151,7 @@ namespace org.herbal3d.convoar {
                 }
             }
             catch (Exception e) {
-                _context.log.ErrorFormat("{0}: UpdateFaceInfoWithTexture: exception updating faceInfo. id={1}: {2}",
+                ConvOAR.Globals.log.ErrorFormat("{0}: UpdateFaceInfoWithTexture: exception updating faceInfo. id={1}: {2}",
                                     _logHeader, texID, e);
             }
         }

@@ -60,7 +60,7 @@ namespace org.herbal3d.convoar {
 
     class ConvOAR {
 
-        GlobalContext _context;
+        public static GlobalContext Globals;
 
         string _outputDir;
 
@@ -83,35 +83,35 @@ convoar
         }
 
         public void Start(string[] args) {
-            _context = new GlobalContext(new ConvoarParams(), new LoggerLog4Net());
-            _context.stats = new ConvoarStats(_context);
+            Globals = new GlobalContext(new ConvoarParams(), new LoggerLog4Net());
+            Globals.stats = new ConvoarStats(Globals);
 
             try {
-                _context.parms.MergeCommandLine(args, null, "InputOAR");
+                Globals.parms.MergeCommandLine(args, null, "InputOAR");
             }
             catch (Exception e) {
-                _context.log.ErrorFormat("ERROR: bad parameters: " + e.Message);
-                _context.log.ErrorFormat(Invocation());
+                Globals.log.ErrorFormat("ERROR: bad parameters: " + e.Message);
+                Globals.log.ErrorFormat(Invocation());
                 return;
             }
 
             // Validate parameters
-            if (String.IsNullOrEmpty(_context.parms.InputOAR)) {
-                _context.log.ErrorFormat("An input OAR file must be specified");
-                _context.log.ErrorFormat(Invocation());
+            if (String.IsNullOrEmpty(Globals.parms.InputOAR)) {
+                Globals.log.ErrorFormat("An input OAR file must be specified");
+                Globals.log.ErrorFormat(Invocation());
                 return;
             }
-            if (String.IsNullOrEmpty(_context.parms.OutputDirectory)) {
+            if (String.IsNullOrEmpty(Globals.parms.OutputDirectory)) {
                 _outputDir = "./out";
-                _context.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
+                Globals.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
             }
 
             // Read in OAR
             Dictionary<string, object> options = new Dictionary<string, object>();
             // options.Add("merge", false);
-            string optDisplacement = _context.parms.Displacement;
+            string optDisplacement = Globals.parms.Displacement;
             if (optDisplacement != null) options.Add("displacement", optDisplacement);
-            string optRotation = _context.parms.Rotation;
+            string optRotation = Globals.parms.Rotation;
             if (optRotation != null) options.Add("rotation", optRotation);
             // options.Add("default-user", OMV.UUID.Random());
             // if (_optSkipAssets != null) options.Add('skipAssets', true);
@@ -123,19 +123,19 @@ convoar
                 Scene scene = CreateScene(memAssetService);
 
                 // Load the archive into our scene
-                ArchiveReadRequest archive = new ArchiveReadRequest(scene, _context.parms.InputOAR, Guid.Empty, options);
+                ArchiveReadRequest archive = new ArchiveReadRequest(scene, Globals.parms.InputOAR, Guid.Empty, options);
                 archive.DearchiveRegion(false);
 
                 // Convert SOGs from OAR into EntityGroups
-                _context.log.Log("Num assets = {0}", memAssetService.NumAssets);
-                _context.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
+                Globals.log.Log("Num assets = {0}", memAssetService.NumAssets);
+                Globals.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
 
                 // Convert all the loaded SOGs and images into meshes and our format
-                BConverterOS converter = new BConverterOS(_context);
+                BConverterOS converter = new BConverterOS();
 
-                IAssetFetcher assetFetcher = new OSAssetFetcher(scene, memAssetService, _context);
+                IAssetFetcher assetFetcher = new OSAssetFetcher(scene, memAssetService, Globals);
 
-                PrimToMesh mesher = new PrimToMesh(_context);
+                PrimToMesh mesher = new PrimToMesh();
 
                 Promise<BInstance>.All(
                     scene.GetSceneObjectGroups().Select(sog => {
@@ -145,8 +145,7 @@ convoar
                 .Catch(e => {
                 })
                 .Done(instances => {
-                    _context.log.Log("Num instances = {0}", instances.ToList().Count);
-                    
+                    Globals.log.Log("Num instances = {0}", instances.ToList().Count);
                 });
 
             }

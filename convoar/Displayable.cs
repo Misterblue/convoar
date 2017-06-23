@@ -32,31 +32,28 @@ namespace org.herbal3d.convoar {
     public class Displayable {
         public string name = "no name";
         public OMV.UUID baseUUID = OMV.UUID.Zero;   // the UUID of the original object that careated is displayable
+        public bool positionIsParentRelative = false;
         public OMV.Vector3 offsetPosition = OMV.Vector3.Zero;
         public OMV.Quaternion offsetRotation = OMV.Quaternion.Identity;
         public OMV.Vector3 scale = new OMV.Vector3(1,1,1);
         public DisplayableRenderable renderable = null;
         public List<Displayable> children = new List<Displayable>();
         public SceneObjectPart baseSOP = null;
+        public CoordAxis coordAxis = new CoordAxis();
 
-        private GlobalContext _context;
-
-        public Displayable(GlobalContext pContext) {
-            _context = pContext;
+        public Displayable() {
         }
 
-        public Displayable(DisplayableRenderable pRenderable, GlobalContext pContext) {
-            _context = pContext;
+        public Displayable(DisplayableRenderable pRenderable) {
             renderable = pRenderable;
         }
 
-        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop, GlobalContext pContext) {
-            _context = pContext;
+        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop) {
             name = sop.Name;
             baseSOP = sop;
             offsetPosition = baseSOP.OffsetPosition;
             offsetRotation = baseSOP.RotationOffset;
-            if (_context.parms.DisplayTimeScaling) {
+            if (ConvOAR.Globals.parms.DisplayTimeScaling) {
                 scale = sop.Scale;
             }
             renderable = pRenderable;
@@ -84,7 +81,4 @@ namespace org.herbal3d.convoar {
         public EntityHandle mesh;
         public EntityHandle material;
     }
-
-
-
 } 

@@ -269,13 +269,15 @@ namespace org.herbal3d.convoar {
         //    dependent structures
         public void BuildAccessorsAndBuffers(BasilPersist persist, GlobalContext context) {
             
+            // TODO: Don't need this any more
             // Scan all the meshes and build the materials from the face texture information
-            BuildPrimitives(persist);
+            // BuildPrimitives(persist);
 
             // Scan all the created meshes and create the Buffers, BufferViews, and Accessors
             BuildBuffers(persist, context.parms.VerticesMaxForBuffer);
         }
 
+        /*
         // Meshes with FaceInfo's have been added to the scene. Pass over all
         //   the meshes and create the Primitives, Materials, and Images.
         // Called before calling ToJSON().
@@ -291,7 +293,7 @@ namespace org.herbal3d.convoar {
             meshes.ForEach(mesh => {
                 GltfMaterial theMaterial = null;
                 // int hash = mesh.faceInfo.textureEntry.GetHashCode();
-                int hash = mesh.faceInfo.GetTextureHash();
+                int hash = mesh.meshInfo.GetTextureHash();
                 if (!gltfRoot.materials.GetHash(hash, out theMaterial)) {
                     theMaterial = BuildMaterial(mesh, defaultSampler, persist);
                 }
@@ -302,33 +304,33 @@ namespace org.herbal3d.convoar {
         public GltfMaterial BuildMaterial(GltfMesh mesh, GltfSampler defaultSampler, BasilPersist persist) {
             // Material has not beeen created yet
             GltfMaterial theMaterial = new GltfMaterial(gltfRoot, mesh.ID + "_mat");
-            theMaterial.hash = mesh.faceInfo.GetTextureHash();
+            theMaterial.hash = mesh.meshInfo.GetTextureHash();
             // m_log.DebugFormat("{0} Gltf.BuildPrimitives. Creating new material. hash={1}, texture={2}",
             //                 LogHeader, hash, mesh.faceInfo.textureID, theMaterial.name);
 
             GltfExtension ext = new GltfExtension(gltfRoot, "KHR_materials_common");
             ext.technique = "BLINN";  // 'LAMBERT' or 'BLINN' or 'PHONG'
 
-            OMV.Color4 surfaceColor = mesh.faceInfo.textureEntry.RGBA;
+            OMV.Color4 surfaceColor = mesh.meshInfo.textureEntry.RGBA;
             OMV.Color4 aColor = OMV.Color4.Black;
 
             ext.values.Add(GltfExtension.valDiffuse, surfaceColor);
             // ext.values.Add(GltfExtension.valDoubleSided, true);
             // ext.values.Add(GltfExtension.valEmission, aColor);
             // ext.values.Add(GltfExtension.valSpecular, aColor); // not a value in LAMBERT
-            if (mesh.faceInfo.textureEntry.Shiny != OMV.Shininess.None) {
-                float shine = (float)mesh.faceInfo.textureEntry.Shiny / 256f;
+            if (mesh.meshInfo.textureEntry.Shiny != OMV.Shininess.None) {
+                float shine = (float)mesh.meshInfo.textureEntry.Shiny / 256f;
                 ext.values.Add(GltfExtension.valShininess, shine);
             }
             if (surfaceColor.A != 1.0f) {
                 ext.values.Add(GltfExtension.valTransparency, surfaceColor.A);
             }
 
-            if (mesh.faceInfo.textureID != null) {
+            if (mesh.meshInfo.textureID != null) {
                 // There is an image texture with this mesh.
                 // Create all the structures for an image.
                 GltfTexture theTexture = null;
-                OMV.UUID texID = (OMV.UUID)mesh.faceInfo.textureID;
+                OMV.UUID texID = (OMV.UUID)mesh.meshInfo.textureID;
                 // Look up the texture to see if already created. If not, build texture info.
                 if (!gltfRoot.textures.GetByUUID(texID, out theTexture)) {
                     theTexture = new GltfTexture(gltfRoot, texID.ToString() + "_tex");
@@ -353,9 +355,9 @@ namespace org.herbal3d.convoar {
                 ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
 
                 ext.values.Remove(GltfExtension.valTransparent);
-                if (mesh.faceInfo.hasAlpha) {
+                if (mesh.meshInfo.hasAlpha) {
                     // the spec says default value is 'false' so only specify if 'true'
-                    ext.values.Add(GltfExtension.valTransparent, mesh.faceInfo.hasAlpha);
+                    ext.values.Add(GltfExtension.valTransparent, mesh.meshInfo.hasAlpha);
                 }
             }
 
@@ -363,8 +365,9 @@ namespace org.herbal3d.convoar {
 
             return theMaterial;
         }
+        */
 
-        // Meshes with FaceInfo's have been added to the scene. Pass over all
+        // Meshes with MeshInfo's have been added to the scene. Pass over all
         //   the meshes and create the Buffers, BufferViews, and Accessors.
         // Called before calling ToJSON().
         public void BuildBuffers(BasilPersist persist, int maxVerticesPerBuffer) {
@@ -373,12 +376,12 @@ namespace org.herbal3d.convoar {
             int totalVertices = 0;
             meshes.ForEach(mesh => {
                 // If adding this mesh will push the total vertices in this buffer over the max, flush this buffer.
-                if ((totalVertices + mesh.faceInfo.vertexs.Count) > maxVerticesPerBuffer) {
+                if ((totalVertices + mesh.meshInfo.vertexs.Count) > maxVerticesPerBuffer) {
                     BuildBufferForSomeMeshes(partial, persist);
                     partial.Clear();
                     totalVertices = 0;
                 }
-                totalVertices += mesh.faceInfo.vertexs.Count;
+                totalVertices += mesh.meshInfo.vertexs.Count;
                 partial.Add(mesh);
             });
             if (partial.Count > 0) {
@@ -396,8 +399,8 @@ namespace org.herbal3d.convoar {
             ushort vertInd = 0;
             someMeshes.ForEach(mesh => {
                 numMeshes++;
-                FaceInfo faceInfo = mesh.faceInfo;
-                faceInfo.vertexs.ForEach(vert => {
+                MeshInfo meshInfo = mesh.meshInfo;
+                meshInfo.vertexs.ForEach(vert => {
                     numVerts++;
                     if (!vertexIndex.ContainsKey(vert)) {
                         vertexIndex.Add(vert, vertInd);
@@ -415,10 +418,10 @@ namespace org.herbal3d.convoar {
             // TODO: if num verts > ushort.maxValue, create array if uint's
             int numIndices = 0;
             someMeshes.ForEach(mesh => {
-                FaceInfo faceInfo = mesh.faceInfo;
-                ushort[] newIndices = new ushort[faceInfo.indices.Count];
-                for (int ii = 0; ii < faceInfo.indices.Count; ii++) {
-                    OMVR.Vertex aVert = faceInfo.vertexs[(int)faceInfo.indices[ii]];
+                MeshInfo meshInfo = mesh.meshInfo;
+                ushort[] newIndices = new ushort[meshInfo.indices.Count];
+                for (int ii = 0; ii < meshInfo.indices.Count; ii++) {
+                    OMVR.Vertex aVert = meshInfo.vertexs[(int)meshInfo.indices[ii]];
                     newIndices[ii] = vertexIndex[aVert];
                 }
                 mesh.newIndices = newIndices;
@@ -875,8 +878,8 @@ namespace org.herbal3d.convoar {
         public GltfPrimitives primitives;
         public GltfPrimitive onePrimitive;  // a mesh has one primitive
         public GltfAttributes attributes;
-        public FaceInfo faceInfo;
-        public ExtendedPrim underlyingPrim;
+        public MeshInfo meshInfo;
+        public Displayable underlyingDisplayable;
         public ushort[] newIndices; // remapped indices posinting to global vertex list
         public GltfMesh(Gltf pRoot, string pID) : base(pRoot, pID) {
             gltfRoot.meshes.Add(this);

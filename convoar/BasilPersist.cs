@@ -102,6 +102,7 @@ namespace org.herbal3d.convoar {
             return ret;
         }
 
+        /*
         // Keep a cache if image data and either fetch and Image or return a cached instance.
         public Promise<ImageInfo> GetUniqueTextureData(FaceInfo faceInfo, IAssetFetcher assetFetcher) {
 
@@ -148,6 +149,7 @@ namespace org.herbal3d.convoar {
             }
             return prom;
         }
+        */
 
         public string CreateFilename() {
             return CreateFilename(_assetType, _assetInfo);

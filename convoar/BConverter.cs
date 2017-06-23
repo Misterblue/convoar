@@ -44,6 +44,11 @@ namespace org.herbal3d.convoar {
 
         private GlobalContext _context;
 
+        public BConverter(GlobalContext context) {
+            _context = context;
+        }
+
+        /*
         // Lists of similar faces indexed by the texture hash
         public class SimilarFaces : Dictionary<BHash, List<FaceInfo>> {
             public SimilarFaces() : base() {
@@ -54,10 +59,6 @@ namespace org.herbal3d.convoar {
                 }
                 this[pHash].Add(pFace);
             }
-        }
-
-        public BConverter(GlobalContext context) {
-            _context = context;
         }
 
         // Loop through all the shared faces (faces that share the same material) and create
@@ -109,17 +110,6 @@ namespace org.herbal3d.convoar {
                     // totalFaces++;   // DEBUG DEBUG
                 });
             });
-
-            /*
-            EntityGroup rebuilt = new EntityGroup(
-                similarFaces.Values.Select(similarFaceList => {
-                    ExtendedPrim ep = CreateExtendedPrimFromSimilarFaces(similarFaceList);
-                    _context.log.DebugFormat("{0} ConvertEntityGroupIntoSharedMaterialMeshes: create ExtendedPrim: {1}",
-                                            _logHeader, ep.Stats());
-                    return new ExtendedPrimGroup(ep);
-                }).ToList()
-            );
-            */
 
             EntityGroupList rebuilt = new EntityGroupList(
                 similarFaces.Values.Select(similarFaceList => {
@@ -227,6 +217,7 @@ namespace org.herbal3d.convoar {
             //             _logHeader, newFace.vertexs.Count, newFace.indices.Count);
             return newEp;
         }
+        */
 
     }
 }

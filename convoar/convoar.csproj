@@ -134,6 +134,7 @@
   <ItemGroup>
     <Compile Include="AssetFetcher.cs" />
     <Compile Include="BasilPersist.cs" />
+    <Compile Include="BCoordinates.cs" />
     <Compile Include="ConvoarTerrain.cs" />
     <Compile Include="BConverter.cs" />
     <Compile Include="BConverterOS.cs" />
@@ -144,7 +145,6 @@
     <Compile Include="ConvoarStats.cs" />
     <Compile Include="ConvoarTests.cs" />
     <Compile Include="Displayable.cs" />
-    <Compile Include="EntityGroup.cs" />
     <Compile Include="EntityHandle.cs" />
     <Compile Include="GltfClasses.cs" />
     <Compile Include="ImageInfo.cs" />

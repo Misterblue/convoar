@@ -37,7 +37,7 @@ namespace org.herbal3d.convoar {
         private static string LogHeader = "ConvoarTerrain";
 
         // Create a mesh for the terrain of the current scene
-        public static BInstance CreateTerrainMesh(GlobalContext context,
+        public static BInstance CreateTerrainMesh(
                             Scene scene,
                             PrimToMesh assetMesher, IAssetFetcher assetFetcher) {
 
@@ -46,8 +46,8 @@ namespace org.herbal3d.convoar {
             int YSize = terrainDef.Height;
 
             float[,] heightMap = new float[XSize, YSize];
-            if (context.parms.HalfRezTerrain) {
-                context.log.DebugFormat("{0}: CreateTerrainMesh. creating half sized terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
+            if (ConvOAR.Globals.parms.HalfRezTerrain) {
+                ConvOAR.Globals.log.DebugFormat("{0}: CreateTerrainMesh. creating half sized terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
                 // Half resolution mesh that approximates the heightmap
                 heightMap = new float[XSize/2, YSize/2];
                 for (int xx = 0; xx < XSize; xx += 2) {
@@ -61,7 +61,7 @@ namespace org.herbal3d.convoar {
                 }
             }
             else {
-                context.log.DebugFormat("{0}: CreateTerrainMesh. creating terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
+                ConvOAR.Globals.log.DebugFormat("{0}: CreateTerrainMesh. creating terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
                 for (int xx = 0; xx < XSize; xx++) {
                     for (int yy = 0; yy < YSize; yy++) {
                         heightMap[xx, yy] = terrainDef.GetHeightAtXYZ(xx, yy, 26);
@@ -70,7 +70,7 @@ namespace org.herbal3d.convoar {
             }
 
             // Number found in RegionSettings.cs as DEFAULT_TERRAIN_TEXTURE_3
-            OMV.UUID convoarID = new OMV.UUID(context.parms.ConvoarID);
+            OMV.UUID convoarID = new OMV.UUID(ConvOAR.Globals.parms.ConvoarID);
 
             OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
             OMV.Primitive.TextureEntryFace terrainFace = new OMV.Primitive.TextureEntryFace(null);
@@ -79,7 +79,7 @@ namespace org.herbal3d.convoar {
             EntityHandle terrainTextureHandle = new EntityHandle();
             MaterialInfo terrainMaterialInfo = new MaterialInfo(terrainFace);
 
-            if (context.parms.CreateTerrainSplat) {
+            if (ConvOAR.Globals.parms.CreateTerrainSplat) {
                 // Use the OpenSim maptile generator to create a texture for the terrain
                 var terrainRenderer = new TexturedMapTileRenderer();
                 terrainRenderer.Initialise(scene, null);    // doesn't use config param
@@ -115,12 +115,12 @@ namespace org.herbal3d.convoar {
 
             // The above has created a MaterialInfo for the terrain texture
 
-            context.log.DebugFormat("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
+            ConvOAR.Globals.log.DebugFormat("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
             DisplayableRenderable terrainDisplayable = assetMesher.MeshFromHeightMap(heightMap,
                             terrainDef.Width, terrainDef.Height, assetFetcher, terrainFace);
 
             BInstance terrainInstance = new BInstance();
-            terrainInstance.Representation = new Displayable(terrainDisplayable, context);
+            terrainInstance.Representation = new Displayable(terrainDisplayable);
 
             return terrainInstance;
         }
@@ -148,7 +148,7 @@ namespace org.herbal3d.convoar {
         // PrimMesher has a terrain mesh generator but it doesn't compute normals.
         // TODO: Optimize by removing vertices that are just mid points.
         //    Having a vertex for every height is very inefficient especially for flat areas.
-        public static OMVR.Face TerrainMesh(float[,] heights, float realSizeX, float realSizeY, GlobalContext context) {
+        public static OMVR.Face TerrainMesh(float[,] heights, float realSizeX, float realSizeY) {
 
             List<ushort> indices = new List<ushort>();
 
