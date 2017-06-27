@@ -25,21 +25,21 @@ using System.Threading.Tasks;
 namespace org.herbal3d.convoar {
 
     public class ImageInfo {
-        public EntityHandle handle;
+        public EntityHandleUUID handle;
         public bool hasTransprency;
         public Image image;
         public int xSize;
         public int ySize;
 
         public ImageInfo() {
-            handle = new EntityHandle();
+            handle = new EntityHandleUUID();
             hasTransprency = false;
             image = null;
             xSize = ySize = 0;
         }
 
         public ImageInfo(Image pImage) {
-            handle = new EntityHandle();
+            handle = new EntityHandleUUID();
             hasTransprency = false;
             this.SetImage(pImage);
         }

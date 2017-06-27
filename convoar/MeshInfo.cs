@@ -26,7 +26,7 @@ using OMVR = OpenMetaverse.Rendering;
 namespace org.herbal3d.convoar {
 
     public class MeshInfo {
-        public EntityHandle handle;
+        public EntityHandleUUID handle;
         public List<OMVR.Vertex> vertexs;
         public List<int> indices;
         public OMV.Vector3 faceCenter;
@@ -34,7 +34,7 @@ namespace org.herbal3d.convoar {
         private BHash _hash = null;
 
         public MeshInfo() {
-            handle = new EntityHandle();
+            handle = new EntityHandleUUID();
             vertexs = new List<OMVR.Vertex>();
             indices = new List<int>();
             faceCenter = OMV.Vector3.Zero;

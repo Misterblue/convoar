@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2017 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ namespace org.herbal3d.convoar {
         // Information from OpenSimulator
         public OMV.UUID baseUUID = OMV.UUID.Zero;   // the UUID of the original object that careated is displayable
         public SceneObjectPart baseSOP = null;
+        public BAttributes attributes = new BAttributes();
 
         public Displayable() {
         }
@@ -54,11 +55,19 @@ namespace org.herbal3d.convoar {
         public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop) {
             name = sop.Name;
             baseSOP = sop;
-            offsetPosition = baseSOP.OffsetPosition;
-            offsetRotation = baseSOP.RotationOffset;
+            baseUUID = sop.UUID;
+            // If not a root prim, add the offset to the root. 
+            // The root Displayable will be zeros (not world position which is in the BInstance).
+            if (!sop.IsRoot) {
+                offsetPosition = baseSOP.OffsetPosition;
+                offsetRotation = baseSOP.RotationOffset;
+            }
             if (ConvOAR.Globals.parms.DisplayTimeScaling) {
                 scale = sop.Scale;
             }
+
+            attributes.Add("HasSciptsInInventory", sop.Inventory.ContainsScripts());
+            attributes.Add("IsPhysical", (sop.PhysActor != null && sop.PhysActor.IsPhysical));
             renderable = pRenderable;
         }
     }

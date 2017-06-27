@@ -76,7 +76,7 @@ namespace org.herbal3d.convoar {
             OMV.Primitive.TextureEntryFace terrainFace = new OMV.Primitive.TextureEntryFace(null);
             terrainFace.TextureID = defaultTextureID;
 
-            EntityHandle terrainTextureHandle = new EntityHandle();
+            EntityHandleUUID terrainTextureHandle = new EntityHandleUUID();
             MaterialInfo terrainMaterialInfo = new MaterialInfo(terrainFace);
 
             if (ConvOAR.Globals.parms.CreateTerrainSplat) {
@@ -100,7 +100,7 @@ namespace org.herbal3d.convoar {
             }
             else {
                 // Use the default texture code for terrain
-                terrainTextureHandle = new EntityHandle(defaultTextureID);
+                terrainTextureHandle = new EntityHandleUUID(defaultTextureID);
                 BHash terrainHash = new BHashULong(defaultTextureID.GetHashCode());
                 assetFetcher.GetImageInfo(terrainHash, () => {
                     ImageInfo terrainImageInfo = new ImageInfo();

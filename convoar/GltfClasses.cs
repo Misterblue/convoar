@@ -122,6 +122,8 @@ namespace org.herbal3d.convoar {
         public GltfImages images;
         public GltfSamplers samplers;
 
+        GltfSampler defaultSampler;
+
         public Gltf(ILog pLogger) : base() {
             m_log = pLogger;
 
@@ -142,6 +144,15 @@ namespace org.herbal3d.convoar {
             textures = new GltfTextures(this);
             images = new GltfImages(this);
             samplers = new GltfSamplers(this);
+
+            // 20170201: ThreeJS defaults to GL_CLAMP but GLTF should default to GL_REPEAT/WRAP
+            // Create a sampler for all the textures that forces WRAPing
+            defaultSampler = new GltfSampler(gltfRoot, "simpleTextureRepeat");
+            defaultSampler.values.Add("magFilter", WebGLConstants.LINEAR);
+            defaultSampler.values.Add("minFilter", WebGLConstants.LINEAR_MIPMAP_LINEAR);
+            defaultSampler.values.Add("wrapS", WebGLConstants.REPEAT);
+            defaultSampler.values.Add("wrapT", WebGLConstants.REPEAT);
+
         }
 
         // Say this scene is using the extension.
@@ -897,6 +908,68 @@ namespace org.herbal3d.convoar {
             extensions = new GltfExtensions(pRoot);
             hash = 0;
             gltfRoot.materials.Add(this);
+        }
+
+        public GltfMaterial(MaterialInfo matInfo, Gltf pRoot, string pID) : base(pRoot, pID) {
+            values = new GltfAttributes();
+            extensions = new GltfExtensions(pRoot);
+            hash = xxx;
+            gltfRoot.materials.Add(this);
+
+            GltfExtension ext = new GltfExtension(gltfRoot, "KHR_materials_common");
+            ext.technique = "BLINN";  // 'LAMBERT' or 'BLINN' or 'PHONG'
+
+            OMV.Color4 surfaceColor = matInfo.RGBA;
+            OMV.Color4 aColor = OMV.Color4.Black;
+
+            ext.values.Add(GltfExtension.valDiffuse, surfaceColor);
+            // ext.values.Add(GltfExtension.valDoubleSided, true);
+            // ext.values.Add(GltfExtension.valEmission, aColor);
+            // ext.values.Add(GltfExtension.valSpecular, aColor); // not a value in LAMBERT
+            if (matInfo.shiny != OMV.Shininess.None) {
+                float shine = (float)matInfo.shiny / 256f;
+                ext.values.Add(GltfExtension.valShininess, shine);
+            }
+            if (surfaceColor.A != 1.0f) {
+                ext.values.Add(GltfExtension.valTransparency, surfaceColor.A);
+            }
+
+            if (mesh.meshInfo.textureID != null) {
+                // There is an image texture with this mesh.
+                // Create all the structures for an image.
+                GltfTexture theTexture = null;
+                OMV.UUID texID = (OMV.UUID)mesh.meshInfo.textureID;
+                // Look up the texture to see if already created. If not, build texture info.
+                if (!gltfRoot.textures.GetByUUID(texID, out theTexture)) {
+                    theTexture = new GltfTexture(gltfRoot, texID.ToString() + "_tex");
+                    theTexture.underlyingUUID = texID;
+                    theTexture.target = WebGLConstants.TEXTURE_2D;
+                    theTexture.type = WebGLConstants.UNSIGNED_BYTE;
+                    theTexture.format = WebGLConstants.RGBA;
+                    theTexture.internalFormat = WebGLConstants.RGBA;
+                    theTexture.sampler = defaultSampler;
+                    GltfImage theImage = null;
+                    if (!gltfRoot.images.GetByUUID(texID, out theImage)) {
+                        // If this is the first time seeing this texture, create the underlying GltfImage
+                        theImage = new GltfImage(gltfRoot, texID.ToString() + "_img");
+                        theImage.underlyingUUID = texID;
+                        theImage.filename = persist.CreateFilename(Gltf.MakeAssetURITypeImage, texID.ToString());
+                        theImage.uri = persist.CreateURI(Gltf.MakeAssetURITypeImage, texID.ToString());
+                    }
+                    theTexture.source = theImage;
+                }
+                // Remove the defaults created above and add new values for the texture
+                ext.values.Remove(GltfExtension.valDiffuse);
+                ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
+
+                ext.values.Remove(GltfExtension.valTransparent);
+                if (mesh.meshInfo.hasAlpha) {
+                    // the spec says default value is 'false' so only specify if 'true'
+                    ext.values.Add(GltfExtension.valTransparent, mesh.meshInfo.hasAlpha);
+                }
+            }
+
+            theMaterial.extensions.Add(ext);
         }
 
         public override void ToJSON(StreamWriter outt, int level) {

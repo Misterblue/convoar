@@ -25,27 +25,46 @@ namespace org.herbal3d.convoar {
     // All filename, type, and version conversions are done here.
     //
     // At the moment, an entity just has a UUID
-    public class EntityHandle : IEqualityComparer<EntityHandle> {
+    public abstract class EntityHandle : IEqualityComparer<EntityHandle> {
 
-        OMV.UUID _uuid;
+        // System.Object.GetHashCode()
+        public override abstract int GetHashCode();
 
-        public EntityHandle() {
+        // IComparable
+        public abstract int CompareTo(object obj);
+
+        // IEqualityComparer.Equals
+        public abstract bool Equals(EntityHandle x, EntityHandle y);
+
+        // IEqualityComparer.GetHashCode
+        public abstract int GetHashCode(EntityHandle obj);
+
+        // System.Object.ToString()
+        // ToString() returns what is needed for the constructor that takes a string
+        public override abstract string ToString();
+    }
+
+    public class EntityHandleUUID : EntityHandle {
+
+        protected OMV.UUID _uuid;
+
+        public EntityHandleUUID() {
             _uuid = OMV.UUID.Random();
         }
 
-        public EntityHandle(OMV.UUID id) {
-            _uuid = id;
+        public EntityHandleUUID(string handleString) {
+            _uuid = new OMV.UUID(handleString);
         }
 
-        // OpenSim likes to specify assets with a simple string of the asset's UUID
-        public string GetOSAssetString() {
-            return _uuid.ToString();
+        public EntityHandleUUID(OMV.UUID id) {
+            _uuid = id;
         }
 
         public OMV.UUID GetUUID() {
             return _uuid;
         }
 
+        // ToString() returns a 'name' for this entity that can be used to look it up
         public override string ToString() {
             return _uuid.ToString();
         }
@@ -56,9 +75,9 @@ namespace org.herbal3d.convoar {
         }
 
         // IComparable
-        public int CompareTo(object obj) {
+        public override int CompareTo(object obj) {
             int ret = 0;
-            EntityHandle other = obj as EntityHandle;
+            EntityHandleUUID other = obj as EntityHandleUUID;
             if (other == null) {
                 throw new ArgumentException("CompareTo in EntityHandle: other type not EntityHandle");
             }
@@ -76,13 +95,24 @@ namespace org.herbal3d.convoar {
         }
 
         // IEqualityComparer.Equals
-        public bool Equals(EntityHandle x, EntityHandle y) {
-            return x._uuid.CompareTo(y._uuid) == 0;
+        public override bool Equals(EntityHandle x, EntityHandle y) {
+            bool ret = false;
+            EntityHandleUUID xU = x as EntityHandleUUID;
+            EntityHandleUUID yU = y as EntityHandleUUID;
+            if (xU != null && yU != null) {
+                ret = xU._uuid.CompareTo(yU._uuid) == 0;
+            }
+            return ret;
         }
 
         // IEqualityComparer.GetHashCode
-        public int GetHashCode(EntityHandle obj) {
-            return obj._uuid.GetHashCode();
+        public override int GetHashCode(EntityHandle obj) {
+            int ret = 0;
+            EntityHandleUUID objU = obj as EntityHandleUUID;
+            if (objU != null) {
+                ret =  objU._uuid.GetHashCode();
+            }
+            return ret;
         }
     }
 }

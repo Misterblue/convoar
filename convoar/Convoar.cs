@@ -95,7 +95,13 @@ convoar
                     BConverterOS converter = new BConverterOS();
 
                     converter.ConvertOarToScene(memAssetService, assetFetcher)
-                        .Then(scene => {
+                        .Then(bScene => {
+
+                            // Perform any optimizations on the scene and its instances
+
+                            // Output the transformed scene
+
+
                         }
                     );
                 }

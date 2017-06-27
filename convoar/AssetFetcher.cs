@@ -117,7 +117,7 @@ namespace org.herbal3d.convoar {
             var prom = new Promise<byte[]>();
 
             // Don't bother with async -- this call will hang until the asset is fetched
-            byte[] returnBytes = _assetService.GetData(handle.GetOSAssetString());
+            byte[] returnBytes = _assetService.GetData(handle.ToString());
             if (returnBytes.Length > 0) {
                 prom.Resolve(returnBytes);
             }
@@ -128,14 +128,14 @@ namespace org.herbal3d.convoar {
         }
 
         public override void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data) {
-            AssetBase newAsset = new AssetBase(handle.GetUUID(), name, (sbyte)assetType, creatorID.ToString());
+            AssetBase newAsset = new AssetBase(((EntityHandleUUID)handle).GetUUID(), name, (sbyte)assetType, creatorID.ToString());
             _assetService.Store(newAsset);
 
         }
 
         public override void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage) {
             // This application overloads AssetType.TExtureTGA to be our serialized image
-            AssetBase newAsset = new AssetBase(handle.GetUUID(), name, (sbyte)OMV.AssetType.TextureTGA, creatorID.ToString());
+            AssetBase newAsset = new AssetBase(((EntityHandleUUID)handle).GetUUID(), name, (sbyte)OMV.AssetType.TextureTGA, creatorID.ToString());
             using (MemoryStream byteStream = new MemoryStream()) {
                 pImage.Save(byteStream, System.Drawing.Imaging.ImageFormat.Png);
                 newAsset.Data = byteStream.ToArray();
@@ -153,9 +153,9 @@ namespace org.herbal3d.convoar {
             var prom = new Promise<OMVA.AssetTexture>();
 
             // Don't bother with async -- this call will hang until the asset is fetched
-            AssetBase asset = _assetService.Get(handle.GetOSAssetString());
+            AssetBase asset = _assetService.Get(handle.ToString());
             if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
-                OMVA.AssetTexture tex = new OMVA.AssetTexture(handle.GetUUID(), asset.Data);
+                OMVA.AssetTexture tex = new OMVA.AssetTexture(((EntityHandleUUID)handle).GetUUID(), asset.Data);
                 try {
                     if (tex.Decode()) {
                         prom.Resolve(tex);
@@ -186,7 +186,7 @@ namespace org.herbal3d.convoar {
             var prom = new Promise<Image>();
 
             // Don't bother with async -- this call will hang until the asset is fetched
-            AssetBase asset = _assetService.Get(handle.GetOSAssetString());
+            AssetBase asset = _assetService.Get(handle.ToString());
             if (asset != null) {
                 Image imageDecoded = null;
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {

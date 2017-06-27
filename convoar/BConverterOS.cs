@@ -105,6 +105,7 @@ namespace org.herbal3d.convoar {
                 bScene.attributes.Add("RegionLocY", ri.RegionLocY);
                 bScene.attributes.Add("WorldLocX", ri.WorldLocX);
                 bScene.attributes.Add("WorldLocY", ri.WorldLocY);
+                bScene.attributes.Add("WaterHeight", ri.RegionSettings.WaterHeight);
                 bScene.attributes.Add("DefaultLandingPorint", ri.DefaultLandingPoint);
 
                 prom.Resolve(bScene);

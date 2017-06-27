@@ -26,7 +26,7 @@ using OMVR = OpenMetaverse.Rendering;
 namespace org.herbal3d.convoar {
 
     public class MaterialInfo {
-        public EntityHandle handle;
+        public EntityHandleUUID handle;
         public OMV.UUID? textureID;     // UUID of the texture if there is one
         public EntityHandle image;
         public OMV.Primitive.TextureEntryFace faceTexture;
@@ -45,7 +45,7 @@ namespace org.herbal3d.convoar {
         }
 
         public MaterialInfo(OMVR.Face face, OMV.Primitive.TextureEntryFace defaultTexture) {
-            handle = new EntityHandle();
+            handle = new EntityHandleUUID();
             faceTexture = face.TextureFace;
             if (faceTexture == null) {
                 faceTexture = defaultTexture;

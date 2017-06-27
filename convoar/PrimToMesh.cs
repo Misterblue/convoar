@@ -46,7 +46,6 @@ namespace org.herbal3d.convoar {
         /// Create and return a set of meshes/materials that make the passed SOP.
         /// This just deals the making a mesh from the SOP and getting the material/texture of the meshes
         ///    into the caches.
-        /// The SOP is put in the 'userData' of the returned Displayables.
         /// </summary>
         public IPromise<Displayable> CreateMeshResource(SceneObjectGroup sog, SceneObjectPart sop,
                     OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
@@ -109,7 +108,7 @@ namespace org.herbal3d.convoar {
             var prom = new Promise<DisplayableRenderable>();
 
             // Get the asset that the sculpty is built on
-            EntityHandle texHandle = new EntityHandle(prim.Sculpt.SculptTexture);
+            EntityHandle texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
             assetFetcher.FetchTexture(texHandle)
                 .Then((bm) => {
                     OMVR.FacetedMesh fMesh = m_mesher.GenerateFacetedSculptMesh(prim, bm.Image.ExportBitmap(), lod);
@@ -130,7 +129,7 @@ namespace org.herbal3d.convoar {
             var prom = new Promise<DisplayableRenderable>();
 
             // Get the asset that the mesh is built on
-            EntityHandle meshHandle = new EntityHandle(prim.Sculpt.SculptTexture);
+            EntityHandle meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
             try {
                 assetFetcher.FetchRawAsset(meshHandle)
                     .Then(meshBytes => {
@@ -203,7 +202,7 @@ namespace org.herbal3d.convoar {
                         && matInfo.textureID != OMV.UUID.Zero
                         && matInfo.textureID != OMV.Primitive.TextureEntry.WHITE_TEXTURE) {
                 // Textures/images use the UUID from OpenSim and the hash is just the hash of the UUID
-                EntityHandle textureHandle = new EntityHandle((OMV.UUID)matInfo.textureID);
+                EntityHandleUUID textureHandle = new EntityHandleUUID((OMV.UUID)matInfo.textureID);
                 BHash textureHash = new BHashULong(textureHandle.GetUUID().GetHashCode());
                 ImageInfo lookupImageInfo = assetFetcher.GetImageInfo(textureHash, () => {
                     // The image is not in the cache yet so create an ImageInfo entry for it
