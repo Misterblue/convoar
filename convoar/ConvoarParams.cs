@@ -57,8 +57,6 @@ namespace org.herbal3d.convoar {
 
         public string URIBase;          // the URI base to be added to the beginning of the asset name
 
-        public bool UseOpenSimImageDecoder; //  Use the OpenSimulator image decoder to process JPEG2000 images
-
         public bool LogConversionStats; // output numbers about number of entities converted
         public bool LogDetailedSharedFaceStats; // output numbers about face mesh sharing
         public bool LogDetailedEntityInfo;      // output detailed information about each entity

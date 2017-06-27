@@ -23,10 +23,17 @@ using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 
 using OpenSim.Framework;
+using OpenSim.Services.Interfaces;
+using OpenSim.Region.CoreModules;
+using OpenSim.Region.CoreModules.World.Serialiser;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
-
-using log4net;
+using OpenSim.Region.CoreModules.World.Terrain;
+using OpenSim.Region.CoreModules.World.Archiver;
+using OpenSim.Tests.Common;
+using OpenSim.Data.Null;
+using OpenSim.Region.PhysicsModule.BasicPhysics;
+using OpenSim.Region.PhysicsModules.SharedBase;
 
 using RSG;
 
@@ -45,8 +52,121 @@ namespace org.herbal3d.convoar {
         public BConverterOS() {
         }
 
+        public Promise<BScene> ConvertOarToScene(IAssetService assetService, IAssetFetcher assetFetcher) {
+
+            Promise<BScene> prom = new Promise<BScene>();
+
+            // Read in OAR
+            Dictionary<string, object> options = new Dictionary<string, object>();
+            // options.Add("merge", false);
+            string optDisplacement = ConvOAR.Globals.parms.Displacement;
+            if (optDisplacement != null) options.Add("displacement", optDisplacement);
+            string optRotation = ConvOAR.Globals.parms.Rotation;
+            if (optRotation != null) options.Add("rotation", optRotation);
+            // options.Add("default-user", OMV.UUID.Random());
+            // if (_optSkipAssets != null) options.Add('skipAssets', true);
+            // if (_optForceTerrain != null) options.Add("force-terrain", true);
+            // if (_optNoObjects != null) options.Add("no-objects", true);
+
+            Scene scene = CreateScene(assetService);
+
+            // Load the archive into our scene
+            ArchiveReadRequest archive = new ArchiveReadRequest(scene, ConvOAR.Globals.parms.InputOAR, Guid.Empty, options);
+            archive.DearchiveRegion(false);
+
+            // Convert SOGs from OAR into EntityGroups
+            // ConvOAR.Globals.log.Log("Num assets = {0}", assetService.NumAssets);
+            ConvOAR.Globals.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
+
+            PrimToMesh mesher = new PrimToMesh();
+
+            Promise<BInstance>.All(
+                scene.GetSceneObjectGroups().Select(sog => {
+                    return ConvertSogToInstance(sog, assetFetcher, mesher);
+                })
+            )
+            .Catch(e => {
+            })
+            .Done(instances => {
+                ConvOAR.Globals.log.Log("Num instances = {0}", instances.ToList().Count);
+                BInstanceList instanceList = new BInstanceList();
+                instanceList = (BInstanceList)instances.ToList();
+
+                BScene bScene = new BScene();
+                bScene.instances = instanceList;
+
+                RegionInfo ri = scene.RegionInfo;
+                bScene.name = ri.RegionName;
+                bScene.attributes.Add("RegionName", ri.RegionName);
+                bScene.attributes.Add("RegionSizeX", ri.RegionSizeX);
+                bScene.attributes.Add("RegionSizeY", ri.RegionSizeY);
+                bScene.attributes.Add("RegionSizeZ", ri.RegionSizeZ);
+                bScene.attributes.Add("RegionLocX", ri.RegionLocX);
+                bScene.attributes.Add("RegionLocY", ri.RegionLocY);
+                bScene.attributes.Add("WorldLocX", ri.WorldLocX);
+                bScene.attributes.Add("WorldLocY", ri.WorldLocY);
+                bScene.attributes.Add("DefaultLandingPorint", ri.DefaultLandingPoint);
+
+                prom.Resolve(bScene);
+            });
+
+            return prom;
+
+        }
+
+        // Create an OpenSimulator Scene and add enough auxillery services and objects
+        //   to it so it will do a asset load;
+        public Scene CreateScene(IAssetService memAssetService) {
+            RegionInfo regionInfo = new RegionInfo(0, 0, null, "convoar");
+            regionInfo.RegionName = "convoar";
+            regionInfo.RegionSizeX = regionInfo.RegionSizeY = Constants.RegionSize;
+            regionInfo.RegionID = OMV.UUID.Random();
+            var estateSettings = new EstateSettings();
+            estateSettings.EstateOwner = OMV.UUID.Random();
+            regionInfo.EstateSettings = estateSettings;
+
+            Scene scene = new Scene(regionInfo);
+
+            // Add an in-memory asset service for all the loaded assets to go into
+            scene.RegisterModuleInterface<IAssetService>(memAssetService);
+
+            ISimulationDataService simulationDataService = new NullDataService();
+            scene.RegisterModuleInterface<ISimulationDataService>(simulationDataService);
+
+            IRegionSerialiserModule serializerModule = new SerialiserModule();
+            scene.RegisterModuleInterface<IRegionSerialiserModule>(serializerModule);
+
+            IUserAccountService userAccountService = new NullUserAccountService();
+            scene.RegisterModuleInterface<IUserAccountService>(userAccountService);
+
+            PhysicsScene physScene = CreateSimplePhysicsEngine();
+            ((INonSharedRegionModule)physScene).AddRegion(scene);
+            ((INonSharedRegionModule)physScene).RegionLoaded(scene);
+            scene.PhysicsScene = physScene;
+
+            scene.LandChannel = new TestLandChannel(scene); // simple land with no parcels
+            var terrainModule = new TerrainModule();
+            terrainModule.AddRegion(scene);
+
+            SceneManager.Instance.Add(scene);
+
+            return scene;
+        }
+
+        public PhysicsScene CreateSimplePhysicsEngine() {
+            Nini.Config.IConfigSource config = new Nini.Config.IniConfigSource();
+            config.AddConfig("Startup");
+            config.Configs["Startup"].Set("physics", "basicphysics");
+
+            PhysicsScene pScene = new BasicScene();
+            INonSharedRegionModule mod = pScene as INonSharedRegionModule;
+            mod.Initialise(config);
+
+            return pScene;
+        }
+
         // Convert a SceneObjectGroup into an instance with displayables
-        public IPromise<BInstance> Convert(SceneObjectGroup sog, IAssetFetcher assetFetcher, PrimToMesh mesher) {
+        public IPromise<BInstance> ConvertSogToInstance(SceneObjectGroup sog, IAssetFetcher assetFetcher, PrimToMesh mesher) {
             var prom = new Promise<BInstance>();
 
             /* DEBUG DEBUG
@@ -85,7 +205,6 @@ namespace org.herbal3d.convoar {
                 rootDisplayable.children = renderables.Where(disp => {
                     return !disp.baseSOP.IsRoot;
                 }).Select(disp => {
-                    disp.positionIsParentRelative = true;
                     return disp;
                 }).ToList();
 

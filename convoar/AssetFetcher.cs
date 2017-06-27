@@ -107,15 +107,10 @@ namespace org.herbal3d.convoar {
     // Fetch an asset from  the OpenSimulator asset system
     public class OSAssetFetcher : IAssetFetcher {
         // private string _logHeader = "[OSAssetFetcher]";
-        private GlobalContext _context;
-
-        private Scene _scene;
         private IAssetService _assetService;
 
-        public OSAssetFetcher(Scene pScene, IAssetService pAssetService, GlobalContext pGC) : base() {
-            _scene = pScene;
+        public OSAssetFetcher(IAssetService pAssetService) : base() {
             _assetService = pAssetService;
-            _context = pGC;
         }
 
         public override IPromise<byte[]> FetchRawAsset(EntityHandle handle) {
@@ -196,18 +191,12 @@ namespace org.herbal3d.convoar {
                 Image imageDecoded = null;
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
-                        if (_context.parms.UseOpenSimImageDecoder) {
-                            IJ2KDecoder imgDecoder = _scene.RequestModuleInterface<IJ2KDecoder>();
-                            imageDecoded = imgDecoder.DecodeToImage(asset.Data);
+                        ManagedImage mimage;
+                        if (OpenJPEG.DecodeToImage(asset.Data, out mimage, out imageDecoded)) {
+                            mimage = null;
                         }
                         else {
-                            ManagedImage mimage;
-                            if (OpenJPEG.DecodeToImage(asset.Data, out mimage, out imageDecoded)) {
-                                mimage = null;
-                            }
-                            else {
-                                imageDecoded = null;
-                            }
+                            imageDecoded = null;
                         }
                         prom.Resolve(imageDecoded);
                     }
@@ -239,7 +228,6 @@ namespace org.herbal3d.convoar {
         }
 
         public override void Dispose() {
-            _scene = null;
             _assetService = null;
         }
     }

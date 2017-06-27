@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2017 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -141,10 +141,8 @@ namespace org.herbal3d.convoar {
                 }
 
                 // Fix the location in space
-                if (!disp.positionIsParentRelative) {
-                    disp.offsetPosition = disp.offsetPosition * coordTransformQ;
-                    disp.offsetRotation = coordTransformQ * disp.offsetRotation;
-                }
+                disp.offsetPosition = disp.offsetPosition * coordTransformQ;
+                disp.offsetRotation = coordTransformQ * disp.offsetRotation;
 
                 /* TODO: Is this needed?
                 // Go through all the vertices and change the UV coords if necessary

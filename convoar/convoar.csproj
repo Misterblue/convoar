@@ -134,7 +134,9 @@
   <ItemGroup>
     <Compile Include="AssetFetcher.cs" />
     <Compile Include="BasilPersist.cs" />
+    <Compile Include="BAttributes.cs" />
     <Compile Include="BCoordinates.cs" />
+    <Compile Include="BScene.cs" />
     <Compile Include="ConvoarTerrain.cs" />
     <Compile Include="BConverter.cs" />
     <Compile Include="BConverterOS.cs" />
@@ -148,6 +150,7 @@
     <Compile Include="EntityHandle.cs" />
     <Compile Include="GltfClasses.cs" />
     <Compile Include="ImageInfo.cs" />
+    <Compile Include="JSONHelpers.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="MaterialInfo.cs" />
     <Compile Include="MemAssetService.cs" />

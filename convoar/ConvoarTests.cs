@@ -91,8 +91,6 @@ namespace org.herbal3d.convoar.tests {
                 Assert.AreEqual(inputOARFile, parms.InputOAR, "The trailing filename was not set");
             }
         }
-
-
     }
 
     // =========================================================================================
@@ -102,20 +100,21 @@ namespace org.herbal3d.convoar.tests {
 
         ConvoarParams _parms;
         Logger _log;
-        private GlobalContext _context = null;
         MemAssetService _assetService;
-        Scene _scene;
         private IAssetFetcher _assetFetcher = null;
+        private BConverterOS _converter = null;
         private OMV.Primitive.TextureEntryFace _defaultTexture = null;
+        Scene _scene;
 
         [TestFixtureSetUp]
         public void Init() {
             _parms = new ConvoarParams();
             _log = new LoggerConsole();
-            _context = new GlobalContext(_parms, _log);
+            ConvOAR.Globals = new GlobalContext(_parms, _log);
             _assetService = new MemAssetService();
-            _scene = ConvOAR.CreateScene(_assetService);
-            _assetFetcher = new OSAssetFetcher(_scene, _assetService, _context);
+            _converter = new BConverterOS();
+            _scene = _converter.CreateScene(_assetService);
+            _assetFetcher = new OSAssetFetcher(_assetService);
             OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
             _defaultTexture = new OMV.Primitive.TextureEntryFace(null);
             _defaultTexture.TextureID = defaultTextureID;

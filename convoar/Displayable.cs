@@ -31,15 +31,18 @@ namespace org.herbal3d.convoar {
     /// </summary>
     public class Displayable {
         public string name = "no name";
-        public OMV.UUID baseUUID = OMV.UUID.Zero;   // the UUID of the original object that careated is displayable
-        public bool positionIsParentRelative = false;
         public OMV.Vector3 offsetPosition = OMV.Vector3.Zero;
         public OMV.Quaternion offsetRotation = OMV.Quaternion.Identity;
+        public CoordAxis coordAxis = new CoordAxis();
         public OMV.Vector3 scale = new OMV.Vector3(1,1,1);
+
+        // Information on how to display
         public DisplayableRenderable renderable = null;
         public List<Displayable> children = new List<Displayable>();
+
+        // Information from OpenSimulator
+        public OMV.UUID baseUUID = OMV.UUID.Zero;   // the UUID of the original object that careated is displayable
         public SceneObjectPart baseSOP = null;
-        public CoordAxis coordAxis = new CoordAxis();
 
         public Displayable() {
         }

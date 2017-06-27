@@ -19,24 +19,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using OpenSim.Framework;
-using OpenSim.Services.Interfaces;
-using OpenSim.Region.CoreModules;
-using OpenSim.Region.CoreModules.World.Serialiser;
-using OpenSim.Region.Framework.Interfaces;
-using OpenSim.Region.Framework.Scenes;
-using OpenSim.Region.CoreModules.World.Terrain;
-using OpenSim.Region.CoreModules.World.Archiver;
-using OpenSim.Tests.Common;
-using OpenSim.Data.Null;
-using OpenSim.Region.PhysicsModule.BasicPhysics;
-using OpenSim.Region.PhysicsModules.SharedBase;
-
-using Nini;
-
-using RSG;
-
-using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
 
@@ -106,100 +88,18 @@ convoar
                 Globals.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
             }
 
-            // Read in OAR
-            Dictionary<string, object> options = new Dictionary<string, object>();
-            // options.Add("merge", false);
-            string optDisplacement = Globals.parms.Displacement;
-            if (optDisplacement != null) options.Add("displacement", optDisplacement);
-            string optRotation = Globals.parms.Rotation;
-            if (optRotation != null) options.Add("rotation", optRotation);
-            // options.Add("default-user", OMV.UUID.Random());
-            // if (_optSkipAssets != null) options.Add('skipAssets', true);
-            // if (_optForceTerrain != null) options.Add("force-terrain", true);
-            // if (_optNoObjects != null) options.Add("no-objects", true);
-
             using (MemAssetService memAssetService = new MemAssetService()) {
 
-                Scene scene = CreateScene(memAssetService);
+                using (IAssetFetcher assetFetcher = new OSAssetFetcher(memAssetService)) {
 
-                // Load the archive into our scene
-                ArchiveReadRequest archive = new ArchiveReadRequest(scene, Globals.parms.InputOAR, Guid.Empty, options);
-                archive.DearchiveRegion(false);
+                    BConverterOS converter = new BConverterOS();
 
-                // Convert SOGs from OAR into EntityGroups
-                Globals.log.Log("Num assets = {0}", memAssetService.NumAssets);
-                Globals.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
-
-                // Convert all the loaded SOGs and images into meshes and our format
-                BConverterOS converter = new BConverterOS();
-
-                IAssetFetcher assetFetcher = new OSAssetFetcher(scene, memAssetService, Globals);
-
-                PrimToMesh mesher = new PrimToMesh();
-
-                Promise<BInstance>.All(
-                    scene.GetSceneObjectGroups().Select(sog => {
-                        return converter.Convert(sog, assetFetcher, mesher);
-                    })
-                )
-                .Catch(e => {
-                })
-                .Done(instances => {
-                    Globals.log.Log("Num instances = {0}", instances.ToList().Count);
-                });
-
+                    converter.ConvertOarToScene(memAssetService, assetFetcher)
+                        .Then(scene => {
+                        }
+                    );
+                }
             }
-        }
-
-        // Create an OpenSimulator Scene and add enough auxillery services and objects
-        //   to it so it will do a asset load;
-        public static Scene CreateScene(MemAssetService memAssetService) {
-            RegionInfo regionInfo = new RegionInfo(0, 0, null, "convoar");
-            regionInfo.RegionName = "convoar";
-            regionInfo.RegionSizeX = regionInfo.RegionSizeY = Constants.RegionSize;
-            regionInfo.RegionID = OMV.UUID.Random();
-            var estateSettings = new EstateSettings();
-            estateSettings.EstateOwner = OMV.UUID.Random();
-            regionInfo.EstateSettings = estateSettings;
-
-            Scene scene = new Scene(regionInfo);
-
-            // Add an in-memory asset service for all the loaded assets to go into
-            scene.RegisterModuleInterface<IAssetService>(memAssetService);
-
-            ISimulationDataService simulationDataService = new NullDataService();
-            scene.RegisterModuleInterface<ISimulationDataService>(simulationDataService);
-
-            IRegionSerialiserModule serializerModule = new SerialiserModule();
-            scene.RegisterModuleInterface<IRegionSerialiserModule>(serializerModule);
-
-            IUserAccountService userAccountService = new NullUserAccountService();
-            scene.RegisterModuleInterface<IUserAccountService>(userAccountService);
-
-            PhysicsScene physScene = CreateSimplePhysicsEngine();
-            ((INonSharedRegionModule)physScene).AddRegion(scene);
-            ((INonSharedRegionModule)physScene).RegionLoaded(scene);
-            scene.PhysicsScene = physScene;
-
-            scene.LandChannel = new TestLandChannel(scene); // simple land with no parcels
-            var terrainModule = new TerrainModule();
-            terrainModule.AddRegion(scene);
-
-            SceneManager.Instance.Add(scene);
-
-            return scene;
-        }
-
-        public static PhysicsScene CreateSimplePhysicsEngine() {
-            Nini.Config.IConfigSource config = new Nini.Config.IniConfigSource();
-            config.AddConfig("Startup");
-            config.Configs["Startup"].Set("physics", "basicphysics");
-
-            PhysicsScene pScene = new BasicScene();
-            INonSharedRegionModule mod = pScene as INonSharedRegionModule;
-            mod.Initialise(config);
-
-            return pScene;
         }
     }
 }
