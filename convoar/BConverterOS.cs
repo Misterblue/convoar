@@ -76,21 +76,23 @@ namespace org.herbal3d.convoar {
 
             // Convert SOGs from OAR into EntityGroups
             // ConvOAR.Globals.log.Log("Num assets = {0}", assetService.NumAssets);
-            ConvOAR.Globals.log.Log("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
+            ConvOAR.Globals.log.DebugFormat("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
 
             PrimToMesh mesher = new PrimToMesh();
 
             Promise<BInstance>.All(
                 scene.GetSceneObjectGroups().Select(sog => {
+                    ConvOAR.Globals.log.DebugFormat("Convert SOG. ID={0}", sog.UUID);
                     return ConvertSogToInstance(sog, assetFetcher, mesher);
                 })
             )
             .Catch(e => {
+                prom.Reject(new Exception(String.Format("Failed conversion: {0}", e)));
             })
             .Done(instances => {
-                ConvOAR.Globals.log.Log("Num instances = {0}", instances.ToList().Count);
+                ConvOAR.Globals.log.DebugFormat("Num instances = {0}", instances.ToList().Count);
                 BInstanceList instanceList = new BInstanceList();
-                instanceList = (BInstanceList)instances.ToList();
+                instanceList.AddRange(instances);
 
                 BScene bScene = new BScene();
                 bScene.instances = instanceList;

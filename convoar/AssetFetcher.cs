@@ -57,17 +57,27 @@ namespace org.herbal3d.convoar {
             Images = new OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo>();
         }
 
-        public delegate DisplayableRenderable RenderableBuilder();
-        public DisplayableRenderable GetRenderable(BHash hash, RenderableBuilder builder) {
-            DisplayableRenderable renderable = null;
+        public delegate IPromise<DisplayableRenderable> RenderableBuilder();
+        public IPromise<DisplayableRenderable> GetRenderable(BHash hash, RenderableBuilder builder) {
+            Promise<DisplayableRenderable> prom = new Promise<DisplayableRenderable>();
+
             lock (Renderables) {
-                if (!Renderables.TryGetValue(hash, out renderable)) {
-                    renderable = builder();
-                    Renderables.Add(hash, renderable);
+                DisplayableRenderable renderable = null;
+                if (Renderables.TryGetValue(hash, out renderable)) {
+                    prom.Resolve(renderable);
+                }
+                else {
+                    builder()
+                    .Then(rend => {
+                        Renderables.Add(hash, renderable);
+                        prom.Resolve(rend);
+                    });
                 }
             }
-            return renderable;
+
+            return prom;
         }
+
         public delegate MeshInfo MeshInfoBuilder();
         public MeshInfo GetMeshInfo(BHash hash, MeshInfoBuilder builder) {
             MeshInfo meshInfo = null;

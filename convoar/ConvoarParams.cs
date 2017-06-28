@@ -126,8 +126,6 @@ namespace org.herbal3d.convoar {
 
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
                 "./" ),
-            new ParameterDefn<bool>("UseOpenSimImageDecoder", "Use the OpenSimulator image decoder to process JPEG2000 images",
-                false ),
 
             new ParameterDefn<bool>("LogConversionStats", "output numbers about number of entities converted",
                 true ),

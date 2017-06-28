@@ -24,11 +24,13 @@ using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
     public class BInstance {
+        public EntityHandle handle;
         public OMV.Vector3 Position { get; set; }
         public OMV.Quaternion Rotation { get; set; }
         public Displayable Representation { get; set; }
 
         public BInstance() {
+            handle = new EntityHandleUUID();
         }
     }
 

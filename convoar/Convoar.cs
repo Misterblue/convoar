@@ -41,6 +41,7 @@ namespace org.herbal3d.convoar {
     }
 
     class ConvOAR {
+        private static string _logHeader = "ConvOAR";
 
         public static GlobalContext Globals;
 
@@ -87,23 +88,39 @@ convoar
                 _outputDir = "./out";
                 Globals.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
             }
-
+           
             using (MemAssetService memAssetService = new MemAssetService()) {
 
                 using (IAssetFetcher assetFetcher = new OSAssetFetcher(memAssetService)) {
 
                     BConverterOS converter = new BConverterOS();
 
-                    converter.ConvertOarToScene(memAssetService, assetFetcher)
-                        .Then(bScene => {
+                    try {
+                        converter.ConvertOarToScene(memAssetService, assetFetcher)
+                            .Catch(e => {
+                                Globals.log.ErrorFormat("{0} Exception converting scene: {1}", _logHeader, e);
+                            })
+                            .Then(bScene => {
+                                Globals.log.DebugFormat("{0} Scene created. name={1}, instances={2}",
+                                    _logHeader, bScene.name, bScene.instances.Count);
+                                Globals.log.DebugFormat("{0}    num assetFetcher.images={1}", _logHeader, assetFetcher.Images.Count);
+                                Globals.log.DebugFormat("{0}    num assetFetcher.materials={1}", _logHeader, assetFetcher.Materials.Count);
+                                Globals.log.DebugFormat("{0}    num assetFetcher.meshes={1}", _logHeader, assetFetcher.Meshes.Count);
+                                Globals.log.DebugFormat("{0}    num assetFetcher.renderables={1}", _logHeader, assetFetcher.Renderables.Count);
 
-                            // Perform any optimizations on the scene and its instances
+                                // Perform any optimizations on the scene and its instances
 
-                            // Output the transformed scene
+                                // Output the transformed scene
+                                Gltf gltf = new Gltf();
+                                gltf.LoadScene(bScene, assetFetcher);
 
 
-                        }
-                    );
+                            }
+                        );
+                    }
+                    catch (Exception e) {
+                        Globals.log.ErrorFormat("{0} Exception converting scene: {1}", _logHeader, e);
+                    }
                 }
             }
         }

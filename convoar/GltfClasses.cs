@@ -15,6 +15,7 @@
  */
 using System;
 using System.Text;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 
@@ -27,6 +28,7 @@ using OMVR = OpenMetaverse.Rendering;
 
 namespace org.herbal3d.convoar {
 
+    // The base class for all of the different types.
     public abstract class GltfClass {
         public Gltf gltfRoot;
         public string ID;
@@ -39,6 +41,7 @@ namespace org.herbal3d.convoar {
         }
     }
 
+    // Base class of a list of a type.
     public abstract class GltfListClass<T> : List<T> {
         public Gltf gltfRoot;
         public string ID;
@@ -100,8 +103,7 @@ namespace org.herbal3d.convoar {
 
     // =============================================================
     public class Gltf : GltfClass {
-        ILog m_log;
-        // private static string _logHeader = "Gltf";
+        private static string _logHeader = "Gltf";
 
         public GltfAttributes extensionsUsed;   // list of extensions used herein
 
@@ -122,11 +124,9 @@ namespace org.herbal3d.convoar {
         public GltfImages images;
         public GltfSamplers samplers;
 
-        GltfSampler defaultSampler;
+        public GltfSampler defaultSampler;
 
-        public Gltf(ILog pLogger) : base() {
-            m_log = pLogger;
-
+        public Gltf() : base() {
             gltfRoot = this;
 
             extensionsUsed = new GltfAttributes();
@@ -152,7 +152,6 @@ namespace org.herbal3d.convoar {
             defaultSampler.values.Add("minFilter", WebGLConstants.LINEAR_MIPMAP_LINEAR);
             defaultSampler.values.Add("wrapS", WebGLConstants.REPEAT);
             defaultSampler.values.Add("wrapT", WebGLConstants.REPEAT);
-
         }
 
         // Say this scene is using the extension.
@@ -160,6 +159,31 @@ namespace org.herbal3d.convoar {
             if (!extensionsUsed.ContainsKey(extName)) {
                 extensionsUsed.Add(extName, null);
             }
+        }
+
+        // Add all the objects from a scene into this empty Gltf instance.
+        public void LoadScene(BScene scene, IAssetFetcher assetFetcher) {
+            // Load the pointed to items first and then the complex items
+
+            GltfScene gltfScene = new GltfScene(this, scene.name);
+
+            // Load Images
+            assetFetcher.Images.ForEach(delegate(ImageInfo pImageInfo) {
+                GltfImage newImage = new GltfImage(this, pImageInfo);
+                GltfTexture newTexture = new GltfTexture(this, pImageInfo, newImage);
+            });
+            // Load Materials
+            assetFetcher.Materials.ForEach(delegate (MaterialInfo pMatInfo) {
+                GltfMaterial newMaterial = new GltfMaterial(this, pMatInfo);
+            });
+            // Load Meshes
+            assetFetcher.Meshes.ForEach(delegate (MeshInfo pMeshInfo) {
+                GltfMesh newMesh = new GltfMesh(this, pMeshInfo);
+            });
+            // Load Nodes
+            scene.instances.ForEach(delegate (BInstance pInstance) {
+                GltfNode newNode = new GltfNode(this, gltfScene, pInstance);
+            });
         }
 
         // Function called below to create a URI from an asset ID.
@@ -174,103 +198,9 @@ namespace org.herbal3d.convoar {
         //    dependent structures
         public void BuildAccessorsAndBuffers(BasilPersist persist, GlobalContext context) {
             
-            // TODO: Don't need this any more
-            // Scan all the meshes and build the materials from the face texture information
-            // BuildPrimitives(persist);
-
             // Scan all the created meshes and create the Buffers, BufferViews, and Accessors
             BuildBuffers(persist, context.parms.VerticesMaxForBuffer);
         }
-
-        /*
-        // Meshes with FaceInfo's have been added to the scene. Pass over all
-        //   the meshes and create the Primitives, Materials, and Images.
-        // Called before calling ToJSON().
-        public void BuildPrimitives(BasilPersist persist) {
-            // 20170201: ThreeJS defaults to GL_CLAMP but GLTF should default to GL_REPEAT/WRAP
-            // Create a sampler for all the textures that forces WRAPing
-            GltfSampler defaultSampler = new GltfSampler(gltfRoot, "simpleTextureRepeat");
-            defaultSampler.values.Add("magFilter", WebGLConstants.LINEAR);
-            defaultSampler.values.Add("minFilter", WebGLConstants.LINEAR_MIPMAP_LINEAR);
-            defaultSampler.values.Add("wrapS", WebGLConstants.REPEAT);
-            defaultSampler.values.Add("wrapT", WebGLConstants.REPEAT);
-
-            meshes.ForEach(mesh => {
-                GltfMaterial theMaterial = null;
-                // int hash = mesh.faceInfo.textureEntry.GetHashCode();
-                int hash = mesh.meshInfo.GetTextureHash();
-                if (!gltfRoot.materials.GetHash(hash, out theMaterial)) {
-                    theMaterial = BuildMaterial(mesh, defaultSampler, persist);
-                }
-                mesh.onePrimitive.material = theMaterial;
-            });
-        }
-
-        public GltfMaterial BuildMaterial(GltfMesh mesh, GltfSampler defaultSampler, BasilPersist persist) {
-            // Material has not beeen created yet
-            GltfMaterial theMaterial = new GltfMaterial(gltfRoot, mesh.ID + "_mat");
-            theMaterial.hash = mesh.meshInfo.GetTextureHash();
-            // m_log.DebugFormat("{0} Gltf.BuildPrimitives. Creating new material. hash={1}, texture={2}",
-            //                 LogHeader, hash, mesh.faceInfo.textureID, theMaterial.name);
-
-            GltfExtension ext = new GltfExtension(gltfRoot, "KHR_materials_common");
-            ext.technique = "BLINN";  // 'LAMBERT' or 'BLINN' or 'PHONG'
-
-            OMV.Color4 surfaceColor = mesh.meshInfo.textureEntry.RGBA;
-            OMV.Color4 aColor = OMV.Color4.Black;
-
-            ext.values.Add(GltfExtension.valDiffuse, surfaceColor);
-            // ext.values.Add(GltfExtension.valDoubleSided, true);
-            // ext.values.Add(GltfExtension.valEmission, aColor);
-            // ext.values.Add(GltfExtension.valSpecular, aColor); // not a value in LAMBERT
-            if (mesh.meshInfo.textureEntry.Shiny != OMV.Shininess.None) {
-                float shine = (float)mesh.meshInfo.textureEntry.Shiny / 256f;
-                ext.values.Add(GltfExtension.valShininess, shine);
-            }
-            if (surfaceColor.A != 1.0f) {
-                ext.values.Add(GltfExtension.valTransparency, surfaceColor.A);
-            }
-
-            if (mesh.meshInfo.textureID != null) {
-                // There is an image texture with this mesh.
-                // Create all the structures for an image.
-                GltfTexture theTexture = null;
-                OMV.UUID texID = (OMV.UUID)mesh.meshInfo.textureID;
-                // Look up the texture to see if already created. If not, build texture info.
-                if (!gltfRoot.textures.GetByUUID(texID, out theTexture)) {
-                    theTexture = new GltfTexture(gltfRoot, texID.ToString() + "_tex");
-                    theTexture.underlyingUUID = texID;
-                    theTexture.target = WebGLConstants.TEXTURE_2D;
-                    theTexture.type = WebGLConstants.UNSIGNED_BYTE;
-                    theTexture.format = WebGLConstants.RGBA;
-                    theTexture.internalFormat = WebGLConstants.RGBA;
-                    theTexture.sampler = defaultSampler;
-                    GltfImage theImage = null;
-                    if (!gltfRoot.images.GetByUUID(texID, out theImage)) {
-                        // If this is the first time seeing this texture, create the underlying GltfImage
-                        theImage = new GltfImage(gltfRoot, texID.ToString() + "_img");
-                        theImage.underlyingUUID = texID;
-                        theImage.filename = persist.CreateFilename(Gltf.MakeAssetURITypeImage, texID.ToString());
-                        theImage.uri = persist.CreateURI(Gltf.MakeAssetURITypeImage, texID.ToString());
-                    }
-                    theTexture.source = theImage;
-                }
-                // Remove the defaults created above and add new values for the texture
-                ext.values.Remove(GltfExtension.valDiffuse);
-                ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
-
-                ext.values.Remove(GltfExtension.valTransparent);
-                if (mesh.meshInfo.hasAlpha) {
-                    // the spec says default value is 'false' so only specify if 'true'
-                    ext.values.Add(GltfExtension.valTransparent, mesh.meshInfo.hasAlpha);
-                }
-            }
-
-            theMaterial.extensions.Add(ext);
-
-            return theMaterial;
-        }
-        */
 
         // Meshes with MeshInfo's have been added to the scene. Pass over all
         //   the meshes and create the Buffers, BufferViews, and Accessors.
@@ -314,9 +244,10 @@ namespace org.herbal3d.convoar {
                     }
                 });
             });
-            // m_log.DebugFormat("{0} BuildBuffers: total meshes = {1}", LogHeader, numMeshes);
-            // m_log.DebugFormat("{0} BuildBuffers: total vertices = {1}", LogHeader, numVerts);
-            // m_log.DebugFormat("{0} BuildBuffers: total unique vertices = {1}", LogHeader, vertInd);
+            ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total meshes = {1}", _logHeader, numMeshes);
+            ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total vertices = {1}", _logHeader, numVerts);
+            ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total unique vertices = {1}", _logHeader, vertInd);
+
 
             // Remap all the indices to the new, compacted vertex collection.
             //     mesh.underlyingMesh.face to mesh.newIndices
@@ -352,7 +283,7 @@ namespace org.herbal3d.convoar {
             string buffName = "buffer" + buffNum;
             string buffFilename = persist.CreateFilename(Gltf.MakeAssetURITypeBuff, buffName);
             string buffURI = persist.CreateURI(Gltf.MakeAssetURITypeBuff, buffName);
-            // m_log.DebugFormat("{0} BuildBuffers: make buffer: name={1}, filename={2}, uri={3}", LogHeader, buffName, buffFilename, buffURI);
+            // ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: make buffer: name={1}, filename={2}, uri={3}", LogHeader, buffName, buffFilename, buffURI);
             GltfBuffer binBuff = new GltfBuffer(gltfRoot, buffName, "arraybuffer", buffFilename, buffURI);
             binBuff.bufferBytes = binBuffRaw;
 
@@ -475,7 +406,7 @@ namespace org.herbal3d.convoar {
                 indicesAccessor.min = new object[1] { imin };
                 indicesAccessor.max = new object[1] { imax };
 
-                // m_log.DebugFormat("{0} indices: meshIndSize={1}, cnt={2}, offset={3}", LogHeader,
+                // ConvOAR.Globals.log.DebugFormat("{0} indices: meshIndSize={1}, cnt={2}, offset={3}", LogHeader,
                 //                 meshIndicesSize, indicesAccessor.count, indicesOffset);
 
                 indicesOffset += meshIndicesSize;
@@ -586,7 +517,7 @@ namespace org.herbal3d.convoar {
         public void WriteBinaryFiles(string targetDir) {
             buffers.ForEach(buff => {
                 string outFilename = buff.filename;
-                // m_log.DebugFormat("{0} WriteBinaryFiles: filename={1}", LogHeader, outFilename);
+                // ConvOAR.Globals.log.DebugFormat("{0} WriteBinaryFiles: filename={1}", LogHeader, outFilename);
                 File.WriteAllBytes(outFilename, buff.bufferBytes);
             });
         }
@@ -725,8 +656,16 @@ namespace org.herbal3d.convoar {
         }
 
         // Add a node that is top level in a scene
-        public GltfNode(Gltf pRoot, GltfScene containingScene, string pID) : base(pRoot, pID) {
+        public GltfNode(Gltf pRoot, GltfScene containingScene, BInstance pInstance) : base(pRoot, pInstance.handle.ToString() + "_inst") {
             NodeInit(pRoot, containingScene);
+            InitFromDisplayable(pInstance.Representation);
+            translation = pInstance.Position;
+            rotation = pInstance.Rotation;
+        }
+
+        public GltfNode(Gltf pRoot, GltfScene containingScene, Displayable pDisplayable) : base(pRoot, pDisplayable.baseUUID.ToString() + "_disp") {
+            NodeInit(pRoot, containingScene);
+            InitFromDisplayable(pDisplayable);
         }
 
         private void NodeInit(Gltf pRoot, GltfScene containingScene) {
@@ -740,6 +679,27 @@ namespace org.herbal3d.convoar {
             gltfRoot.nodes.Add(this);
             if (containingScene != null)
                 containingScene.nodes.Add(this);
+        }
+
+        private void InitFromDisplayable(Displayable pDisplayable) {
+            name = pDisplayable.name;
+            translation = pDisplayable.offsetPosition;
+            rotation = pDisplayable.offsetRotation;
+            // only know how to handle a displayable of meshes
+            RenderableMeshGroup meshGroup = pDisplayable.renderable as RenderableMeshGroup;
+            if (meshGroup != null) {
+                this.meshes.AddRange(meshGroup.meshes.Select(renderableMesh => {
+                    OMV.UUID meshUUID = ((EntityHandleUUID)renderableMesh.mesh).GetUUID();
+                    GltfMesh thisMesh = null;
+                    if (!gltfRoot.meshes.GetByUUID(meshUUID, out thisMesh)) {
+                        ConvOAR.Globals.log.ErrorFormat("GltfClasses.GltfNode: could not find mesh. id={0}", meshUUID);
+                    }
+                    return thisMesh;
+                }));
+            }
+            this.children.AddRange(pDisplayable.children.Select(child => {
+                return new GltfNode(gltfRoot, null, child);
+            }));
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
@@ -776,10 +736,22 @@ namespace org.herbal3d.convoar {
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
         }
+
+        public bool GetByUUID(OMV.UUID aUUID, out GltfMesh theMesh) {
+            foreach (GltfMesh mesh in this) {
+                if (mesh.underlyingUUID != null && mesh.underlyingUUID == aUUID) {
+                    theMesh = mesh;
+                    return true;
+                }
+            }
+            theMesh = null;
+            return false;
+        }
     }
 
     public class GltfMesh : GltfClass {
         public string name;
+        public OMV.UUID underlyingUUID;
         public GltfPrimitives primitives;
         public GltfPrimitive onePrimitive;  // a mesh has one primitive
         public GltfAttributes attributes;
@@ -791,7 +763,13 @@ namespace org.herbal3d.convoar {
             primitives = new GltfPrimitives(gltfRoot);
             onePrimitive = new GltfPrimitive(gltfRoot);
             primitives.Add(onePrimitive);
+        }
 
+        public GltfMesh(Gltf pRoot, MeshInfo pMeshInfo) : base(pRoot, pMeshInfo.handle.ToString() + "_mesh") {
+            meshInfo = pMeshInfo;
+            underlyingUUID = ((EntityHandleUUID)pMeshInfo.handle).GetUUID();
+
+            gltfRoot.meshes.Add(this);
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
@@ -885,6 +863,7 @@ namespace org.herbal3d.convoar {
             this.ToJSONArrayOfIDs(outt, level+1);
         }
 
+        /*
         // Find the material in this collection that has the hash from the texture entry
         public bool GetHash(int hash, out GltfMaterial foundMaterial) {
             foreach (GltfMaterial mat in this) {
@@ -896,24 +875,22 @@ namespace org.herbal3d.convoar {
             foundMaterial = null;
             return false;
         }
+        */
     }
 
     public class GltfMaterial : GltfClass {
         public string name;
-        public int hash;
         public GltfAttributes values;
         public GltfExtensions extensions;
         public GltfMaterial(Gltf pRoot, string pID) : base(pRoot, pID) {
             values = new GltfAttributes();
             extensions = new GltfExtensions(pRoot);
-            hash = 0;
             gltfRoot.materials.Add(this);
         }
 
-        public GltfMaterial(MaterialInfo matInfo, Gltf pRoot, string pID) : base(pRoot, pID) {
+        public GltfMaterial(Gltf pRoot, MaterialInfo matInfo) : base(pRoot, matInfo.handle.ToString() + "_mat") {
             values = new GltfAttributes();
             extensions = new GltfExtensions(pRoot);
-            hash = xxx;
             gltfRoot.materials.Add(this);
 
             GltfExtension ext = new GltfExtension(gltfRoot, "KHR_materials_common");
@@ -934,42 +911,22 @@ namespace org.herbal3d.convoar {
                 ext.values.Add(GltfExtension.valTransparency, surfaceColor.A);
             }
 
-            if (mesh.meshInfo.textureID != null) {
-                // There is an image texture with this mesh.
-                // Create all the structures for an image.
+            if (matInfo.textureID != null) {
                 GltfTexture theTexture = null;
-                OMV.UUID texID = (OMV.UUID)mesh.meshInfo.textureID;
-                // Look up the texture to see if already created. If not, build texture info.
-                if (!gltfRoot.textures.GetByUUID(texID, out theTexture)) {
-                    theTexture = new GltfTexture(gltfRoot, texID.ToString() + "_tex");
-                    theTexture.underlyingUUID = texID;
-                    theTexture.target = WebGLConstants.TEXTURE_2D;
-                    theTexture.type = WebGLConstants.UNSIGNED_BYTE;
-                    theTexture.format = WebGLConstants.RGBA;
-                    theTexture.internalFormat = WebGLConstants.RGBA;
-                    theTexture.sampler = defaultSampler;
-                    GltfImage theImage = null;
-                    if (!gltfRoot.images.GetByUUID(texID, out theImage)) {
-                        // If this is the first time seeing this texture, create the underlying GltfImage
-                        theImage = new GltfImage(gltfRoot, texID.ToString() + "_img");
-                        theImage.underlyingUUID = texID;
-                        theImage.filename = persist.CreateFilename(Gltf.MakeAssetURITypeImage, texID.ToString());
-                        theImage.uri = persist.CreateURI(Gltf.MakeAssetURITypeImage, texID.ToString());
-                    }
-                    theTexture.source = theImage;
-                }
+                pRoot.textures.GetByUUID((OMV.UUID)matInfo.textureID, out theTexture);
+
                 // Remove the defaults created above and add new values for the texture
                 ext.values.Remove(GltfExtension.valDiffuse);
                 ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
 
                 ext.values.Remove(GltfExtension.valTransparent);
-                if (mesh.meshInfo.hasAlpha) {
+                if (theTexture.source != null && theTexture.source.imageInfo.hasTransprency) {
                     // the spec says default value is 'false' so only specify if 'true'
-                    ext.values.Add(GltfExtension.valTransparent, mesh.meshInfo.hasAlpha);
+                    ext.values.Add(GltfExtension.valTransparent, true);
                 }
             }
 
-            theMaterial.extensions.Add(ext);
+            extensions.Add(ext);
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
@@ -1221,7 +1178,23 @@ namespace org.herbal3d.convoar {
         public uint internalFormat;
         public GltfImage source;
         public GltfSampler sampler;
+
         public GltfTexture(Gltf pRoot, string pID) : base(pRoot, pID) {
+            gltfRoot.textures.Add(this);
+        }
+
+        public GltfTexture(Gltf pRoot, ImageInfo pImageInfo, GltfImage pImage) : base(pRoot, pImageInfo.handle.ToString() + "_tex") {
+            EntityHandleUUID handleU = pImageInfo.handle as EntityHandleUUID;
+            if (handleU != null) {
+                underlyingUUID = handleU.GetUUID();
+            }
+            this.target = WebGLConstants.TEXTURE_2D;
+            this.type = WebGLConstants.UNSIGNED_BYTE;
+            this.format = WebGLConstants.RGBA;
+            this.internalFormat = WebGLConstants.RGBA;
+            this.sampler = pRoot.defaultSampler;
+            this.source = pImage;
+
             gltfRoot.textures.Add(this);
         }
 
@@ -1267,17 +1240,25 @@ namespace org.herbal3d.convoar {
 
     public class GltfImage : GltfClass {
         public OMV.UUID underlyingUUID;
-        public string name;
+        public ImageInfo imageInfo;
         public string uri;
         public string filename;
         public GltfImage(Gltf pRoot, string pID) : base(pRoot, pID) {
             gltfRoot.images.Add(this);
         }
 
+        public GltfImage(Gltf pRoot, ImageInfo pImageInfo) : base(pRoot, pImageInfo.handle.ToString() + "_mat") {
+            imageInfo = pImageInfo;
+            EntityHandleUUID handleU = pImageInfo.handle as EntityHandleUUID;
+            if (handleU != null) {
+                underlyingUUID = handleU.GetUUID();
+            }
+            gltfRoot.images.Add(this);
+        }
+
         public override void ToJSON(StreamWriter outt, int level) {
             outt.Write(" { ");
             bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", uri);
             outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
