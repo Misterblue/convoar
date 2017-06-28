@@ -83,20 +83,15 @@ namespace org.herbal3d.convoar {
 
         public override void Log(string msg, params Object[] args) {
             _log.InfoFormat(msg, args);
-            // System.Console.WriteLine(msg, args);
         }
 
         // Output the message if 'Verbose' is true
         public override void DebugFormat(string msg, params Object[] args) {
             _log.DebugFormat(msg, args);
-            // if (Verbose) {
-            //     System.Console.WriteLine(msg, args);
-            // }
         }
 
         public override void ErrorFormat(string msg, params Object[] args) {
             _log.ErrorFormat(msg, args);
-            // System.Console.WriteLine(msg, args);
         }
     }
 }

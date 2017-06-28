@@ -32,13 +32,11 @@ namespace org.herbal3d.convoar {
         public int numMeshAssets = 0;
         public int numSculpties = 0;
 
-        private GlobalContext _context;
 
         public Scene m_scene;
         private static string _logHeader = "[Stats]";
 
-        public ConvoarStats(GlobalContext pContext) {
-            _context = pContext;
+        public ConvoarStats() {
         }
 
         /*  TODO: figure out what statistics are wanted

@@ -68,7 +68,7 @@ convoar
 
         public void Start(string[] args) {
             Globals = new GlobalContext(new ConvoarParams(), new LoggerLog4Net());
-            Globals.stats = new ConvoarStats(Globals);
+            Globals.stats = new ConvoarStats();
 
             try {
                 Globals.parms.MergeCommandLine(args, null, "InputOAR");
