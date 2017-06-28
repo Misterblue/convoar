@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -114,7 +115,21 @@ convoar
                                 Gltf gltf = new Gltf();
                                 gltf.LoadScene(bScene, assetFetcher);
 
+                                Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
 
+                                PersistRules.ResolveAndCreateDir(ConvOAR.Globals.parms.GltfTargetDir);
+                                string gltfFilename = PersistRules.CreateFilename(PersistRules.AssetTypeGltf, bScene.name, "");
+
+                                using (StreamWriter outt = File.CreateText(gltfFilename)) {
+                                    gltf.ToJSON(outt);
+                                }
+                                gltf.WriteBinaryFiles();
                             }
                         );
                     }

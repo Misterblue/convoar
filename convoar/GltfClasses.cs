@@ -163,56 +163,53 @@ namespace org.herbal3d.convoar {
 
         // Add all the objects from a scene into this empty Gltf instance.
         public void LoadScene(BScene scene, IAssetFetcher assetFetcher) {
-            // Load the pointed to items first and then the complex items
 
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: loading scene {0}", scene.name);
             GltfScene gltfScene = new GltfScene(this, scene.name);
 
+            // Load the pointed to items first and then the complex items
+
             // Load Images
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load images");
             assetFetcher.Images.ForEach(delegate(ImageInfo pImageInfo) {
                 GltfImage newImage = new GltfImage(this, pImageInfo);
                 GltfTexture newTexture = new GltfTexture(this, pImageInfo, newImage);
             });
             // Load Materials
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load materials");
             assetFetcher.Materials.ForEach(delegate (MaterialInfo pMatInfo) {
                 GltfMaterial newMaterial = new GltfMaterial(this, pMatInfo);
             });
             // Load Meshes
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load meshes");
             assetFetcher.Meshes.ForEach(delegate (MeshInfo pMeshInfo) {
                 GltfMesh newMesh = new GltfMesh(this, pMeshInfo);
             });
             // Load Nodes
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load nodes");
             scene.instances.ForEach(delegate (BInstance pInstance) {
                 GltfNode newNode = new GltfNode(this, gltfScene, pInstance);
             });
-        }
 
-        // Function called below to create a URI from an asset ID.
-        // 'type' may be one of 'image', 'mesh', ?
-        // public delegate string MakeAssetURI(string type, OMV.UUID uuid);
-        public delegate void MakeAssetURI(string type, string info, out string filename, out string uri);
-        public const string MakeAssetURITypeImage = "image";    // image of type PNG
-        public const string MakeAssetURITypeMesh = "mesh";
-        public const string MakeAssetURITypeBuff = "buff";      // binary buffer
+            // Meshes, etc  have been added to the scene. Pass over all
+            //   the meshes and create the Buffers, BufferViews, and Accessors.
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to build buffers");
+            BuildAccessorsAndBuffers();
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: done loading");
+        }
 
         // After all the nodes have been added to a Gltf class, build all the
         //    dependent structures
-        public void BuildAccessorsAndBuffers(BasilPersist persist, GlobalContext context) {
-            
-            // Scan all the created meshes and create the Buffers, BufferViews, and Accessors
-            BuildBuffers(persist, context.parms.VerticesMaxForBuffer);
-        }
+        public void BuildAccessorsAndBuffers() {
+            int maxVerticesPerBuffer = ConvOAR.Globals.parms.VerticesMaxForBuffer;
 
-        // Meshes with MeshInfo's have been added to the scene. Pass over all
-        //   the meshes and create the Buffers, BufferViews, and Accessors.
-        // Called before calling ToJSON().
-        public void BuildBuffers(BasilPersist persist, int maxVerticesPerBuffer) {
             // Partition the meshes into smaller groups based on number of vertices going out
             List<GltfMesh> partial = new List<GltfMesh>();
             int totalVertices = 0;
             meshes.ForEach(mesh => {
                 // If adding this mesh will push the total vertices in this buffer over the max, flush this buffer.
                 if ((totalVertices + mesh.meshInfo.vertexs.Count) > maxVerticesPerBuffer) {
-                    BuildBufferForSomeMeshes(partial, persist);
+                    BuildBufferForSomeMeshes(partial);
                     partial.Clear();
                     totalVertices = 0;
                 }
@@ -220,12 +217,12 @@ namespace org.herbal3d.convoar {
                 partial.Add(mesh);
             });
             if (partial.Count > 0) {
-                BuildBufferForSomeMeshes(partial, persist);
+                BuildBufferForSomeMeshes(partial);
             }
         }
 
         // For a collection of meshes, create the buffers and accessors.
-        public void BuildBufferForSomeMeshes(List<GltfMesh> someMeshes, BasilPersist persist) {
+        public void BuildBufferForSomeMeshes(List<GltfMesh> someMeshes) {
             // Pass over all the vertices in all the meshes and collect common vertices into 'vertexCollection'
             int numMeshes = 0;
             int numVerts = 0;
@@ -281,10 +278,7 @@ namespace org.herbal3d.convoar {
             byte[] binBuffRaw = new byte[paddedSizeofIndices + sizeofVertices];
             string buffNum =  String.Format("{0:000}", buffers.Count + 1);
             string buffName = "buffer" + buffNum;
-            string buffFilename = persist.CreateFilename(Gltf.MakeAssetURITypeBuff, buffName);
-            string buffURI = persist.CreateURI(Gltf.MakeAssetURITypeBuff, buffName);
-            // ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: make buffer: name={1}, filename={2}, uri={3}", LogHeader, buffName, buffFilename, buffURI);
-            GltfBuffer binBuff = new GltfBuffer(gltfRoot, buffName, "arraybuffer", buffFilename, buffURI);
+            GltfBuffer binBuff = new GltfBuffer(gltfRoot, buffName, "arraybuffer");
             binBuff.bufferBytes = binBuffRaw;
 
             GltfBufferView binIndicesView = new GltfBufferView(gltfRoot, "bufferViewIndices" + buffNum);
@@ -514,9 +508,9 @@ namespace org.herbal3d.convoar {
         }
 
         // Write the binary files into the specified target directory
-        public void WriteBinaryFiles(string targetDir) {
+        public void WriteBinaryFiles() {
             buffers.ForEach(buff => {
-                string outFilename = buff.filename;
+                string outFilename = buff.persist.filename;
                 // ConvOAR.Globals.log.DebugFormat("{0} WriteBinaryFiles: filename={1}", LogHeader, outFilename);
                 File.WriteAllBytes(outFilename, buff.bufferBytes);
             });
@@ -668,6 +662,7 @@ namespace org.herbal3d.convoar {
             InitFromDisplayable(pDisplayable);
         }
 
+        // Base initialization of the node instance
         private void NodeInit(Gltf pRoot, GltfScene containingScene) {
             meshes = new GltfMeshes(gltfRoot);
             children = new GltfNodes(gltfRoot);
@@ -677,8 +672,9 @@ namespace org.herbal3d.convoar {
             translation = new OMV.Vector3(0, 0, 0);
 
             gltfRoot.nodes.Add(this);
-            if (containingScene != null)
+            if (containingScene != null) {
                 containingScene.nodes.Add(this);
+            }
         }
 
         private void InitFromDisplayable(Displayable pDisplayable) {
@@ -768,7 +764,9 @@ namespace org.herbal3d.convoar {
         public GltfMesh(Gltf pRoot, MeshInfo pMeshInfo) : base(pRoot, pMeshInfo.handle.ToString() + "_mesh") {
             meshInfo = pMeshInfo;
             underlyingUUID = ((EntityHandleUUID)pMeshInfo.handle).GetUUID();
-
+            primitives = new GltfPrimitives(gltfRoot);
+            onePrimitive = new GltfPrimitive(gltfRoot);
+            primitives.Add(onePrimitive);
             gltfRoot.meshes.Add(this);
         }
 
@@ -913,16 +911,20 @@ namespace org.herbal3d.convoar {
 
             if (matInfo.textureID != null) {
                 GltfTexture theTexture = null;
-                pRoot.textures.GetByUUID((OMV.UUID)matInfo.textureID, out theTexture);
+                if (pRoot.textures.GetByUUID((OMV.UUID)matInfo.textureID, out theTexture)) {
 
-                // Remove the defaults created above and add new values for the texture
-                ext.values.Remove(GltfExtension.valDiffuse);
-                ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
+                    // Remove the defaults created above and add new values for the texture
+                    ext.values.Remove(GltfExtension.valDiffuse);
+                    ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
 
-                ext.values.Remove(GltfExtension.valTransparent);
-                if (theTexture.source != null && theTexture.source.imageInfo.hasTransprency) {
-                    // the spec says default value is 'false' so only specify if 'true'
-                    ext.values.Add(GltfExtension.valTransparent, true);
+                    ext.values.Remove(GltfExtension.valTransparent);
+                    if (theTexture.source != null && theTexture.source.imageInfo.hasTransprency) {
+                        // the spec says default value is 'false' so only specify if 'true'
+                        ext.values.Add(GltfExtension.valTransparent, true);
+                    }
+                }
+                else {
+                    ConvOAR.Globals.log.ErrorFormat("GltfClasses.GltfMaterial: texture not found. ID={0}", matInfo.textureID);
                 }
             }
 
@@ -1006,16 +1008,14 @@ namespace org.herbal3d.convoar {
     public class GltfBuffer : GltfClass {
         public byte[] bufferBytes;
         public string type;
-        public string filename;
-        public string uri;
+        public PersistRules persist;
         public GltfBuffer(Gltf pRoot, string pID) : base(pRoot, pID) {
             gltfRoot.buffers.Add(this);
         }
 
-        public GltfBuffer(Gltf pRoot, string pID, string pType, string pFilename, string pUri) : base(pRoot, pID) {
+        public GltfBuffer(Gltf pRoot, string pID, string pType) : base(pRoot, pID) {
             type = pType;
-            filename = pFilename;
-            uri = pUri;
+            persist = new PersistRules(PersistRules.AssetTypeBuff, pID);
             gltfRoot.buffers.Add(this);
         }
 
@@ -1024,7 +1024,7 @@ namespace org.herbal3d.convoar {
             bool first = true;
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "byteLength", bufferBytes.Length);
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "type", "arraybuffer");
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", uri);
+            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", persist.uri);
             outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
     }
@@ -1241,8 +1241,8 @@ namespace org.herbal3d.convoar {
     public class GltfImage : GltfClass {
         public OMV.UUID underlyingUUID;
         public ImageInfo imageInfo;
-        public string uri;
-        public string filename;
+        public PersistRules persist;
+    
         public GltfImage(Gltf pRoot, string pID) : base(pRoot, pID) {
             gltfRoot.images.Add(this);
         }
@@ -1253,13 +1253,14 @@ namespace org.herbal3d.convoar {
             if (handleU != null) {
                 underlyingUUID = handleU.GetUUID();
             }
+            persist = new PersistRules(PersistRules.AssetTypeImage, imageInfo.handle.ToString());
             gltfRoot.images.Add(this);
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
             outt.Write(" { ");
             bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", uri);
+            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", persist.uri);
             outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
     }

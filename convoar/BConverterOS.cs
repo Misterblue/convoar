@@ -82,7 +82,6 @@ namespace org.herbal3d.convoar {
 
             Promise<BInstance>.All(
                 scene.GetSceneObjectGroups().Select(sog => {
-                    ConvOAR.Globals.log.DebugFormat("Convert SOG. ID={0}", sog.UUID);
                     return ConvertSogToInstance(sog, assetFetcher, mesher);
                 })
             )

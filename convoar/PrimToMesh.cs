@@ -99,34 +99,24 @@ namespace org.herbal3d.convoar {
 
         private Promise<DisplayableRenderable> MeshFromPrimShapeData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
-            var prom = new Promise<DisplayableRenderable>();
-
             BHash primHash = new BHashULong(prim.GetHashCode());
-            assetFetcher.GetRenderable(primHash, () => {
+            return assetFetcher.GetRenderable(primHash, () => {
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
                     OMVR.FacetedMesh mesh = m_mesher.GenerateFacetedMesh(prim, lod);
                     DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, mesh, prim.Textures.DefaultTexture, prim.Scale);
                     resolve(dr);
                 });
-            })
-            .Then(renderable => {
-                prom.Resolve(renderable);
             });
-
-            return prom;
         }
 
         private Promise<DisplayableRenderable> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
 
-            var prom = new Promise<DisplayableRenderable>();
-
             BHash primHash = new BHashULong(prim.GetHashCode());
-            // DisplayableRenderable renderable = assetFetcher.GetRenderable(primHash, () => {
-            assetFetcher.GetRenderable(primHash, () => {
+            return assetFetcher.GetRenderable(primHash, () => {
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
                     // Get the asset that the sculpty is built on
-                    EntityHandle texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
+                    EntityHandleUUID texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
                     assetFetcher.FetchTexture(texHandle)
                         .Catch((e) => {
                             ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}: {2}", _logHeader, texHandle, e);
@@ -139,45 +129,30 @@ namespace org.herbal3d.convoar {
                             resolve(dr);
                         });
                 });
-            })
-            .Then(renderable => {
-                prom.Resolve(renderable);
             });
-
-            return prom;
         }
 
-        private IPromise<DisplayableRenderable> MeshFromPrimMeshData(SceneObjectGroup sog, SceneObjectPart sop,
+        private Promise<DisplayableRenderable> MeshFromPrimMeshData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
-
-            var prom = new Promise<DisplayableRenderable>();
-
-            // Get the asset that the mesh is built on
-            EntityHandle meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
-            try {
-                assetFetcher.FetchRawAsset(meshHandle)
-                    .Then(meshBytes => {
-                        OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
-                        OMVR.FacetedMesh fMesh;
-                        if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
-                            DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
-                            prom.Resolve(dr);
-                        }
-                        else {
-                            prom.Reject(new Exception("MeshFromPrimMeshData: could not decode mesh information from asset. ID="
-                                            + prim.ID.ToString()));
-                        }
-                    })
-                    .Catch((e) => {
-                        ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}", _logHeader, e);
-                        prom.Reject(e);
-                    });
-            }
-            catch (Exception e) {
-                prom.Reject(e);
-            }
-
-            return prom;
+            EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
+            BHash meshHash = new BHashULong(meshHandle.GetUUID().GetHashCode());
+            return assetFetcher.GetRenderable(meshHash, () => {
+                return new Promise<DisplayableRenderable>((resolve, reject) => {
+                    assetFetcher.FetchRawAsset(meshHandle)
+                        .Then(meshBytes => {
+                            OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
+                            OMVR.FacetedMesh fMesh;
+                            if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
+                                DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
+                                resolve(dr);
+                            }
+                            else {
+                                reject(new Exception("MeshFromPrimMeshData: could not decode mesh information from asset. ID="
+                                                + prim.ID.ToString()));
+                            }
+                        });
+                });
+            });
         }
 
         /// <summary>

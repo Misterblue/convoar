@@ -34,51 +34,44 @@ namespace org.herbal3d.convoar {
     // The converted images go somewhere for later fetching.
     // These classes wrap the logic for storing the binary, images, and json files
     //     for later processing.
-    public class BasilPersist {
+    public class PersistRules {
         private string _assetType;
         private string _assetInfo;
-        private GlobalContext _context;
+        private string _imageExtension; // the format type of the image as the filename extension
 
-        private static string _logHeader = "[BasilPersist]";
+        private static string _logHeader = "[PersistRules]";
 
         // Texture cache used when processing one region
         private static Dictionary<int, ImageInfo> textureCache = new Dictionary<int, ImageInfo>();
 
-        public BasilPersist(string pAssetType, string pInfo, GlobalContext pContext) {
+        public PersistRules(string pAssetType, string pInfo) {
             _assetType = pAssetType;
             _assetInfo = pInfo;
-            _context = pContext;
+        }
+
+        public string filename {
+            get {
+                return CreateFilename();
+            }
+        }
+
+        public string uri {
+            get {
+                return CreateURI();
+            }
         }
 
         public void WriteImage(ImageInfo imageInfo) {
             string texFilename = CreateFilename();
             if (!File.Exists(texFilename)) {
-                // imageInfo.ConstrainTextureSize(_context.parms.MaxTextureSize);
                 Image texImage = imageInfo.image;
                 try {
-                    /*
-                    using (Bitmap textureBitmap = new Bitmap(texImage.Width, texImage.Height,
-                                System.Drawing.Imaging.PixelFormat.Format32bppArgb)) {
-                        // convert the raw image into a channeled image
-                        using (Graphics graphics = Graphics.FromImage(textureBitmap)) {
-                            graphics.DrawImage(texImage, 0, 0);
-                            graphics.Flush();
-                        }
-                        // Write out the converted image as PNG
-                        textureBitmap.Save(texFilename, System.Drawing.Imaging.ImageFormat.Png);
-                    }
-                    */
                     // _context.log.DebugFormat("{0} WriteOutImageForEP: id={1}, hasAlpha={2}, format={3}",
                     //                 _logHeader, faceInfo.textureID, faceInfo.hasAlpha, texImage.PixelFormat);
-                    if (imageInfo.hasTransprency) {
-                        texImage.Save(texFilename, ConvertNameToFormatCode(_context.parms.PreferredTextureFormat));
-                    }
-                    else {
-                        texImage.Save(texFilename, ConvertNameToFormatCode(_context.parms.PreferredTextureFormatIfNoTransparency));
-                    }
+                    texImage.Save(texFilename, ConvertNameToFormatCode(_imageExtension));
                 }
                 catch (Exception e) {
-                    _context.log.ErrorFormat("{0} FAILED PNG FILE CREATION: {0}", e);
+                    ConvOAR.Globals.log.ErrorFormat("{0} FAILED PNG FILE CREATION: {0}", e);
                 }
             }
         }
@@ -151,48 +144,74 @@ namespace org.herbal3d.convoar {
         }
         */
 
+        // Function called below to create a URI from an asset ID.
+        // 'type' may be one of 'image', 'mesh', ?
+        // public delegate string MakeAssetURI(string type, OMV.UUID uuid);
+        public delegate void MakeAssetURI(string type, string info, out string filename, out string uri);
+        public const string AssetTypeImage = "image";    // image of type PNG
+        public const string AssetTypeTransImage = "transimage";    // image that includes transparency
+        public const string AssetTypeMesh = "mesh";
+        public const string AssetTypeBuff = "buff";      // binary buffer
+        public const string AssetTypeGltf = "gltf";
+
         public string CreateFilename() {
-            return CreateFilename(_assetType, _assetInfo);
+            return CreateFilename(_assetType, _assetInfo, SetImageExtension(_assetType));
         }
 
-        public string CreateFilename(string assetType, string assetInfo) {
+        public static string CreateFilename(string assetType, string assetInfo, string imageExtension) {
             string fname = "";
 
-            string targetDir = ResolveAndCreateDir(_context.parms.GltfTargetDir);
+            string targetDir = ResolveAndCreateDir(ConvOAR.Globals.parms.GltfTargetDir);
             if (targetDir != null) {
-                if (assetType == Gltf.MakeAssetURITypeImage) {
-                    fname = JoinFilePieces(targetDir, assetInfo + ".png");
+                if (assetType == AssetTypeImage || assetType ==  AssetTypeTransImage) {
+                    fname = JoinFilePieces(targetDir, assetInfo + "." + imageExtension);
                 }
-                if (assetType == Gltf.MakeAssetURITypeBuff) {
-                    fname = JoinFilePieces(targetDir, _context.contextName + "_" + assetInfo + ".bin");
+                if (assetType == AssetTypeBuff) {
+                    fname = JoinFilePieces(targetDir, ConvOAR.Globals.contextName + "_" + assetInfo + ".bin");
                 }
-                if (assetType == Gltf.MakeAssetURITypeMesh) {
+                if (assetType == AssetTypeMesh) {
                     fname = JoinFilePieces(targetDir, assetInfo + ".mesh");
+                }
+                if (assetType == AssetTypeGltf) {
+                    fname = JoinFilePieces(targetDir, assetInfo + ".gltf");
                 }
             }
             return fname;
         }
 
         public string CreateURI() {
-            return CreateURI(_assetType, _assetInfo);
+            return CreateURI(_assetType, _assetInfo, SetImageExtension(_assetType));
         }
 
-        public string CreateURI(string assetType, string assetInfo) {
+        public static string CreateURI(string assetType, string assetInfo, string imageExtension) {
             string uuri = "";
 
-            string targetDir = ResolveAndCreateDir(_context.parms.GltfTargetDir);
+            string targetDir = ResolveAndCreateDir(ConvOAR.Globals.parms.GltfTargetDir);
             if (targetDir != null) {
-                if (assetType == Gltf.MakeAssetURITypeImage) {
-                    uuri = _context.parms.URIBase + assetInfo + ".png";
+                if (assetType == AssetTypeImage || assetType ==  AssetTypeTransImage) {
+                    uuri = ConvOAR.Globals.parms.URIBase + assetInfo + "." + imageExtension;
                 }
-                if (assetType == Gltf.MakeAssetURITypeBuff) {
-                    uuri = _context.parms.URIBase + _context.contextName + "_" + assetInfo + ".bin";
+                if (assetType == AssetTypeBuff) {
+                    uuri = ConvOAR.Globals.parms.URIBase + ConvOAR.Globals.contextName + "_" + assetInfo + ".bin";
                 }
-                if (assetType == Gltf.MakeAssetURITypeMesh) {
-                    uuri = _context.parms.URIBase + assetInfo + ".mesh";
+                if (assetType == AssetTypeMesh) {
+                    uuri = ConvOAR.Globals.parms.URIBase + assetInfo + ".mesh";
+                }
+                if (assetType == AssetTypeGltf) {
+                    uuri = ConvOAR.Globals.parms.URIBase + assetInfo + ".gltf";
                 }
             }
             return uuri;
+        }
+
+        private string SetImageExtension(string assetType) {
+            if (assetType == AssetTypeTransImage) {
+                _imageExtension = ConvOAR.Globals.parms.PreferredTextureFormat.ToLower();
+            }
+            else {
+                _imageExtension = ConvOAR.Globals.parms.PreferredTextureFormatIfNoTransparency.ToLower();
+            }
+            return _imageExtension;
         }
 
 

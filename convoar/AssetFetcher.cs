@@ -57,8 +57,8 @@ namespace org.herbal3d.convoar {
             Images = new OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo>();
         }
 
-        public delegate IPromise<DisplayableRenderable> RenderableBuilder();
-        public IPromise<DisplayableRenderable> GetRenderable(BHash hash, RenderableBuilder builder) {
+        public delegate Promise<DisplayableRenderable> RenderableBuilder();
+        public Promise<DisplayableRenderable> GetRenderable(BHash hash, RenderableBuilder builder) {
             Promise<DisplayableRenderable> prom = new Promise<DisplayableRenderable>();
 
             lock (Renderables) {
