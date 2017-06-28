@@ -79,6 +79,10 @@ convoar
                 return;
             }
 
+            if (Globals.parms.LogVerbose) {
+                Globals.log.SetVerbose(Globals.parms.LogVerbose);
+            }
+
             // Validate parameters
             if (String.IsNullOrEmpty(Globals.parms.InputOAR)) {
                 Globals.log.ErrorFormat("An input OAR file must be specified");

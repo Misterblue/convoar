@@ -57,6 +57,9 @@ namespace org.herbal3d.convoar {
 
         public string URIBase;          // the URI base to be added to the beginning of the asset name
 
+        public bool LogVerbose;         // if set, force DEBUG logging
+        public bool LogBuilding;        // if set, log detailed BScene/BInstance object building
+        public bool LogGltfBuilding;    // if set, log detailed Gltf object building
         public bool LogConversionStats; // output numbers about number of entities converted
         public bool LogDetailedSharedFaceStats; // output numbers about face mesh sharing
         public bool LogDetailedEntityInfo;      // output detailed information about each entity
@@ -127,6 +130,12 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
                 "./" ),
 
+            new ParameterDefn<bool>("LogVerbose", "if set, force DEBUG logging",
+                false ),
+            new ParameterDefn<bool>("LogBuilding", "if set, log detailed BScene/BInstance object building",
+                false ),
+            new ParameterDefn<bool>("LogGltfBuilding", "if set, log detailed Gltf object building",
+                false ),
             new ParameterDefn<bool>("LogConversionStats", "output numbers about number of entities converted",
                 true ),
             new ParameterDefn<bool>("LogDetailedSharedFaceStats", "output numbers about face mesh sharing",
