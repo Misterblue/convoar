@@ -682,8 +682,7 @@ namespace org.herbal3d.convoar {
             translation = pDisplayable.offsetPosition;
             rotation = pDisplayable.offsetRotation;
             // only know how to handle a displayable of meshes
-            RenderableMeshGroup meshGroup = pDisplayable.renderable as RenderableMeshGroup;
-            if (meshGroup != null) {
+            if (pDisplayable.renderable is RenderableMeshGroup meshGroup) {
                 this.meshes.AddRange(meshGroup.meshes.Select(renderableMesh => {
                     OMV.UUID meshUUID = ((EntityHandleUUID)renderableMesh.mesh).GetUUID();
                     GltfMesh thisMesh = null;
@@ -1184,8 +1183,7 @@ namespace org.herbal3d.convoar {
         }
 
         public GltfTexture(Gltf pRoot, ImageInfo pImageInfo, GltfImage pImage) : base(pRoot, pImageInfo.handle.ToString() + "_tex") {
-            EntityHandleUUID handleU = pImageInfo.handle as EntityHandleUUID;
-            if (handleU != null) {
+            if (pImageInfo.handle is EntityHandleUUID handleU) {
                 underlyingUUID = handleU.GetUUID();
             }
             this.target = WebGLConstants.TEXTURE_2D;
@@ -1249,8 +1247,7 @@ namespace org.herbal3d.convoar {
 
         public GltfImage(Gltf pRoot, ImageInfo pImageInfo) : base(pRoot, pImageInfo.handle.ToString() + "_mat") {
             imageInfo = pImageInfo;
-            EntityHandleUUID handleU = pImageInfo.handle as EntityHandleUUID;
-            if (handleU != null) {
+            if (pImageInfo.handle is EntityHandleUUID handleU) {
                 underlyingUUID = handleU.GetUUID();
             }
             persist = new PersistRules(PersistRules.AssetTypeImage, imageInfo.handle.ToString());

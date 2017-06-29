@@ -104,7 +104,6 @@ namespace org.herbal3d.convoar {
 
                 BScene bScene = new BScene();
                 bScene.instances = instanceList;
-
                 RegionInfo ri = scene.RegionInfo;
                 bScene.name = ri.RegionName;
                 bScene.attributes.Add("RegionName", ri.RegionName);
