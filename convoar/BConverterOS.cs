@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Text;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -68,7 +69,15 @@ namespace org.herbal3d.convoar {
             // if (_optForceTerrain != null) options.Add("force-terrain", true);
             // if (_optNoObjects != null) options.Add("no-objects", true);
 
-            Scene scene = CreateScene(assetService);
+            string regionName = "convoar";
+            if (String.IsNullOrEmpty(ConvOAR.Globals.parms.RegionName)) {
+                // Try to build the region name from the OAR filesname
+                regionName = Path.GetFileNameWithoutExtension(ConvOAR.Globals.parms.InputOAR);
+            }
+            else {
+                regionName = ConvOAR.Globals.parms.RegionName;
+            }
+            Scene scene = CreateScene(assetService, regionName);
 
             // Load the archive into our scene
             ArchiveReadRequest archive = new ArchiveReadRequest(scene, ConvOAR.Globals.parms.InputOAR, Guid.Empty, options);
@@ -118,9 +127,9 @@ namespace org.herbal3d.convoar {
 
         // Create an OpenSimulator Scene and add enough auxillery services and objects
         //   to it so it will do a asset load;
-        public Scene CreateScene(IAssetService memAssetService) {
-            RegionInfo regionInfo = new RegionInfo(0, 0, null, "convoar");
-            regionInfo.RegionName = "convoar";
+        public Scene CreateScene(IAssetService memAssetService, string regionName) {
+            RegionInfo regionInfo = new RegionInfo(0, 0, null, regionName);
+            regionInfo.RegionName = regionName;
             regionInfo.RegionSizeX = regionInfo.RegionSizeY = Constants.RegionSize;
             regionInfo.RegionID = OMV.UUID.Random();
             var estateSettings = new EstateSettings();
