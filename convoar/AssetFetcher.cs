@@ -45,6 +45,10 @@ namespace org.herbal3d.convoar {
         public abstract void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage);
         public abstract void Dispose();
 
+#pragma warning disable 414
+        private static string _logHeader = "[IAssetFetcher]";
+#pragma warning restore 414
+
         public Dictionary<BHash, DisplayableRenderable> Renderables;
         public OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo> Meshes;
         public OMV.DoubleDictionary<BHash, EntityHandle, MaterialInfo> Materials;
@@ -59,6 +63,7 @@ namespace org.herbal3d.convoar {
 
         public delegate Promise<DisplayableRenderable> RenderableBuilder();
         public Promise<DisplayableRenderable> GetRenderable(BHash hash, RenderableBuilder builder) {
+        // public Promise<DisplayableRenderable> GetRenderable(BHash hash, Promise<DisplayableRenderable> builder) {
             Promise<DisplayableRenderable> prom = new Promise<DisplayableRenderable>();
 
             lock (Renderables) {
@@ -67,8 +72,15 @@ namespace org.herbal3d.convoar {
                     prom.Resolve(renderable);
                 }
                 else {
+                    ConvOAR.Globals.log.DebugFormat("{0} GetRenderable: invoking builder", _logHeader);
                     builder()
+                    .Catch(e => {
+                        ConvOAR.Globals.log.ErrorFormat("{0} GetRenderable: builder exception: {1}", _logHeader, e);
+                        prom.Reject(e);
+                    })
                     .Then(rend => {
+                        ConvOAR.Globals.log.DebugFormat("{0} GetRenderable: builder complete. hash={1}, numMeshes={2}",
+                                _logHeader, hash, ((RenderableMeshGroup)rend).meshes.Count);
                         Renderables.Add(hash, renderable);
                         prom.Resolve(rend);
                     });
@@ -116,7 +128,9 @@ namespace org.herbal3d.convoar {
 
     // Fetch an asset from  the OpenSimulator asset system
     public class OSAssetFetcher : IAssetFetcher {
-        // private string _logHeader = "[OSAssetFetcher]";
+    #pragma warning disable 414
+        private string _logHeader = "[OSAssetFetcher]";
+    #pragma warning restore 414
         private IAssetService _assetService;
 
         public OSAssetFetcher(IAssetService pAssetService) : base() {

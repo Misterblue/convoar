@@ -103,7 +103,7 @@ namespace org.herbal3d.convoar {
 
     // =============================================================
     public class Gltf : GltfClass {
-        private static string _logHeader = "Gltf";
+        private static string _logHeader = "[Gltf]";
 
         public GltfAttributes extensionsUsed;   // list of extensions used herein
 

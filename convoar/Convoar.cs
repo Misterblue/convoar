@@ -42,7 +42,7 @@ namespace org.herbal3d.convoar {
     }
 
     class ConvOAR {
-        private static string _logHeader = "ConvOAR";
+        private static string _logHeader = "[ConvOAR]";
 
         public static GlobalContext Globals;
 
@@ -79,8 +79,8 @@ convoar
                 return;
             }
 
-            if (Globals.parms.LogVerbose) {
-                Globals.log.SetVerbose(Globals.parms.LogVerbose);
+            if (Globals.parms.Verbose) {
+                Globals.log.SetVerbose(Globals.parms.Verbose);
             }
 
             // Validate parameters
@@ -106,6 +106,8 @@ convoar
                                 Globals.log.ErrorFormat("{0} Exception converting scene: {1}", _logHeader, e);
                             })
                             .Then(bScene => {
+                                Globals.contextName = bScene.name;
+
                                 Globals.log.DebugFormat("{0} Scene created. name={1}, instances={2}",
                                     _logHeader, bScene.name, bScene.instances.Count);
                                 Globals.log.DebugFormat("{0}    num assetFetcher.images={1}", _logHeader, assetFetcher.Images.Count);

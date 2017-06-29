@@ -37,7 +37,7 @@ namespace org.herbal3d.convoar {
 
     public class PrimToMesh : IDisposable {
         private OMVR.MeshmerizerR m_mesher;
-        String _logHeader = "[Basil.PrimToMesh]";
+        String _logHeader = "[PrimToMesh]";
 
         public PrimToMesh() {
             m_mesher = new OMVR.MeshmerizerR();
@@ -56,7 +56,7 @@ namespace org.herbal3d.convoar {
             try {
                 if (prim.Sculpt != null) {
                     if (prim.Sculpt.Type == OMV.SculptType.Mesh) {
-                        // ConvOAR.Globals.log.DebugFormat("{0}: CreateMeshResource: creating mesh", _logHeader);
+                        BConverterOS.LogBProgress("{0}: CreateMeshResource: creating mesh", _logHeader);
                         ConvOAR.Globals.stats.numMeshAssets++;
                         MeshFromPrimMeshData(sog, sop, prim, assetFetcher, lod)
                             .Catch(e => {
@@ -67,7 +67,7 @@ namespace org.herbal3d.convoar {
                             });
                     }
                     else {
-                        // ConvOAR.Globals.log.DebugFormat("{0}: CreateMeshResource: creating sculpty", _logHeader);
+                        BConverterOS.LogBProgress("{0}: CreateMeshResource: creating sculpty", _logHeader);
                         ConvOAR.Globals.stats.numSculpties++;
                         MeshFromPrimSculptData(sog, sop, prim, assetFetcher, lod)
                             .Catch(e => {
@@ -79,13 +79,14 @@ namespace org.herbal3d.convoar {
                     }
                 }
                 else {
-                    // ConvOAR.Globals.log.DebugFormat("{0}: CreateMeshResource: creating primshape", _logHeader);
+                    BConverterOS.LogBProgress("{0}: CreateMeshResource: creating primshape", _logHeader);
                     ConvOAR.Globals.stats.numSimplePrims++;
                     MeshFromPrimShapeData(sog, sop, prim, assetFetcher, lod)
                         .Catch(e => {
                             prom.Reject(e);
                         })
                         .Then(dispable => {
+                            BConverterOS.LogBProgress("{0} CreateMeshResource: prim created", _logHeader);
                             prom.Resolve(new Displayable(dispable, sop));
                         });
                 }
@@ -104,6 +105,8 @@ namespace org.herbal3d.convoar {
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
                     OMVR.FacetedMesh mesh = m_mesher.GenerateFacetedMesh(prim, lod);
                     DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, mesh, prim.Textures.DefaultTexture, prim.Scale);
+                    BConverterOS.LogBProgress("{0} MeshFromPrimShapeData. numGenedMeshed={1}",
+                            _logHeader, ((RenderableMeshGroup)dr).meshes.Count);
                     resolve(dr);
                 });
             });
@@ -126,6 +129,8 @@ namespace org.herbal3d.convoar {
                             OMVR.FacetedMesh fMesh = m_mesher.GenerateFacetedSculptMesh(prim, bm.Image.ExportBitmap(), lod);
                             DisplayableRenderable dr =
                                     ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
+                            BConverterOS.LogBProgress("{0} MeshFromPrimSculptData. numFaces={1}, numGenedMeshed={2}",
+                                    _logHeader, fMesh.Faces.Count, ((RenderableMeshGroup)dr).meshes.Count);
                             resolve(dr);
                         });
                 });
@@ -139,6 +144,10 @@ namespace org.herbal3d.convoar {
             return assetFetcher.GetRenderable(meshHash, () => {
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
                     assetFetcher.FetchRawAsset(meshHandle)
+                        .Catch(e => {
+                            ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimMeshData: exception: {1}", _logHeader, e);
+                            reject(e);
+                        })
                         .Then(meshBytes => {
                             OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
                             OMVR.FacetedMesh fMesh;
@@ -187,8 +196,8 @@ namespace org.herbal3d.convoar {
             meshInfo.indices = new List<int>();
             face.Indices.ForEach(ind => { meshInfo.indices.Add((int)ind); });
             meshInfo.faceCenter = face.Center;
-            // ConvOAR.Globals.log.DebugFormat("{0} ConvertFaceToRenderableMesh: faceId={1}, numVert={2}, numInd={3}",
-            //     _logHeader, face.ID, meshInfo.vertexs.Count, meshInfo.indices.Count);
+            BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: faceId={1}, numVert={2}, numInd={3}",
+                 _logHeader, face.ID, meshInfo.vertexs.Count, meshInfo.indices.Count);
 
             if (!ConvOAR.Globals.parms.DisplayTimeScaling) {
                 ScaleMeshes(meshInfo, primScale);
@@ -210,6 +219,8 @@ namespace org.herbal3d.convoar {
                             imageInfo.SetImage(img);
                         });
                     imageInfo.handle = textureHandle;
+                    BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: create ImageInfo. hash={1}, id={2}",
+                                    _logHeader, textureHash, imageInfo.handle);
                     return imageInfo;
                 });
 
@@ -217,14 +228,16 @@ namespace org.herbal3d.convoar {
                 m_mesher.TransformTexCoords(meshInfo.vertexs, meshInfo.faceCenter, face.TextureFace,  primScale);
             }
 
+            // See that the material is in the cache
             MaterialInfo lookupMatInfo = assetFetcher.GetMaterialInfo(matInfo.GetHash(), () => { return matInfo; });
             rmesh.material = lookupMatInfo.handle;
 
+            // See that the mesh is in the cache
             MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetHash(), () => { return meshInfo; });
             rmesh.mesh = lookupMeshInfo.handle;
 
-            // ConvOAR.Globals.log.DebugFormat("{0} ConvertFaceToRenderableMesh: rmesh.mesh={1}, rmesh.material={2}",
-            //                 _logHeader, rmesh.mesh.GetUUID(), rmesh.material.GetUUID());
+            BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: rmesh.mesh={1}, rmesh.material={2}",
+                             _logHeader, rmesh.mesh, rmesh.material);
 
             return rmesh;
         }

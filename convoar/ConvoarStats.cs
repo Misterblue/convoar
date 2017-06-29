@@ -34,7 +34,9 @@ namespace org.herbal3d.convoar {
 
 
         public Scene m_scene;
+    #pragma warning disable 414
         private static string _logHeader = "[Stats]";
+    #pragma warning restore 414
 
         public ConvoarStats() {
         }

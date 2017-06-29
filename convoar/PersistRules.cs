@@ -39,7 +39,9 @@ namespace org.herbal3d.convoar {
         private string _assetInfo;
         private string _imageExtension; // the format type of the image as the filename extension
 
+    #pragma warning disable 414
         private static string _logHeader = "[PersistRules]";
+    #pragma warning restore 414
 
         // Texture cache used when processing one region
         private static Dictionary<int, ImageInfo> textureCache = new Dictionary<int, ImageInfo>();
@@ -230,8 +232,8 @@ namespace org.herbal3d.convoar {
                 }
             }
             catch (Exception e) {
-                // _context.log.ErrorFormat("{0} Failed creation of GLTF file directory. dir={1}, e: {2}",
-                //             _logHeader, absDir, e);
+                ConvOAR.Globals.log.ErrorFormat("{0} Failed creation of GLTF file directory. dir={1}, e: {2}",
+                            _logHeader, absDir, e);
                 return null;
             }
             return absDir;

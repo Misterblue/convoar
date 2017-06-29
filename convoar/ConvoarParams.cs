@@ -57,7 +57,7 @@ namespace org.herbal3d.convoar {
 
         public string URIBase;          // the URI base to be added to the beginning of the asset name
 
-        public bool LogVerbose;         // if set, force DEBUG logging
+        public bool Verbose;            // if set, force DEBUG logging
         public bool LogBuilding;        // if set, log detailed BScene/BInstance object building
         public bool LogGltfBuilding;    // if set, log detailed Gltf object building
         public bool LogConversionStats; // output numbers about number of entities converted
@@ -130,7 +130,7 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
                 "./" ),
 
-            new ParameterDefn<bool>("LogVerbose", "if set, force DEBUG logging",
+            new ParameterDefn<bool>("Verbose", "if set, force DEBUG logging",
                 false ),
             new ParameterDefn<bool>("LogBuilding", "if set, log detailed BScene/BInstance object building",
                 false ),
@@ -251,7 +251,7 @@ namespace org.herbal3d.convoar {
                         setter(setValue);
                     }
                     catch (Exception e) {
-                        System.Console.WriteLine("{0} Conversion failed for {1}", _logHeader, this.name);
+                        System.Console.WriteLine("{0} Conversion failed for {1}: {2}", _logHeader, this.name, e);
                     }
                 }
             }
@@ -333,14 +333,12 @@ namespace org.herbal3d.convoar {
                 string para = args[ii];
                 // is this a parameter?
                 if (para[0] == '-') {
-                    // is the next one a parameter?
-                    // looks like a parameter followed by a value
                     ii += AddCommandLineParameter(para, (ii==(args.Length-1)) ? null : args[ii + 1]);
                 }
                 else {
                     if (ii == 0 && firstOpFlag) {
                         // if the first thing is not a parameter, make like it's an op or something
-                        AddCommandLineParameter(firstOpParameter, args[ii + 1]);
+                        ii += AddCommandLineParameter(firstOpParameter, args[ii + 1]);
                     }
                     else {
                         if (multipleLast) {
@@ -385,11 +383,17 @@ namespace org.herbal3d.convoar {
             if (TryGetParameter(parm, out parmDefn)) {
                 // If the parameter is a boolean type and the next value is not a parameter,
                 //      don't try to take up the next value.
-                if (parmDefn.GetValueType() == typeof(Boolean) && val != null) {
-                    string valL = val.ToLower();
-                    if (valL != "true" && valL != "t" && valL != "false" && valL != "f") {
-                        val = null;
-                        ret = 0;
+                if (parmDefn.GetValueType() == typeof(Boolean)) {
+                    if (val != null) {
+                        string valL = val.ToLower();
+                        if (valL != "true" && valL != "t" && valL != "false" && valL != "f") {
+                            val = null;
+                            ret = 0;
+                        }
+                    }
+                    if (val == null) {
+                        // Boolean types without a value are set to 'true'
+                        val = "true";
                     }
                 }
                 parmDefn.SetValue(val);

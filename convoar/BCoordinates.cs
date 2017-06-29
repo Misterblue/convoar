@@ -144,14 +144,13 @@ namespace org.herbal3d.convoar {
                 disp.offsetPosition = disp.offsetPosition * coordTransformQ;
                 disp.offsetRotation = coordTransformQ * disp.offsetRotation;
 
-                /* TODO: Is this needed?
                 // Go through all the vertices and change the UV coords if necessary
                 if (flipV) {
-                    PrimToMesh.OnAllVertex(ep, delegate (ref OMVR.Vertex vert) {
-                        vert.TexCoord.Y = 1f - vert.TexCoord.Y;
-                    });
+                    // TODO: Is this needed?
+                    // PrimToMesh.OnAllVertex(ep, delegate (ref OMVR.Vertex vert) {
+                    //     vert.TexCoord.Y = 1f - vert.TexCoord.Y;
+                    // });
                 }
-                */
 
                 // The ExtendedPrim is all converted
                 disp.coordAxis = newCoords;

@@ -40,7 +40,9 @@ namespace org.herbal3d.convoar {
     // Convert entitygroup items -- simpification and mergings
     public class BConverter {
 
+    #pragma warning disable 414
         private static string _logHeader = "BConverter";
+    #pragma warning restore 414
 
         private GlobalContext _context;
 

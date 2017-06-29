@@ -47,7 +47,7 @@ namespace org.herbal3d.convoar {
     // Convert things from OpenSimulator to Instances and Displayables things
     public class BConverterOS {
 
-        private static string _logHeader = "BConverterOS";
+        private static string _logHeader = "[BConverterOS]";
 
         public BConverterOS() {
         }
@@ -76,7 +76,7 @@ namespace org.herbal3d.convoar {
 
             // Convert SOGs from OAR into EntityGroups
             // ConvOAR.Globals.log.Log("Num assets = {0}", assetService.NumAssets);
-            ConvOAR.Globals.log.DebugFormat("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
+            LogBProgress("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
 
             PrimToMesh mesher = new PrimToMesh();
 
@@ -171,12 +171,8 @@ namespace org.herbal3d.convoar {
         public IPromise<BInstance> ConvertSogToInstance(SceneObjectGroup sog, IAssetFetcher assetFetcher, PrimToMesh mesher) {
             var prom = new Promise<BInstance>();
 
-            /* DEBUG DEBUG
-            ConvOAR.Globals.log.ErrorFormat("{0} Convert SOG. ID={1}", _logHeader, sog.UUID);
-            foreach (SceneObjectPart Xsop in sog.Parts) {
-                ConvOAR.Globals.log.ErrorFormat("{0} ... SOP ID={1}, isRoot={2}", _logHeader, Xsop.UUID, Xsop.IsRoot);
-            }
-            // end of DEBUG DEBUG */
+            LogBProgress("{0} ConvertSogToInstance: name={1}, id={2}, SOPs={3}",
+                        _logHeader, sog.Name, sog.UUID, sog.Parts.Length);
             // Create meshes for all the parts of the SOG
             Promise<Displayable>.All(
                 sog.Parts.Select(sop => {
@@ -227,6 +223,12 @@ namespace org.herbal3d.convoar {
             }) ;
 
             return prom;
+        }
+
+        public static void LogBProgress(string msg, params Object[] args) {
+            if (ConvOAR.Globals.parms.LogBuilding) {
+                ConvOAR.Globals.log.Log(msg, args);
+            }
         }
 
         /*
