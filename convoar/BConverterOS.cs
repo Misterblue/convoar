@@ -98,9 +98,15 @@ namespace org.herbal3d.convoar {
                 prom.Reject(new Exception(String.Format("Failed conversion: {0}", e)));
             })
             .Done(instances => {
-                ConvOAR.Globals.log.DebugFormat("Num instances = {0}", instances.ToList().Count);
+                ConvOAR.Globals.log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
                 BInstanceList instanceList = new BInstanceList();
                 instanceList.AddRange(instances);
+
+                // Add the terrain mesh to the scene
+                if (ConvOAR.Globals.parms.AddTerrainMesh) {
+                    ConvOAR.Globals.log.DebugFormat("{0} Adding terrain to scene", _logHeader);
+                    instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher));
+                }
 
                 BScene bScene = new BScene();
                 bScene.instances = instanceList;
