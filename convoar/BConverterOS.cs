@@ -184,8 +184,8 @@ namespace org.herbal3d.convoar {
             // Create meshes for all the parts of the SOG
             Promise<Displayable>.All(
                 sog.Parts.Select(sop => {
-                    // ConvOAR.Globals.log.DebugFormat("{0} calling CreateMeshResource for sog={1}, sop={2}",
-                    //             _logHeader, sog.UUID, sop.UUID);
+                    LogBProgress("{0} calling CreateMeshResource for sog={1}, sop={2}",
+                                _logHeader, sog.UUID, sop.UUID);
                     OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
                     return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest);
                 } )
@@ -227,10 +227,35 @@ namespace org.herbal3d.convoar {
                 inst.Rotation = sog.GroupRotation;
                 inst.Representation = rootDisplayable;
 
+                DumpInstance(inst);
+
                 prom.Resolve(inst);
             }) ;
 
             return prom;
+        }
+
+        private void DumpInstance(BInstance inst) {
+            if (ConvOAR.Globals.parms.LogBuilding) {
+                Displayable instDisplayable = inst.Representation;
+                LogBProgress("{0} created instance. handle={1}, pos={2}, rot={3}",
+                    _logHeader, inst.handle, inst.Position, inst.Rotation);
+                DumpDisplayable(inst.Representation, "Representation", 0);
+            }
+        }
+
+        private void DumpDisplayable(Displayable disp, string header, int level) {
+            string spaces = "                                                           ";
+            string spacer = spaces.Substring(0, level * 2);
+            LogBProgress("{0}{1}  displayable: name={2}, pos={3}, rot={4}",
+                _logHeader, spacer, disp.name, disp.offsetPosition, disp.offsetRotation);
+            (disp.renderable as RenderableMeshGroup).meshes.ForEach(mesh => {
+                LogBProgress("{0}{1}    mesh: mesh={2}. material={3}",
+                    _logHeader, spacer, mesh.mesh, mesh.material);
+            });
+            disp.children.ForEach(child => {
+                DumpDisplayable(child, "Child", level + 1);
+            });
         }
 
         public static void LogBProgress(string msg, params Object[] args) {

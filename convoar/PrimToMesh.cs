@@ -102,6 +102,7 @@ namespace org.herbal3d.convoar {
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
             BHash primHash = new BHashULong(prim.GetHashCode());
             return assetFetcher.GetRenderable(primHash, () => {
+                BConverterOS.LogBProgress("{0} inside builder definition", _logHeader);
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
                     OMVR.FacetedMesh mesh = m_mesher.GenerateFacetedMesh(prim, lod);
                     DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, mesh, prim.Textures.DefaultTexture, prim.Scale);

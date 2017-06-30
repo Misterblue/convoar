@@ -81,7 +81,7 @@ namespace org.herbal3d.convoar {
                     .Then(rend => {
                         ConvOAR.Globals.log.DebugFormat("{0} GetRenderable: builder complete. hash={1}, numMeshes={2}",
                                 _logHeader, hash, ((RenderableMeshGroup)rend).meshes.Count);
-                        Renderables.Add(hash, renderable);
+                        Renderables.Add(hash, rend);
                         prom.Resolve(rend);
                     });
                 }

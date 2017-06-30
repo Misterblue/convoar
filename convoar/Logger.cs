@@ -35,16 +35,7 @@ namespace org.herbal3d.convoar {
 
         private bool _verbose = false;
         public override void SetVerbose(bool value) {
-            bool nextValue = value;
-            if (!_verbose && nextValue) {
-                // turning Verbose on
-                LogManager.GetRepository().Threshold = log4net.Core.Level.Debug;
-            }
-            if (_verbose && !nextValue) {
-                // turning Verbose off
-                LogManager.GetRepository().Threshold = log4net.Core.Level.Info;
-            }
-            _verbose = nextValue;
+            bool _verbose = value;
         }
 
         public override void Log(string msg, params Object[] args) {
@@ -66,19 +57,17 @@ namespace org.herbal3d.convoar {
     // Do logging with Log4net
     public class LoggerLog4Net : Logger {
         private static readonly ILog _log = LogManager.GetLogger("convoar");
+        private static string _logHeader = "[Logger]";
 
         private bool _verbose = false;
         public override void SetVerbose(bool value) {
-            bool nextValue = value;
-            if (!_verbose && nextValue) {
+            _verbose = value;
+            bool alreadyDebug = (LogManager.GetRepository().Threshold == log4net.Core.Level.Debug);
+            if (_verbose && !alreadyDebug) {
                 // turning Verbose on
+                _log.InfoFormat("{0} SetVerbose: Setting logging threshold to DEBUG", _logHeader);
                 LogManager.GetRepository().Threshold = log4net.Core.Level.Debug;
             }
-            if (_verbose && !nextValue) {
-                // turning Verbose off
-                LogManager.GetRepository().Threshold = log4net.Core.Level.Info;
-            }
-            _verbose = nextValue;
         }
 
         public override void Log(string msg, params Object[] args) {
