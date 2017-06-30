@@ -77,6 +77,10 @@ namespace org.herbal3d.convoar {
     /// Could be a mesh or procedure or whatever.
     /// </summary>
     public abstract class DisplayableRenderable {
+        public EntityHandle handle;
+        public DisplayableRenderable() {
+            handle = new EntityHandleUUID();
+        }
     }
 
     /// <summary>
@@ -85,7 +89,11 @@ namespace org.herbal3d.convoar {
     /// </summary>
     public class RenderableMeshGroup : DisplayableRenderable {
         // The meshes that make up this Renderable
-        public List<RenderableMesh> meshes = new List<RenderableMesh>();
+        public List<RenderableMesh> meshes;
+
+        public RenderableMeshGroup() : base() {
+            meshes = new List<RenderableMesh>();
+        }
     }
         
     public class RenderableMesh {

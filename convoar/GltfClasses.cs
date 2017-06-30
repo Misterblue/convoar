@@ -167,6 +167,9 @@ namespace org.herbal3d.convoar {
             ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: loading scene {0}", scene.name);
             GltfScene gltfScene = new GltfScene(this, scene.name);
 
+            scene.instances.ForEach(pInstance => {
+
+            });
             // Load the pointed to items first and then the complex items
 
             // Load Images
@@ -630,11 +633,11 @@ namespace org.herbal3d.convoar {
 
     public class GltfNode : GltfClass {
         public string camera;       // non-empty if a camera definition
+        public GltfMesh mesh;
         public GltfNodes children;
         public string[] skeleton;   // IDs of skeletons
         public string skin;
         public string jointName;
-        public GltfMeshes meshes;
         // has either 'matrix' or 'rotation/scale/translation'
         public OMV.Matrix4 matrix;
         public OMV.Quaternion rotation;
@@ -664,7 +667,6 @@ namespace org.herbal3d.convoar {
 
         // Base initialization of the node instance
         private void NodeInit(Gltf pRoot, GltfScene containingScene) {
-            meshes = new GltfMeshes(gltfRoot);
             children = new GltfNodes(gltfRoot);
             matrix = OMV.Matrix4.Zero;
             rotation = new OMV.Quaternion();
@@ -682,16 +684,8 @@ namespace org.herbal3d.convoar {
             translation = pDisplayable.offsetPosition;
             rotation = pDisplayable.offsetRotation;
             // only know how to handle a displayable of meshes
-            if (pDisplayable.renderable is RenderableMeshGroup meshGroup) {
-                this.meshes.AddRange(meshGroup.meshes.Select(renderableMesh => {
-                    OMV.UUID meshUUID = ((EntityHandleUUID)renderableMesh.mesh).GetUUID();
-                    GltfMesh thisMesh = null;
-                    if (!gltfRoot.meshes.GetByUUID(meshUUID, out thisMesh)) {
-                        ConvOAR.Globals.log.ErrorFormat("GltfClasses.GltfNode: could not find mesh. id={0}", meshUUID);
-                    }
-                    return thisMesh;
-                }));
-            }
+            mesh = new GltfMesh(gltfRoot, pDisplayable.renderable, assetFetcher);
+
             this.children.AddRange(pDisplayable.children.Select(child => {
                 return new GltfNode(gltfRoot, null, child);
             }));
@@ -746,26 +740,38 @@ namespace org.herbal3d.convoar {
 
     public class GltfMesh : GltfClass {
         public string name;
-        public OMV.UUID underlyingUUID;
         public GltfPrimitives primitives;
-        public GltfPrimitive onePrimitive;  // a mesh has one primitive
+        // public OMV.UUID underlyingUUID;
+        // public GltfPrimitive onePrimitive;  // a mesh has one primitive
         public GltfAttributes attributes;
-        public MeshInfo meshInfo;
         public Displayable underlyingDisplayable;
-        public ushort[] newIndices; // remapped indices posinting to global vertex list
+        // public MeshInfo meshInfo;
+        // public ushort[] newIndices; // remapped indices posinting to global vertex list
         public GltfMesh(Gltf pRoot, string pID) : base(pRoot, pID) {
             gltfRoot.meshes.Add(this);
             primitives = new GltfPrimitives(gltfRoot);
-            onePrimitive = new GltfPrimitive(gltfRoot);
-            primitives.Add(onePrimitive);
+            // onePrimitive = new GltfPrimitive(gltfRoot);
+            // primitives.Add(onePrimitive);
         }
 
-        public GltfMesh(Gltf pRoot, MeshInfo pMeshInfo) : base(pRoot, pMeshInfo.handle.ToString() + "_mesh") {
-            meshInfo = pMeshInfo;
-            underlyingUUID = ((EntityHandleUUID)pMeshInfo.handle).GetUUID();
+        public GltfMesh(Gltf pRoot, DisplayableRenderable pDR, IAssetFetcher assetFetcher) : base(pRoot, pDR.handle.ToString() + "_dr") {
             primitives = new GltfPrimitives(gltfRoot);
-            onePrimitive = new GltfPrimitive(gltfRoot);
-            primitives.Add(onePrimitive);
+            if (pDR is RenderableMeshGroup rmg) {
+                primitives.AddRange(rmg.meshes.Select(oneMesh => {
+                    GltfPrimitive prim = null;
+                    MeshInfo meshInfo = null;
+                    if (assetFetcher.Meshes.TryGetValue(oneMesh.mesh, out meshInfo)) {
+                        prim = new GltfPrimitive(pRoot, meshInfo);
+                    }
+                    else {
+                        ConvOAR.Globals.log.ErrorFormat("GltfMesh: could not find meshinfo: id={0}", oneMesh.mesh);
+                    }
+                    return prim;
+                }));
+            }
+            // underlyingUUID = ((EntityHandleUUID)pMeshInfo.handle).GetUUID();
+            // onePrimitive = new GltfPrimitive(gltfRoot);
+            // primitives.Add(onePrimitive);
             gltfRoot.meshes.Add(this);
         }
 
@@ -810,6 +816,8 @@ namespace org.herbal3d.convoar {
     }
 
     public class GltfPrimitive : GltfClass {
+        public MeshInfo meshInfo;
+        public ushort[] newIndices; // remapped indices posinting to global vertex list
         public int mode;
         public GltfAccessor indices;
         public GltfAccessor normals;
@@ -818,6 +826,11 @@ namespace org.herbal3d.convoar {
         public GltfMaterial material;
         public GltfPrimitive(Gltf pRoot) : base(pRoot, "primitive") {
             mode = 4;
+        }
+
+        public GltfPrimitive(Gltf pRoot, MeshInfo pMeshInfo) : base(pRoot, "primitive") {
+            mode = 4;
+            meshInfo = pMeshInfo;
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
