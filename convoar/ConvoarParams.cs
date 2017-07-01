@@ -113,10 +113,10 @@ namespace org.herbal3d.convoar {
                 true ),
             new ParameterDefn<int>("MaxTextureSize", "The maximum pixel dimension for images if exporting",
                 256 ),
-            new ParameterDefn<string>("PreferredTextureFormat", "One of: PNG, JPEG, GIF, BMP",
+            new ParameterDefn<string>("PreferredTextureFormat", "One of: PNG, JPG, GIF, BMP",
                 "PNG"),
-            new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPEG, GIF, BMP",
-                "JPEG"),
+            new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPG, GIF, BMP",
+                "JPG"),
 
             new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
                 true ),

@@ -87,7 +87,7 @@ namespace org.herbal3d.convoar {
                 case "gif":
                     ret = ImageFormat.Gif;
                     break;
-                case "jpeg":
+                case "jpg":
                     ret = ImageFormat.Jpeg;
                     break;
                 case "bmp":
