@@ -162,8 +162,8 @@ namespace org.herbal3d.convoar {
             //    optimizations.
             Vert[,] vertices = new Vert[sizeX, sizeY];
 
-            float stepX = (realSizeX+1f) / (float)sizeX;    // the real dimension step for each heightmap step
-            float stepY = (realSizeY+1f) / (float)sizeY;
+            float stepX = (realSizeX) / (float)sizeX;    // the real dimension step for each heightmap step
+            float stepY = (realSizeY) / (float)sizeY;
             float coordStepX = 1.0f / (float)sizeX;    // the coordinate dimension step for each heightmap step
             float coordStepY = 1.0f / (float)sizeY;
 
@@ -177,6 +177,13 @@ namespace org.herbal3d.convoar {
                     vert.index = index++;
                     vertices[xx, yy] = vert;
                 }
+            }
+            // Pass over the far edges and make sure the mesh streaches the whole area
+            for (int xx = 0; xx < sizeX; xx++) {
+                vertices[xx, sizeY - 1].Position.Y = realSizeY + 1;
+            }
+            for (int yy = 0; yy < sizeY; yy++) {
+                vertices[sizeX - 1, yy].Position.X = realSizeY + 1;
             }
 
             // Compute the normals
