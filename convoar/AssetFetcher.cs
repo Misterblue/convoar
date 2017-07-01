@@ -95,15 +95,12 @@ namespace org.herbal3d.convoar {
                     prom.Resolve(renderable);
                 }
                 else {
-                    ConvOAR.Globals.log.DebugFormat("{0} GetRenderable: invoking builder", _logHeader);
                     builder()
                     .Catch(e => {
                         ConvOAR.Globals.log.ErrorFormat("{0} GetRenderable: builder exception: {1}", _logHeader, e);
                         prom.Reject(e);
                     })
                     .Then(rend => {
-                        ConvOAR.Globals.log.DebugFormat("{0} GetRenderable: builder complete. hash={1}, numMeshes={2}",
-                                _logHeader, hash, ((RenderableMeshGroup)rend).meshes.Count);
                         Renderables.Add(hash, rend);
                         prom.Resolve(rend);
                     });

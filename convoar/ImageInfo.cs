@@ -31,6 +31,10 @@ namespace org.herbal3d.convoar {
         public int xSize;
         public int ySize;
 
+#pragma warning disable 414
+        private string _logHeader = "[ImageInfo]";
+#pragma warning restore 414
+
         public ImageInfo() {
             handle = new EntityHandleUUID();
             hasTransprency = false;
@@ -49,7 +53,9 @@ namespace org.herbal3d.convoar {
             image = pImage;
             xSize = image.Width;
             ySize = image.Height;
-            this.CheckForTransparency();
+            hasTransprency = CheckForTransparency();
+            // ConvOAR.Globals.log.DebugFormat("{0} SetImage. ID={1}, xSize={2}, ySize={3}, hasTrans={4}",
+            //             _logHeader, handle, xSize, ySize, hasTransprency);
         }
 
         // The hash code for an image is just the hash of its UUID handle.

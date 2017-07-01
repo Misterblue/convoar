@@ -78,7 +78,9 @@ namespace org.herbal3d.convoar {
 
     // Capturing the processing of the coordinate system for a mesh
     public class CoordAxis {
+#pragma warning disable 414
         private static string _logHeader = "[CoordAxis]";
+#pragma warning restore 414
 
         public const int Handedness = 0x200;    // bit that specifies the handedness
         public const int UpDimension = 0x00F;   // field that specifies the up dimension
@@ -156,8 +158,8 @@ namespace org.herbal3d.convoar {
                 inst.Position = inst.Position * coordTransformQ;
                 inst.Rotation = coordTransformQ * inst.Rotation;
 
-                ConvOAR.Globals.log.DebugFormat("{0} FixCoordinates. dispID={1}, oldPos={2}, newPos={3}, oldRot={4}, newRot={5}",
-                    _logHeader, inst.handle, oldPos, inst.Position, oldRot, inst.Rotation);
+                // ConvOAR.Globals.log.DebugFormat("{0} FixCoordinates. dispID={1}, oldPos={2}, newPos={3}, oldRot={4}, newRot={5}",
+                //     _logHeader, inst.handle, oldPos, inst.Position, oldRot, inst.Rotation);
 
                 // Go through all the vertices and change the UV coords if necessary
                 if (flipV) {

@@ -1333,7 +1333,12 @@ namespace org.herbal3d.convoar {
             if (pImageInfo.handle is EntityHandleUUID handleU) {
                 underlyingUUID = handleU.GetUUID();
             }
-            persist = new PersistRules(PersistRules.AssetTypeImage, imageInfo.handle.ToString());
+            if (imageInfo.hasTransprency) {
+                persist = new PersistRules(PersistRules.AssetTypeTransImage, imageInfo.handle.ToString());
+            }
+            else {
+                persist = new PersistRules(PersistRules.AssetTypeImage, imageInfo.handle.ToString());
+            }
             gltfRoot.images.Add(pImageInfo.GetBHash(), this);
             LogGltf("{0} GltfImage: created. ID={1}, uuid={2}, imgInfoHandle={3}",
                     "Gltf", ID, underlyingUUID, imageInfo.handle);
