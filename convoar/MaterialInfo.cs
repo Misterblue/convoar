@@ -60,11 +60,11 @@ namespace org.herbal3d.convoar {
             shiny = faceTexture.Shiny;
         }
 
-        public BHash GetHash() {
-            return GetHash(false);
+        public BHash GetBHash() {
+            return GetBHash(false);
         }
 
-        public BHash GetHash(bool force) {
+        public BHash GetBHash(bool force) {
             if (force) _hash = null;
 
             if (_hash == null) {

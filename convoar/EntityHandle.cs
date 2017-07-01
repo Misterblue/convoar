@@ -42,6 +42,8 @@ namespace org.herbal3d.convoar {
         // System.Object.ToString()
         // ToString() returns what is needed for the constructor that takes a string
         public override abstract string ToString();
+
+        public abstract BHash GetBHash();
     }
 
     public class EntityHandleUUID : EntityHandle {
@@ -92,6 +94,10 @@ namespace org.herbal3d.convoar {
         // System.Object.GetHashCode()
         public override int GetHashCode() {
             return _uuid.GetHashCode();
+        }
+
+        public override BHash GetBHash() {
+            return new BHashULong(_uuid.GetHashCode());
         }
 
         // IEqualityComparer.Equals

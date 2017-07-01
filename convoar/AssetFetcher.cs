@@ -49,16 +49,39 @@ namespace org.herbal3d.convoar {
         private static string _logHeader = "[IAssetFetcher]";
 #pragma warning restore 414
 
+        // Displayables are the linksetable prim equivilient
+        // The top Displayable is the root prim and the children Displayables are the linkset members
+        public Dictionary<BHash, Displayable> Displayables;
+        // DisplayableRenderables are the rendering mesh for a Displayable (usually a list of meshes).
+        // The list of meshes are the faces of a prim.
         public Dictionary<BHash, DisplayableRenderable> Renderables;
+        // Meshes are each of the individual meshes with material
         public OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo> Meshes;
         public OMV.DoubleDictionary<BHash, EntityHandle, MaterialInfo> Materials;
         public OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo> Images;
 
         public IAssetFetcher() {
+            Displayables = new Dictionary<BHash, Displayable>();
             Renderables = new Dictionary<BHash, DisplayableRenderable>();
             Meshes = new OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo>();
             Materials = new OMV.DoubleDictionary<BHash, EntityHandle, MaterialInfo>();
             Images = new OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo>();
+        }
+
+        // Adds this Displayable if it's not already in the list.
+        // Return 'true' if the Displayable was added to the list.
+        public bool AddUniqueDisplayable(Displayable disp) {
+            bool ret = false;
+            Displayable maybeDisp;
+            BHash dispHash = disp.GetBHash();
+            if (!Displayables.TryGetValue(dispHash, out maybeDisp)) {
+                
+            }
+            return ret;
+        }
+
+        public bool GetDisplayable(BHash hash, out Displayable disp) {
+            return Displayables.TryGetValue(hash, out disp);
         }
 
         public delegate Promise<DisplayableRenderable> RenderableBuilder();

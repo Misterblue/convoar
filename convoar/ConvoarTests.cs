@@ -134,13 +134,12 @@ namespace org.herbal3d.convoar.tests {
         [TestCase(100, 200)]
         public void VerifyMeshCoversWholeRegion(int heightmapSize, int regionSize) {
             float[,] heightMap = CreateHeightmap(heightmapSize);
-            using (PrimToMesh mesher = new PrimToMesh()) {
-                DisplayableRenderable dr = mesher.MeshFromHeightMap(heightMap, regionSize, regionSize,
-                                        _assetFetcher, _defaultTexture);
-                RenderableMeshGroup rmg = dr as RenderableMeshGroup;
-                Assert.IsTrue(rmg != null, "MeshFromHeightMap did not return a RenderableMeshGroup");
-                Assert.AreEqual(rmg.meshes.Count, 1, "MeshFromHeightMap returned more than one mesh");
-            }
+            PrimToMesh mesher = new PrimToMesh();
+            DisplayableRenderable dr = mesher.MeshFromHeightMap(heightMap, regionSize, regionSize,
+                                    _assetFetcher, _defaultTexture);
+            RenderableMeshGroup rmg = dr as RenderableMeshGroup;
+            Assert.IsTrue(rmg != null, "MeshFromHeightMap did not return a RenderableMeshGroup");
+            Assert.AreEqual(rmg.meshes.Count, 1, "MeshFromHeightMap returned more than one mesh");
         }
 
         // Creates a heightmap of specificed size with a simple gradient from on corner to the

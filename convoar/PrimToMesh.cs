@@ -35,12 +35,12 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace org.herbal3d.convoar {
 
-    public class PrimToMesh : IDisposable {
-        private OMVR.MeshmerizerR m_mesher;
+    public class PrimToMesh {
+        private OMVR.MeshmerizerR _mesher;
         String _logHeader = "[PrimToMesh]";
 
         public PrimToMesh() {
-            m_mesher = new OMVR.MeshmerizerR();
+            _mesher = new OMVR.MeshmerizerR();
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace org.herbal3d.convoar {
             return assetFetcher.GetRenderable(primHash, () => {
                 BConverterOS.LogBProgress("{0} inside builder definition", _logHeader);
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
-                    OMVR.FacetedMesh mesh = m_mesher.GenerateFacetedMesh(prim, lod);
+                    OMVR.FacetedMesh mesh = _mesher.GenerateFacetedMesh(prim, lod);
                     DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, mesh, prim.Textures.DefaultTexture, prim.Scale);
                     BConverterOS.LogBProgress("{0} MeshFromPrimShapeData. numGenedMeshed={1}",
                             _logHeader, ((RenderableMeshGroup)dr).meshes.Count);
@@ -127,7 +127,7 @@ namespace org.herbal3d.convoar {
                             reject(null);
                         })
                         .Then((bm) => {
-                            OMVR.FacetedMesh fMesh = m_mesher.GenerateFacetedSculptMesh(prim, bm.Image.ExportBitmap(), lod);
+                            OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, bm.Image.ExportBitmap(), lod);
                             DisplayableRenderable dr =
                                     ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
                             BConverterOS.LogBProgress("{0} MeshFromPrimSculptData. numFaces={1}, numGenedMeshed={2}",
@@ -226,15 +226,16 @@ namespace org.herbal3d.convoar {
                 });
 
                 // Update the UV information for the texture mapping
-                m_mesher.TransformTexCoords(meshInfo.vertexs, meshInfo.faceCenter, face.TextureFace,  primScale);
+                _mesher.TransformTexCoords(meshInfo.vertexs, meshInfo.faceCenter,
+                        face.TextureFace == null ? defaultTexture : face.TextureFace,  primScale);
             }
 
             // See that the material is in the cache
-            MaterialInfo lookupMatInfo = assetFetcher.GetMaterialInfo(matInfo.GetHash(), () => { return matInfo; });
+            MaterialInfo lookupMatInfo = assetFetcher.GetMaterialInfo(matInfo.GetBHash(), () => { return matInfo; });
             rmesh.material = lookupMatInfo.handle;
 
             // See that the mesh is in the cache
-            MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetHash(), () => { return meshInfo; });
+            MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetBHash(), () => { return meshInfo; });
             rmesh.mesh = lookupMeshInfo.handle;
 
             BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: rmesh.mesh={1}, rmesh.material={2}",
@@ -259,10 +260,6 @@ namespace org.herbal3d.convoar {
             rmg.meshes.Add(rm);
 
             return rmg;
-        }
-
-        public void Dispose() {
-            m_mesher = null;
         }
 
         // Walk through all the vertices and scale the included meshes

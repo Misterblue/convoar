@@ -89,6 +89,7 @@ namespace org.herbal3d.convoar {
 
             PrimToMesh mesher = new PrimToMesh();
 
+            // Convert SOGs => BInstances
             Promise<BInstance>.All(
                 scene.GetSceneObjectGroups().Select(sog => {
                     return ConvertSogToInstance(sog, assetFetcher, mesher);
@@ -108,6 +109,7 @@ namespace org.herbal3d.convoar {
                     instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher));
                 }
 
+                // package instances into a BScene
                 BScene bScene = new BScene();
                 bScene.instances = instanceList;
                 RegionInfo ri = scene.RegionInfo;
@@ -190,7 +192,7 @@ namespace org.herbal3d.convoar {
             // Create meshes for all the parts of the SOG
             Promise<Displayable>.All(
                 sog.Parts.Select(sop => {
-                    LogBProgress("{0} calling CreateMeshResource for sog={1}, sop={2}",
+                    LogBProgress("{0} ConvertSOGToInstance: Calling CreateMeshResource for sog={1}, sop={2}",
                                 _logHeader, sog.UUID, sop.UUID);
                     OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
                     return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest);
@@ -204,7 +206,7 @@ namespace org.herbal3d.convoar {
                 }).ToList();
                 if (rootDisplayableList.Count != 1) {
                     // There should be only one root prim
-                    ConvOAR.Globals.log.ErrorFormat("{0} Found not one root prim in SOG. ID={1}, numRoots={2}",
+                    ConvOAR.Globals.log.ErrorFormat("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
                                 _logHeader, sog.UUID, rootDisplayableList.Count);
                     prom.Reject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
                     return null;
@@ -212,6 +214,9 @@ namespace org.herbal3d.convoar {
 
                 // The root of the SOG
                 Displayable rootDisplayable = rootDisplayableList.First();
+
+                // Twist the OpenSimulator Z-up coordinate system to the OpenGL Y-up
+                CoordAxis.FixCoordinates(rootDisplayable, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
 
                 // Collect all the children prims and add them to the root Displayable
                 rootDisplayable.children = renderables.Where(disp => {
@@ -228,15 +233,21 @@ namespace org.herbal3d.convoar {
                 prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
             })
             .Done (rootDisplayable => {
+                // Add the Displayable into the collection of known Displayables for instancing
+                assetFetcher.AddUniqueDisplayable(rootDisplayable);
+
+                // Package the Displayable into an instance that is position in the world
                 BInstance inst = new BInstance();
                 inst.Position = sog.AbsolutePosition;
                 inst.Rotation = sog.GroupRotation;
                 inst.Representation = rootDisplayable;
 
-                DumpInstance(inst);
+                if (ConvOAR.Globals.parms.LogBuilding) {
+                    DumpInstance(inst);
+                }
 
                 prom.Resolve(inst);
-            }) ;
+            });
 
             return prom;
         }

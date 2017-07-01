@@ -53,8 +53,8 @@ namespace org.herbal3d.convoar {
         }
 
         // The hash code for an image is just the hash of its UUID handle.
-        public BHash GetHash() {
-            return new BHashULong(handle.GetUUID().GetHashCode());
+        public BHash GetBHash() {
+            return handle.GetBHash();
         }
 
         // Check the image in this TextureInfo for transparency and set this.hasTransparency.

@@ -29,8 +29,35 @@ namespace org.herbal3d.convoar {
     /// A set of classes that hold viewer displayable items. These can be
     /// meshes, procedures, or whatever.
     /// </summary>
+
+    // This is a rough map of how the OpenSimulator structures map onto the BInstance structures
+    // BInstance                            SOG
+    //     World Position
+    //     Representation => Displayable
+    // Displayable                          Root SOP
+    //     offset, coordSystem
+    //     renderable => DisplayableRenderable
+    //     children
+    //          [Displayable]               linkset SOPs
+    // DisplayableRenderable == RenderableMeshGroup
+    //     [Meshes] prim faces
+    // Meshes
+    //     mesh
+    //     material
+    //
+    // This is a rough map of how the BInstance structures map onto GLTF
+    // Node                             SOG/SOP
+    //     World Position/Offset
+    //     Mesh                         DisplayableRenderable of RootSOP
+    //     Children
+    //          [Node]                  linkset SOPs
+    // Mesh
+    //     [Primitives]                 DisplayableRenderable/RenderableMeshGroup - prim faces
+
     public class Displayable {
+        public EntityHandle handle;
         public string name = "no name";
+
         public OMV.Vector3 offsetPosition = OMV.Vector3.Zero;
         public OMV.Quaternion offsetRotation = OMV.Quaternion.Identity;
         public CoordAxis coordAxis = new CoordAxis();
@@ -46,13 +73,14 @@ namespace org.herbal3d.convoar {
         public BAttributes attributes = new BAttributes();
 
         public Displayable() {
+            handle = new EntityHandleUUID();
         }
 
-        public Displayable(DisplayableRenderable pRenderable) {
+        public Displayable(DisplayableRenderable pRenderable) : this() {
             renderable = pRenderable;
         }
 
-        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop) {
+        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop) : this() {
             name = sop.Name;
             baseSOP = sop;
             baseUUID = sop.UUID;
@@ -70,6 +98,20 @@ namespace org.herbal3d.convoar {
             attributes.Add("IsPhysical", (sop.PhysActor != null && sop.PhysActor.IsPhysical));
             renderable = pRenderable;
         }
+
+        // The hash of a Displayable is the hash of all its meshes
+        public BHash GetBHash() {
+            /*
+            BHasher hasher = new BHasherMdjb2();
+            if (renderable is RenderableMeshGroup meshGroup) {
+                meshGroup.meshes.ForEach(renderableMesh => {
+                    hasher.Add(renderableMesh.mesh.GetBHash().ToULong());
+                });
+            }
+            return hasher.Finish();
+            */
+            return handle.GetBHash();
+        }
     }
 
     /// <summary>
@@ -80,6 +122,9 @@ namespace org.herbal3d.convoar {
         public EntityHandle handle;
         public DisplayableRenderable() {
             handle = new EntityHandleUUID();
+        }
+        public virtual BHash GetBHash() {
+            return handle.GetBHash();
         }
     }
 

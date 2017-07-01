@@ -43,10 +43,10 @@ namespace org.herbal3d.convoar {
         // The hash is just a function of the vertices and indices
         // TODO: figure out how to canonicalize the vertices order.
         //    At the moment this relies on the determinism of the vertex generators.
-        public BHash GetHash() {
-            return GetHash(false);
+        public BHash GetBHash() {
+            return GetBHash(false);
         }
-        public BHash GetHash(bool force) {
+        public BHash GetBHash(bool force) {
             if (force) _hash = null;
 
             if (_hash == null) {
@@ -63,6 +63,10 @@ namespace org.herbal3d.convoar {
                 _hash = hasher.Finish();
             }
             return _hash;
+        }
+
+        public override string ToString() {
+            return String.Format("{0}/v={1}/i={2}", handle, vertexs.Count, indices.Count);
         }
     }
 }
