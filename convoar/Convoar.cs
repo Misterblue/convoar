@@ -135,6 +135,7 @@ convoar
                                 using (StreamWriter outt = File.CreateText(gltfFilename)) {
                                     gltf.ToJSON(outt);
                                 }
+                                gltf.WriteImages();
                                 gltf.WriteBinaryFiles();
                             }
                         );

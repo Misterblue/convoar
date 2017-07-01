@@ -178,15 +178,6 @@ namespace org.herbal3d.convoar {
             GltfScene gltfScene = new GltfScene(this, scene.name);
             defaultSceneID = gltfScene.ID;
 
-            scene.instances.ForEach(pInstance => {
-                Displayable rootDisp = pInstance.Representation;
-                GltfNode rootNode = GltfNode.GltfNodeFactory(gltfRoot, gltfScene, rootDisp, assetFetcher);
-                rootNode.translation = pInstance.Position;
-                rootNode.rotation = pInstance.Rotation;
-            });
-
-            // Load the pointed to items first and then the complex items
-
             // Load Images
             ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load images");
             assetFetcher.Images.ForEach(delegate(ImageInfo pImageInfo) {
@@ -198,18 +189,16 @@ namespace org.herbal3d.convoar {
             assetFetcher.Materials.ForEach(delegate (MaterialInfo pMatInfo) {
                 GltfMaterial newMaterial = GltfMaterial.GltfMaterialFactory(this, pMatInfo);
             });
-            /*
-            // Load Meshes
-            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load meshes");
-            assetFetcher.Meshes.ForEach(delegate (MeshInfo pMeshInfo) {
-                GltfMesh newMesh = GltfMesh.GltfMeshFactory(this, pMeshInfo, assetFetcher);
+
+            // Adding the nodes creates all the GltfMesh's, etc.
+            scene.instances.ForEach(pInstance => {
+                Displayable rootDisp = pInstance.Representation;
+                GltfNode rootNode = GltfNode.GltfNodeFactory(gltfRoot, gltfScene, rootDisp, assetFetcher);
+                rootNode.translation = pInstance.Position;
+                rootNode.rotation = pInstance.Rotation;
             });
-            // Load Nodes
-            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load nodes");
-            scene.instances.ForEach(delegate (BInstance pInstance) {
-                GltfNode newNode = GltfNode.GltfNodeFactory(this, gltfScene, pInstance);
-            });
-            */
+
+            // Load the pointed to items first and then the complex items
 
             // Meshes, etc  have been added to the scene. Pass over all
             //   the meshes and create the Buffers, BufferViews, and Accessors.
@@ -533,6 +522,12 @@ namespace org.herbal3d.convoar {
                 string outFilename = buff.persist.filename;
                 // ConvOAR.Globals.log.DebugFormat("{0} WriteBinaryFiles: filename={1}", LogHeader, outFilename);
                 File.WriteAllBytes(outFilename, buff.bufferBytes);
+            }
+        }
+
+        public void WriteImages() {
+            foreach (var img in images.Values) {
+                img.persist.WriteImage(img.imageInfo);
             }
         }
     }
@@ -1333,7 +1328,7 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfImage: created empty. ID={1}", "Gltf", ID);
         }
 
-        public GltfImage(Gltf pRoot, ImageInfo pImageInfo) : base(pRoot, pImageInfo.handle.ToString() + "_mat") {
+        public GltfImage(Gltf pRoot, ImageInfo pImageInfo) : base(pRoot, pImageInfo.handle.ToString() + "_img") {
             imageInfo = pImageInfo;
             if (pImageInfo.handle is EntityHandleUUID handleU) {
                 underlyingUUID = handleU.GetUUID();

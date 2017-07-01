@@ -121,7 +121,7 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
                 true ),
             new ParameterDefn<bool>("HalfRezTerrain", "Whether to reduce the terrain resolution by 2",
-                false ),
+                true ),
             new ParameterDefn<bool>("CreateTerrainSplat", "whether to generate a terrain mesh splat texture",
                 true ),
 

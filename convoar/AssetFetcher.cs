@@ -75,7 +75,7 @@ namespace org.herbal3d.convoar {
             Displayable maybeDisp;
             BHash dispHash = disp.GetBHash();
             if (!Displayables.TryGetValue(dispHash, out maybeDisp)) {
-                
+                Displayables.Add(dispHash, disp);
             }
             return ret;
         }
