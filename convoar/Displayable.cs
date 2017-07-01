@@ -142,7 +142,7 @@ namespace org.herbal3d.convoar {
         
     public class RenderableMesh {
         public int num;                 // number of this face on the prim
-        public EntityHandle mesh;
-        public EntityHandle material;
+        public MeshInfo mesh;
+        public MaterialInfo material;
     }
 } 

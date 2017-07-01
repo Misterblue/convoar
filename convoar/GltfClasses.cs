@@ -776,7 +776,7 @@ namespace org.herbal3d.convoar {
             if (pDR is RenderableMeshGroup rmg) {
                 // Add the meshes in the RenderableMeshGroup as primitives in this mesh
                 rmg.meshes.ForEach(oneMesh => {
-                    GltfPrimitive prim = GltfPrimitive.GltfPrimitiveFactory(pRoot, oneMesh, assetFetcher);
+                    GltfPrimitive prim = GltfPrimitive.GltfPrimitiveFactory(pRoot, oneMesh);
                     primitives.Add(new BHashULong(primitives.Count), prim);
                 });
             }
@@ -848,16 +848,11 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfPrimitive: created empty. ID={1}", "Gltf", ID);
         }
 
-        public GltfPrimitive(Gltf pRoot, RenderableMesh pRenderableMesh, IAssetFetcher assetFetcher) : base(pRoot, "primitive") {
+        public GltfPrimitive(Gltf pRoot, RenderableMesh pRenderableMesh) : base(pRoot, "primitive") {
             mode = 4;
-            if (!assetFetcher.Meshes.TryGetValue(pRenderableMesh.mesh, out meshInfo)) {
-                ConvOAR.Globals.log.ErrorFormat("{0} GltfPrimitive. Could not find mesh. handle={1}",
-                            "Gltf", pRenderableMesh.mesh);
-            }
-            if (!assetFetcher.Materials.TryGetValue(pRenderableMesh.material, out matInfo)) {
-                ConvOAR.Globals.log.ErrorFormat("{0} GltfPrimitive. Could not find material. handle={1}",
-                            "Gltf", pRenderableMesh.material);
-            }
+            meshInfo = pRenderableMesh.mesh;
+            matInfo = pRenderableMesh.material;
+
             material = GltfMaterial.GltfMaterialFactory(pRoot, matInfo);
             BHash hash = pRenderableMesh.mesh.GetBHash();
             ID = hash.ToString();
@@ -865,10 +860,10 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfPrimitive: created. ID={1}, mesh={2}", "Gltf", ID, meshInfo);
         }
 
-        public static GltfPrimitive GltfPrimitiveFactory(Gltf pRoot, RenderableMesh pRenderableMesh, IAssetFetcher assetFetcher) {
+        public static GltfPrimitive GltfPrimitiveFactory(Gltf pRoot, RenderableMesh pRenderableMesh) {
             GltfPrimitive prim = null;
             if (!pRoot.primitives.TryGetValue(pRenderableMesh.mesh.GetBHash(), out prim)) {
-                prim = new GltfPrimitive(pRoot, pRenderableMesh, assetFetcher);
+                prim = new GltfPrimitive(pRoot, pRenderableMesh);
             }
             return prim;
         }

@@ -232,11 +232,11 @@ namespace org.herbal3d.convoar {
 
             // See that the material is in the cache
             MaterialInfo lookupMatInfo = assetFetcher.GetMaterialInfo(matInfo.GetBHash(), () => { return matInfo; });
-            rmesh.material = lookupMatInfo.handle;
+            rmesh.material = lookupMatInfo;
 
             // See that the mesh is in the cache
             MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetBHash(), () => { return meshInfo; });
-            rmesh.mesh = lookupMeshInfo.handle;
+            rmesh.mesh = lookupMeshInfo;
 
             BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: rmesh.mesh={1}, rmesh.material={2}",
                              _logHeader, rmesh.mesh, rmesh.material);

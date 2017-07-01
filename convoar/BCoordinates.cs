@@ -129,8 +129,6 @@ namespace org.herbal3d.convoar {
         //     right-handed,Z-up coordinates (OpenSimulator) to right-handed,Y-up
         //     (OpenGL).
         public static void FixCoordinates(BInstance inst, CoordAxis newCoords) {
-            // true if need to flip the V in UV (origin from top left to bottom left)
-            bool flipV = false;
 
             if (inst.coordAxis.system != newCoords.system) {
 
@@ -148,9 +146,6 @@ namespace org.herbal3d.convoar {
                                     0, 1, 0, 0,
                                     0, 0, 0, 1);
                 }
-                if (inst.coordAxis.getUVOrigin != newCoords.getUVOrigin) {
-                    flipV = true;
-                }
 
                 OMV.Vector3 oldPos = inst.Position;   // DEBUG DEBUG
                 OMV.Quaternion oldRot = inst.Rotation;   // DEBUG DEBUG
@@ -158,22 +153,41 @@ namespace org.herbal3d.convoar {
                 inst.Position = inst.Position * coordTransformQ;
                 inst.Rotation = coordTransformQ * inst.Rotation;
 
+                inst.coordAxis = newCoords;
                 // ConvOAR.Globals.log.DebugFormat("{0} FixCoordinates. dispID={1}, oldPos={2}, newPos={3}, oldRot={4}, newRot={5}",
                 //     _logHeader, inst.handle, oldPos, inst.Position, oldRot, inst.Rotation);
 
                 // Go through all the vertices and change the UV coords if necessary
-                if (flipV) {
-                    // TODO: Is this needed?
-                    // PrimToMesh.OnAllVertex(ep, delegate (ref OMVR.Vertex vert) {
-                    //     vert.TexCoord.Y = 1f - vert.TexCoord.Y;
-                    // });
-                }
+                List<MeshInfo> meshInfos = CollectMeshesFromDisplayable(inst.Representation);
 
-                inst.coordAxis = newCoords;
+                meshInfos.ForEach(meshInfo => {
+                    if (meshInfo.coordAxis.getUVOrigin != newCoords.getUVOrigin) {
+                        for (int ii = 0; ii < meshInfo.vertexs.Count; ii++) {
+                            var vert = meshInfo.vertexs[ii];
+                            vert.TexCoord.Y = 1f - vert.TexCoord.Y;
+                            meshInfo.vertexs[ii] = vert;
+                        }
+                        meshInfo.coordAxis = newCoords;
+                    }
+                });
             }
             else {
                 ConvOAR.Globals.log.DebugFormat("FixCoordinates. Not converting coord system. dispID={0}", inst.handle);
             }
+        }
+
+        // Utility routine to gather all the MeshInfo's from a Displayable and all its children.
+        private static List<MeshInfo> CollectMeshesFromDisplayable(Displayable disp) {
+            List<MeshInfo> meshInfos = new List<MeshInfo>();
+            if (disp.renderable is RenderableMeshGroup rmg) {
+                meshInfos.AddRange(
+                    rmg.meshes.Select(aMesh => { return aMesh.mesh; })
+                );
+            }
+            disp.children.ForEach(child => {
+                meshInfos.AddRange(CollectMeshesFromDisplayable(child));
+            });
+            return meshInfos;
         }
 
     }
