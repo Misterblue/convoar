@@ -30,6 +30,7 @@ namespace org.herbal3d.convoar {
         public List<OMVR.Vertex> vertexs;
         public List<int> indices;
         public OMV.Vector3 faceCenter;
+        public CoordAxis coordAxis = new CoordAxis(CoordAxis.RightHand_Zup);    // SL coordinates
 
         private BHash _hash = null;
 

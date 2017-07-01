@@ -109,6 +109,11 @@ namespace org.herbal3d.convoar {
                     instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher));
                 }
 
+                // Twist the OpenSimulator Z-up coordinate system to the OpenGL Y-up
+                foreach (var inst in instanceList) {
+                    CoordAxis.FixCoordinates(inst, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
+                }
+
                 // package instances into a BScene
                 BScene bScene = new BScene();
                 bScene.instances = instanceList;
@@ -214,9 +219,6 @@ namespace org.herbal3d.convoar {
 
                 // The root of the SOG
                 Displayable rootDisplayable = rootDisplayableList.First();
-
-                // Twist the OpenSimulator Z-up coordinate system to the OpenGL Y-up
-                CoordAxis.FixCoordinates(rootDisplayable, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
 
                 // Collect all the children prims and add them to the root Displayable
                 rootDisplayable.children = renderables.Where(disp => {

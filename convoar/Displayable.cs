@@ -60,7 +60,6 @@ namespace org.herbal3d.convoar {
 
         public OMV.Vector3 offsetPosition = OMV.Vector3.Zero;
         public OMV.Quaternion offsetRotation = OMV.Quaternion.Identity;
-        public CoordAxis coordAxis = new CoordAxis();
         public OMV.Vector3 scale = new OMV.Vector3(1,1,1);
 
         // Information on how to display

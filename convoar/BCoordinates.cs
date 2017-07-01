@@ -46,6 +46,14 @@ namespace org.herbal3d.convoar {
     }
 
     public class BCoordinateF : BCoordinateBase<float> {
+        public BCoordinateF() : base() {
+            x = 0;
+            y = 0;
+            z = 0;
+            coordSystem = CoordSystem.WSG86;
+            rotSystem = RotationSystem.WORLD;
+            coordAxis = new CoordAxis(CoordAxis.RightHand_Yup);
+        }
     }
 
     public enum CoordSystem {
@@ -70,6 +78,8 @@ namespace org.herbal3d.convoar {
 
     // Capturing the processing of the coordinate system for a mesh
     public class CoordAxis {
+        private static string _logHeader = "[CoordAxis]";
+
         public const int Handedness = 0x200;    // bit that specifies the handedness
         public const int UpDimension = 0x00F;   // field that specifies the up dimension
         public const int UVOrigin = 0x030;      // field that specifies UV origin location
@@ -116,15 +126,15 @@ namespace org.herbal3d.convoar {
         // This is not a general solution -- it pretty much only works to convert
         //     right-handed,Z-up coordinates (OpenSimulator) to right-handed,Y-up
         //     (OpenGL).
-        public static void FixCoordinates(Displayable disp, CoordAxis newCoords) {
+        public static void FixCoordinates(BInstance inst, CoordAxis newCoords) {
             // true if need to flip the V in UV (origin from top left to bottom left)
             bool flipV = false;
 
-            if (disp.coordAxis.system != newCoords.system) {
+            if (inst.coordAxis.system != newCoords.system) {
 
                 OMV.Matrix4 coordTransform = OMV.Matrix4.Identity;
                 OMV.Quaternion coordTransformQ = OMV.Quaternion.Identity;
-                if (disp.coordAxis.getUpDimension == CoordAxis.Zup
+                if (inst.coordAxis.getUpDimension == CoordAxis.Zup
                     && newCoords.getUpDimension == CoordAxis.Yup) {
                     // The one thing we know to do is change from Zup to Yup
                     coordTransformQ = OMV.Quaternion.CreateFromAxisAngle(1.0f, 0.0f, 0.0f, -(float)Math.PI / 2f);
@@ -136,13 +146,18 @@ namespace org.herbal3d.convoar {
                                     0, 1, 0, 0,
                                     0, 0, 0, 1);
                 }
-                if (disp.coordAxis.getUVOrigin != newCoords.getUVOrigin) {
+                if (inst.coordAxis.getUVOrigin != newCoords.getUVOrigin) {
                     flipV = true;
                 }
 
+                OMV.Vector3 oldPos = inst.Position;   // DEBUG DEBUG
+                OMV.Quaternion oldRot = inst.Rotation;   // DEBUG DEBUG
                 // Fix the location in space
-                disp.offsetPosition = disp.offsetPosition * coordTransformQ;
-                disp.offsetRotation = coordTransformQ * disp.offsetRotation;
+                inst.Position = inst.Position * coordTransformQ;
+                inst.Rotation = coordTransformQ * inst.Rotation;
+
+                ConvOAR.Globals.log.DebugFormat("{0} FixCoordinates. dispID={1}, oldPos={2}, newPos={3}, oldRot={4}, newRot={5}",
+                    _logHeader, inst.handle, oldPos, inst.Position, oldRot, inst.Rotation);
 
                 // Go through all the vertices and change the UV coords if necessary
                 if (flipV) {
@@ -152,11 +167,10 @@ namespace org.herbal3d.convoar {
                     // });
                 }
 
-                // The ExtendedPrim is all converted
-                disp.coordAxis = newCoords;
+                inst.coordAxis = newCoords;
             }
             else {
-                ConvOAR.Globals.log.DebugFormat("FixCoordinates. Not converting coord system. dispID={0}", disp.baseUUID);
+                ConvOAR.Globals.log.DebugFormat("FixCoordinates. Not converting coord system. dispID={0}", inst.handle);
             }
         }
 
