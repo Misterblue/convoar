@@ -946,7 +946,7 @@ namespace org.herbal3d.convoar {
             OMV.Color4 aColor = OMV.Color4.Black;
 
             ext.values.Add(GltfExtension.valDiffuse, surfaceColor);
-            // ext.values.Add(GltfExtension.valDoubleSided, true);
+            ext.values.Add(GltfExtension.valDoubleSided, true);
             // ext.values.Add(GltfExtension.valEmission, aColor);
             // ext.values.Add(GltfExtension.valSpecular, aColor); // not a value in LAMBERT
             if (matInfo.shiny != OMV.Shininess.None) {
@@ -957,7 +957,9 @@ namespace org.herbal3d.convoar {
                 ext.values.Add(GltfExtension.valTransparency, surfaceColor.A);
             }
 
-            if (matInfo.textureID != null) {
+            if (matInfo.textureID != null
+                        && matInfo.textureID != OMV.UUID.Zero
+                        && matInfo.textureID != OMV.Primitive.TextureEntry.WHITE_TEXTURE) {
                 GltfTexture theTexture = null;
                 if (pRoot.textures.GetByUUID((OMV.UUID)matInfo.textureID, out theTexture)) {
 
@@ -967,6 +969,7 @@ namespace org.herbal3d.convoar {
 
                     ext.values.Remove(GltfExtension.valTransparent);
                     if (theTexture.source != null && theTexture.source.imageInfo.hasTransprency) {
+                        // 'Transparent' says the image has some alpha that needs blending
                         // the spec says default value is 'false' so only specify if 'true'
                         ext.values.Add(GltfExtension.valTransparent, true);
                     }
