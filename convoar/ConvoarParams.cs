@@ -371,12 +371,21 @@ namespace org.herbal3d.convoar {
         // Store the value for the parameter.
         // If we accept the value as a good value for the parameter, return 1 else 0.
         // A 'good value' is one that does not start with '-' or is not after a boolean parameter.
-        private int AddCommandLineParameter(string parm, string val) {
+        private int AddCommandLineParameter(string pParm, string val) {
             int ret = 1;
+            string parm = pParm.ToLower();
             // Strip leading hyphens
             while (parm[0] == '-') {
                 parm = parm.Substring(1);
             }
+
+            // if the boolean parameter starts with "no", turn it off rather than on
+            string positiveAssertion = "true";
+            if (parm.Length > 2 && parm[0] == 'n' && parm[1] == 'o') {
+                parm = parm.Substring(2);
+                positiveAssertion = "false";
+            }
+
             // If the next token starts with a parameter mark, it's not really a value
             if (val[0] == '-') {
                 val = null;
@@ -396,7 +405,7 @@ namespace org.herbal3d.convoar {
                     }
                     if (val == null) {
                         // Boolean types without a value are set to 'true'
-                        val = "true";
+                        val = positiveAssertion;
                     }
                 }
                 parmDefn.SetValue(val);

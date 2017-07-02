@@ -69,6 +69,8 @@ namespace org.herbal3d.convoar.tests {
                 "--logConversionStats",
                 inputOARFile
             };
+            parms.ExportTextures = false;
+            parms.MergeStaticMeshes = false;
 
             Exception exceptionCode = null;
             try {
@@ -89,6 +91,33 @@ namespace org.herbal3d.convoar.tests {
                 Assert.AreEqual(1234, parms.VerticesMaxForBuffer, "VerticesMaxForBuffer was not set");
                 Assert.AreEqual(true, parms.LogConversionStats, "LogConversionStats was not set");
                 Assert.AreEqual(inputOARFile, parms.InputOAR, "The trailing filename was not set");
+            }
+        }
+
+        [TestCase]
+        public void ProcessNoParameter() {
+            ConvoarParams parms = new ConvoarParams();
+            string outputDirectory = "this/that";
+            string[] args = new string[] {
+                "-d", outputDirectory,
+                "--noExportTextures",
+                "--preferredTextureFormat", "GIF",
+            };
+            parms.ExportTextures = true;
+
+            Exception exceptionCode = null;
+            try {
+                parms.MergeCommandLine(args);
+            }
+            catch (Exception e) {
+                exceptionCode = e;
+            }
+
+            if (exceptionCode != null) {
+                Assert.Fail("Exception merging parameters: " + exceptionCode.ToString());
+            }
+            else {
+                Assert.AreEqual(false, parms.ExportTextures, "ExportTextures was not set to false");
             }
         }
     }
