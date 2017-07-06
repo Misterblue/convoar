@@ -267,6 +267,10 @@ namespace org.herbal3d.convoar {
             // Array.Copy(addition, offset, tempBytes, 0, len);    // DEBUG DEBUG
             // System.Console.WriteLine(String.Format("AddBytes: offset={0}, len={1}, bytes={2}",  // DEBUG DEBUG
             //    offset, len, BitConverter.ToString(tempBytes).Replace("-", String.Empty)));      // DEBUG DEBUG
+            if (len < 0 || offset < 0 || addition == null) {
+                throw new ArgumentException(String.Format("BHasherBytes.AddBytes: Bad parameters. offset={0}, len={1}",
+                                offset, len));
+            }
             if (offset + len > addition.Length) {
                 throw new ArgumentException(String.Format("BHasherBytes.AddBytes: addition parameters off end of array. addition.len={0}, offset={1}, len={2}",
                                 addition.Length, offset, len));
