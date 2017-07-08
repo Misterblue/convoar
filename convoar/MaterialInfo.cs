@@ -94,5 +94,12 @@ namespace org.herbal3d.convoar {
             }
             return _hash;
         }
+
+        public override string ToString() {
+            string ret = handle.ToString();
+            if (textureID != null) ret += "/hasImg";
+            if (fullAlpha) ret += "/fAlpha";
+            return ret;
+        }
     }
 }
