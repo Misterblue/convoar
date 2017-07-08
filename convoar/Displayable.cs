@@ -60,7 +60,7 @@ namespace org.herbal3d.convoar {
 
         public OMV.Vector3 offsetPosition = OMV.Vector3.Zero;
         public OMV.Quaternion offsetRotation = OMV.Quaternion.Identity;
-        public OMV.Vector3 scale = new OMV.Vector3(1,1,1);
+        public OMV.Vector3 scale = OMV.Vector3.One;
 
         // Information on how to display
         public DisplayableRenderable renderable = null;
@@ -137,6 +137,16 @@ namespace org.herbal3d.convoar {
 
         public RenderableMeshGroup() : base() {
             meshes = new List<RenderableMesh>();
+        }
+
+        // A DisplayableRenderable made of meshes has the hash of all its meshes and materials
+        public override BHash GetBHash() {
+            BHasher hasher = new BHasherMdjb2();
+            meshes.ForEach(m => {
+                hasher.Add(m.mesh.GetBHash());
+                hasher.Add(m.material.GetBHash());
+            });
+            return hasher.Finish();
         }
     }
         
