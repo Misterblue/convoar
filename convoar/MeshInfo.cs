@@ -30,6 +30,7 @@ namespace org.herbal3d.convoar {
         public List<OMVR.Vertex> vertexs;
         public List<int> indices;
         public OMV.Vector3 faceCenter;
+        public OMV.Vector3 scale;  // scaling that has been applied to this mesh
         public CoordAxis coordAxis = new CoordAxis(CoordAxis.RightHand_Zup);    // SL coordinates
 
         private BHash _hash = null;
@@ -38,7 +39,27 @@ namespace org.herbal3d.convoar {
             handle = new EntityHandleUUID();
             vertexs = new List<OMVR.Vertex>();
             indices = new List<int>();
+            scale = OMV.Vector3.One;
             faceCenter = OMV.Vector3.Zero;
+        }
+
+        // Create a new MeshInfo with a copy of what is in another MeshInfo.
+        // Note that we need to do a deep'ish copy since the values of the 
+        //     vertices may be modified in the copy.
+        // OMVR.Vertex and OMV.Vextor3 are structs so they are copied.
+        public MeshInfo(MeshInfo other) {
+            handle = new EntityHandleUUID();
+            vertexs = other.vertexs.ConvertAll(v => {
+                OMVR.Vertex newV = new OMVR.Vertex();
+                newV.Position = v.Position;
+                newV.Normal = v.Normal;
+                newV.TexCoord = v.TexCoord;
+                return newV;
+            });
+            // vertexs = new List<OMVR.Vertex>(other.vertexs);
+            indices = new List<int>(other.indices);
+            scale = new OMV.Vector3(other.scale);
+            faceCenter = new OMV.Vector3(other.faceCenter);
         }
 
         // The hash is just a function of the vertices and indices
