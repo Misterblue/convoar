@@ -51,6 +51,7 @@ namespace org.herbal3d.convoar {
         void Add(ulong c);
         void Add(float c);
         void Add(byte[] c, int offset, int len);
+        void Add(BHash c);
 
         BHash Finish();
         // Finish and add byte array. 
@@ -72,9 +73,10 @@ namespace org.herbal3d.convoar {
         public abstract override int GetHashCode();
     }
 
-    // A hash that is an Int32
+    // A hash that is an UInt64
     public class BHashULong : BHash {
-        private ulong _hash;
+        protected ulong _hash;
+
         public BHashULong() {
             _hash = 5131;
         }
@@ -201,6 +203,7 @@ namespace org.herbal3d.convoar {
         public abstract void Add(ulong c);
         public abstract void Add(float c);
         public abstract void Add(byte[] c, int offset, int len);
+        public abstract void Add(BHash c);
         public abstract BHash Finish();
         public abstract BHash Finish(byte[] c);
         public abstract BHash Finish(byte[] c, int offset, int len);
@@ -245,6 +248,11 @@ namespace org.herbal3d.convoar {
 
         public override void Add(byte[] c, int offset, int len) {
             AddBytes(c, offset, len);
+        }
+
+        public override void Add(BHash c) {
+            byte[] bytes = c.ToBytes();
+            AddBytes(bytes, 0, bytes.Length);
         }
 
         // Implemented by derived class
