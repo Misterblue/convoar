@@ -181,6 +181,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="..\libs\openjpeg-dotnet.dll" CopyToOutputDirectory="Always" Visible="true" />
+    <None Include="..\libs\openjpeg-dotnet-x86_64.dll" CopyToOutputDirectory="Always" Visible="true" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
