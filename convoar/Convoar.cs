@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -141,7 +142,15 @@ convoar
                         );
                     }
                     catch (Exception e) {
-                        Globals.log.ErrorFormat("{0} Exception converting scene: {1}", _logHeader, e);
+                        Globals.log.ErrorFormat("{0} Global exception converting scene: {1}", _logHeader, e);
+                        ReflectionTypeLoadException refE = e as ReflectionTypeLoadException;
+                        if (refE != null)
+                        {
+                            foreach (var ee in refE.LoaderExceptions)
+                            {
+                                Globals.log.ErrorFormat("{0} reference exception: {1}", _logHeader, ee);
+                            }
+                        }
                     }
                 }
             }
