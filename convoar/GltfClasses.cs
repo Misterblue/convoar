@@ -679,7 +679,7 @@ namespace org.herbal3d.convoar {
             children = new GltfNodes(pRoot);
             matrix = OMV.Matrix4.Zero;
             rotation = new OMV.Quaternion();
-            scale = new OMV.Vector3(1, 1, 1);
+            scale = OMV.Vector3.One;
             translation = new OMV.Vector3(0, 0, 0);
         }
 
@@ -687,6 +687,7 @@ namespace org.herbal3d.convoar {
             name = pDisplayable.name;
             translation = pDisplayable.offsetPosition;
             rotation = pDisplayable.offsetRotation;
+            scale = pDisplayable.scale;
             // only know how to handle a displayable of meshes
             mesh = GltfMesh.GltfMeshFactory(gltfRoot, pDisplayable.renderable, assetFetcher);
 

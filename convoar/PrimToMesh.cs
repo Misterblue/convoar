@@ -100,49 +100,51 @@ namespace org.herbal3d.convoar {
 
         private Promise<DisplayableRenderable> MeshFromPrimShapeData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
-            BHash primHash = new BHashULong(prim.GetHashCode());
-            return assetFetcher.GetRenderable(primHash, () => {
-                BConverterOS.LogBProgress("{0} inside builder definition", _logHeader);
-                return new Promise<DisplayableRenderable>((resolve, reject) => {
-                    OMVR.FacetedMesh mesh = _mesher.GenerateFacetedMesh(prim, lod);
-                    DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, mesh, prim.Textures.DefaultTexture, prim.Scale);
-                    BConverterOS.LogBProgress("{0} MeshFromPrimShapeData. numGenedMeshed={1}",
-                            _logHeader, ((RenderableMeshGroup)dr).meshes.Count);
-                    resolve(dr);
-                });
+            return new Promise<DisplayableRenderable>((resolve, reject) => {
+                OMVR.FacetedMesh mesh = _mesher.GenerateFacetedMesh(prim, lod);
+                DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, mesh, prim.Textures.DefaultTexture, prim.Scale);
+                BHash drHash = dr.GetBHash();
+                DisplayableRenderable realDR = assetFetcher.GetRenderable(drHash, () => { return dr; });
+                BConverterOS.LogBProgress("{0} MeshFromPrimShapeData. numGenedMeshed={1}",
+                        _logHeader, ((RenderableMeshGroup)realDR).meshes.Count);
+                resolve(realDR);
             });
         }
 
         private Promise<DisplayableRenderable> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
 
-            BHash primHash = new BHashULong(prim.GetHashCode());
-            return assetFetcher.GetRenderable(primHash, () => {
-                return new Promise<DisplayableRenderable>((resolve, reject) => {
-                    // Get the asset that the sculpty is built on
-                    EntityHandleUUID texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
-                    assetFetcher.FetchTexture(texHandle)
-                        .Catch((e) => {
-                            ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}: {2}", _logHeader, texHandle, e);
-                            reject(null);
-                        })
-                        .Then((bm) => {
-                            OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, bm.Image.ExportBitmap(), lod);
-                            DisplayableRenderable dr =
-                                    ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
-                            BConverterOS.LogBProgress("{0} MeshFromPrimSculptData. numFaces={1}, numGenedMeshed={2}",
-                                    _logHeader, fMesh.Faces.Count, ((RenderableMeshGroup)dr).meshes.Count);
-                            resolve(dr);
-                        });
-                });
+            return new Promise<DisplayableRenderable>((resolve, reject) => {
+                // Get the asset that the sculpty is built on
+                EntityHandleUUID texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
+                assetFetcher.FetchTexture(texHandle)
+                    .Catch((e) => {
+                        ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}: {2}", _logHeader, texHandle, e);
+                        reject(null);
+                    })
+                    .Then((bm) => {
+                        OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, bm.Image.ExportBitmap(), lod);
+                        DisplayableRenderable dr =
+                                ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
+                        BHash drHash = dr.GetBHash();
+                        DisplayableRenderable realDR = assetFetcher.GetRenderable(drHash, () => { return dr; });
+                        BConverterOS.LogBProgress("{0} MeshFromPrimSculptData. numFaces={1}, numGenedMeshed={2}",
+                                _logHeader, fMesh.Faces.Count, ((RenderableMeshGroup)realDR).meshes.Count);
+                        resolve(realDR);
+                    });
             });
         }
 
         private Promise<DisplayableRenderable> MeshFromPrimMeshData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
+
+            /*
+            // Fetch mesh from our asset storage.
+            // This assumes the hash for the mesh defintion is the UUID of the asset (in 'SculptTexture')
             EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
             BHash meshHash = new BHashULong(meshHandle.GetUUID().GetHashCode());
             return assetFetcher.GetRenderable(meshHash, () => {
+                // If the mesh asset doesn't already exist, build it.
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
                     assetFetcher.FetchRawAsset(meshHandle)
                         .Catch(e => {
@@ -150,9 +152,18 @@ namespace org.herbal3d.convoar {
                             reject(e);
                         })
                         .Then(meshBytes => {
-                            OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
-                            OMVR.FacetedMesh fMesh;
-                            if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
+                            // OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
+                            // if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
+                            OMVR.FacetedMesh fMesh = null;
+                            try
+                            {
+                                fMesh = _mesher.GenerateFacetedMeshMesh(prim, meshBytes);
+                            }
+                            catch (Exception e)
+                            {
+                                ConvOAR.Globals.log.ErrorFormat("{0} Exception in GenerateFacetedMeshMesh: {1}", _logHeader, e);
+                            }
+                            if (fMesh != null) {
                                 DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
                                 resolve(dr);
                             }
@@ -163,6 +174,41 @@ namespace org.herbal3d.convoar {
                         });
                 });
             });
+            */
+                EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
+                return new Promise<DisplayableRenderable>((resolve, reject) => {
+                    assetFetcher.FetchRawAsset(meshHandle)
+                        .Catch(e => {
+                            ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimMeshData: exception: {1}", _logHeader, e);
+                            reject(e);
+                        })
+                        .Then(meshBytes => {
+                            // OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
+                            // if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
+                            OMVR.FacetedMesh fMesh = null;
+                            try
+                            {
+                                fMesh = _mesher.GenerateFacetedMeshMesh(prim, meshBytes);
+                            }
+                            catch (Exception e)
+                            {
+                                ConvOAR.Globals.log.ErrorFormat("{0} Exception in GenerateFacetedMeshMesh: {1}", _logHeader, e);
+                            }
+                            if (fMesh != null) {
+                                DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
+                                // Don't know the hash of the DisplayableRenderable until after it has been created.
+                                // Now use the hash to see if this has already been done.
+                                // If this DisplayableRenderable has already been built, use the other one and throw this away.
+                                BHash drHash = dr.GetBHash();
+                                DisplayableRenderable realDR = assetFetcher.GetRenderable(drHash, () => { return dr; });
+                                resolve(realDR);
+                            }
+                            else {
+                                reject(new Exception("MeshFromPrimMeshData: could not decode mesh information from asset. ID="
+                                                + prim.ID.ToString()));
+                            }
+                        });
+                });
         }
 
         /// <summary>
@@ -193,15 +239,19 @@ namespace org.herbal3d.convoar {
 
             // Copy one face's mesh imformation from the FacetedMesh into a MeshInfo
             MeshInfo meshInfo = new MeshInfo();
-            meshInfo.vertexs = face.Vertices;
-            meshInfo.indices = new List<int>();
-            face.Indices.ForEach(ind => { meshInfo.indices.Add((int)ind); });
+            meshInfo.vertexs = new List<OMVR.Vertex>(face.Vertices);
+            meshInfo.indices = face.Indices.ConvertAll(ii => (int)ii);
             meshInfo.faceCenter = face.Center;
+            meshInfo.scale = primScale;
             BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: faceId={1}, numVert={2}, numInd={3}",
                  _logHeader, face.ID, meshInfo.vertexs.Count, meshInfo.indices.Count);
 
             if (!ConvOAR.Globals.parms.DisplayTimeScaling) {
-                ScaleMeshes(meshInfo, primScale);
+                if (ScaleMeshes(meshInfo, primScale)) {
+                    BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: scaled mesh to {1}",
+                             _logHeader, primScale);
+                }
+                meshInfo.scale = OMV.Vector3.One;
             }
 
             // Find or create the MaterialInfo for this face.
@@ -226,6 +276,8 @@ namespace org.herbal3d.convoar {
                 });
 
                 // Update the UV information for the texture mapping
+                BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: Converting tex coords using {1} texture",
+                             _logHeader, face.TextureFace == null ? "default" : "face");
                 _mesher.TransformTexCoords(meshInfo.vertexs, meshInfo.faceCenter,
                         face.TextureFace == null ? defaultTexture : face.TextureFace,  primScale);
             }
@@ -263,14 +315,18 @@ namespace org.herbal3d.convoar {
         }
 
         // Walk through all the vertices and scale the included meshes
-        public static void ScaleMeshes(MeshInfo meshInfo, OMV.Vector3 scale) {
+        // Returns 'true' of the mesh was changed.
+        public static bool ScaleMeshes(MeshInfo meshInfo, OMV.Vector3 scale) {
+            bool ret = false;
             if (scale.X != 1.0 || scale.Y != 1.0 || scale.Z != 1.0) {
+                ret = true;
                 for (int ii = 0; ii < meshInfo.vertexs.Count; ii++) {
                     OMVR.Vertex aVert = meshInfo.vertexs[ii];
                     aVert.Position *= scale;
                     meshInfo.vertexs[ii] = aVert;
                 }
             }
+            return ret;
         }
         // Loop over all the vertices in an ExtendedPrim and perform some operation on them
         public delegate void OperateOnVertex(ref OMVR.Vertex vert);

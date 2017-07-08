@@ -84,30 +84,22 @@ namespace org.herbal3d.convoar {
             return Displayables.TryGetValue(hash, out disp);
         }
 
-        public delegate Promise<DisplayableRenderable> RenderableBuilder();
-        public Promise<DisplayableRenderable> GetRenderable(BHash hash, RenderableBuilder builder) {
-        // public Promise<DisplayableRenderable> GetRenderable(BHash hash, Promise<DisplayableRenderable> builder) {
-            Promise<DisplayableRenderable> prom = new Promise<DisplayableRenderable>();
+        public delegate DisplayableRenderable RenderableBuilder();
+        public DisplayableRenderable GetRenderable(BHash hash, RenderableBuilder builder) {
+            DisplayableRenderable renderable = null;
 
             lock (Renderables) {
-                DisplayableRenderable renderable = null;
-                if (Renderables.TryGetValue(hash, out renderable)) {
-                    prom.Resolve(renderable);
-                }
-                else {
-                    builder()
-                    .Catch(e => {
+                if (!Renderables.TryGetValue(hash, out renderable)) {
+                    try {
+                        renderable = builder();
+                    }
+                    catch (Exception e) {
                         ConvOAR.Globals.log.ErrorFormat("{0} GetRenderable: builder exception: {1}", _logHeader, e);
-                        prom.Reject(e);
-                    })
-                    .Then(rend => {
-                        Renderables.Add(hash, rend);
-                        prom.Resolve(rend);
-                    });
+                    }
+                    Renderables.Add(hash, renderable);
                 }
             }
-
-            return prom;
+            return renderable;
         }
 
         public delegate MeshInfo MeshInfoBuilder();
