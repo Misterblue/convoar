@@ -30,11 +30,23 @@ using log4net;
 using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
+
     // Classes to handle persistance of output.
     // The converted images go somewhere for later fetching.
     // These classes wrap the logic for storing the binary, images, and json files
     //     for later processing.
     public class PersistRules {
+
+        public const string AssetTypeImage = "image";    // image of type PNG
+        public const string AssetTypeTransImage = "transimage";    // image that includes transparency
+        public const string AssetTypeMesh = "mesh";
+        public const string AssetTypeBuff = "buff";      // binary buffer
+        public const string AssetTypeGltf = "gltf";
+        public const string AssetTypeGltf2 = "gltf2";
+
+        public List<string> AssetTypeImages = new List<string>{ AssetTypeImage, AssetTypeTransImage };
+
+        private string _baseDirectory;
         private string _assetType;
         private string _assetInfo;
         private string _imageExtension; // the format type of the image as the filename extension
@@ -47,8 +59,34 @@ namespace org.herbal3d.convoar {
         private static Dictionary<int, ImageInfo> textureCache = new Dictionary<int, ImageInfo>();
 
         public PersistRules(string pAssetType, string pInfo) {
+            _assetType = pAssetType.ToLower();
+            _assetInfo = pInfo;
+            string subDirByType = "";
+            if (AssetTypeImages.Contains(_assetType)) {
+                subDirByType = ConvOAR.Globals.parms.TexturesDir;
+            }
+            if (_assetType == AssetTypeGltf) {
+                subDirByType = ConvOAR.Globals.parms.GltfDir;
+            if (_assetType == AssetTypeGltf2) {
+                subDirByType = ConvOAR.Globals.parms.Gltf2Dir;
+            }
+            _baseDirectory = JoinFilePieces(ConvOAR.Globals.parms.TargetDir, subDirByType);
+        }
+
+        public PersistRules(string pAssetType, string pInfo, string baseDirectory) {
             _assetType = pAssetType;
             _assetInfo = pInfo;
+            _baseDirectory = baseDirectory;
+        }
+
+        public PersistRules GetTypePersister(string pAssetType, string pInfo) {
+            return new PersistRules(pAssetType, pInfo, _baseDirectory);
+        }
+
+        public string baseDirectory {
+            get {
+                return _baseDirectory;
+            }
         }
 
         public string filename {
@@ -97,73 +135,14 @@ namespace org.herbal3d.convoar {
             return ret;
         }
 
-        /*
-        // Keep a cache if image data and either fetch and Image or return a cached instance.
-        public Promise<ImageInfo> GetUniqueTextureData(FaceInfo faceInfo, IAssetFetcher assetFetcher) {
-
-            string imageFilename = CreateFilename();
-
-            Promise<ImageInfo> prom = new Promise<ImageInfo>();
-            EntityHandle textureHandle = new EntityHandle((OMV.UUID)faceInfo.textureID);
-            int hash = textureHandle.GetHashCode();
-            if (textureCache.ContainsKey(hash)) {
-                // _context.log.DebugFormat("{0} GetUniqueTextureData. found image in cache. {1}", _logHeader, faceInfo.textureID);
-                prom.Resolve(textureCache[hash]);
-            }
-            else {
-                // If the converted file already exists, read that one in
-                if (File.Exists(imageFilename)) {
-                    var anImage = Image.FromFile(imageFilename);
-                    // _context.log.DebugFormat("{0} GetUniqueTextureData: reading in existing image from {1}", _logHeader, imageFilename);
-                    ImageInfo imgInfo = new ImageInfo(anImage);
-                    imgInfo.CheckForTransparency();
-                    textureCache.Add(hash, imgInfo);
-                    prom.Resolve(imgInfo);
-                }
-                else {
-                    // If not in the cache or converted file, get it from the asset server
-                    // _context.log.DebugFormat("{0} GetUniqueTextureData. not in file or cache. Fetching image. {1}", _logHeader, faceInfo.textureID);
-                    assetFetcher.FetchTextureAsImage(textureHandle)
-                    .Catch(e => {
-                        prom.Reject(new Exception(String.Format("Could not fetch texture. handle={0}. e={1}", textureHandle, e)));
-                    })
-                    .Then(theImage => {
-                        try {
-                            // _context.log.DebugFormat("{0} GetUniqueTextureData. adding to cache. {1}", _logHeader, faceInfo.textureID);
-                            ImageInfo imgInfo = new ImageInfo(theImage);
-                            imgInfo.CheckForTransparency();
-                            textureCache.Add(textureHandle.GetHashCode(), imgInfo);
-                            // _context.log.DebugFormat("{0} GetUniqueTextureData. handle={1}, hash={2}, caching", _logHeader, textureHandle, hash);
-                            prom.Resolve(imgInfo);
-                        }
-                        catch (Exception e) {
-                            prom.Reject(new Exception(String.Format("Texture conversion failed. handle={0}. e={1}", textureHandle, e)));
-                        }
-                    });
-                }
-            }
-            return prom;
-        }
-        */
-
-        // Function called below to create a URI from an asset ID.
-        // 'type' may be one of 'image', 'mesh', ?
-        // public delegate string MakeAssetURI(string type, OMV.UUID uuid);
-        public delegate void MakeAssetURI(string type, string info, out string filename, out string uri);
-        public const string AssetTypeImage = "image";    // image of type PNG
-        public const string AssetTypeTransImage = "transimage";    // image that includes transparency
-        public const string AssetTypeMesh = "mesh";
-        public const string AssetTypeBuff = "buff";      // binary buffer
-        public const string AssetTypeGltf = "gltf";
-
-        public string CreateFilename() {
+        private string CreateFilename() {
             return CreateFilename(_assetType, _assetInfo, SetImageExtension(_assetType));
         }
 
-        public static string CreateFilename(string assetType, string assetInfo, string imageExtension) {
+        private string CreateFilename(string assetType, string assetInfo, string imageExtension) {
             string fname = "";
 
-            string targetDir = ResolveAndCreateDir(ConvOAR.Globals.parms.GltfTargetDir);
+            string targetDir = _baseDirectory;
             if (targetDir != null) {
                 if (assetType == AssetTypeImage || assetType ==  AssetTypeTransImage) {
                     fname = JoinFilePieces(targetDir, assetInfo + "." + imageExtension);
@@ -181,14 +160,14 @@ namespace org.herbal3d.convoar {
             return fname;
         }
 
-        public string CreateURI() {
+        private string CreateURI() {
             return CreateURI(_assetType, _assetInfo, SetImageExtension(_assetType));
         }
 
-        public static string CreateURI(string assetType, string assetInfo, string imageExtension) {
+        private string CreateURI(string assetType, string assetInfo, string imageExtension) {
             string uuri = "";
 
-            string targetDir = ResolveAndCreateDir(ConvOAR.Globals.parms.GltfTargetDir);
+            string targetDir = _baseDirectory;
             if (targetDir != null) {
                 if (assetType == AssetTypeImage || assetType ==  AssetTypeTransImage) {
                     uuri = ConvOAR.Globals.parms.URIBase + assetInfo + "." + imageExtension;
@@ -215,7 +194,6 @@ namespace org.herbal3d.convoar {
             }
             return _imageExtension;
         }
-
 
         /// <summary>
         /// Turn the passed relative path name into an absolute directory path and
@@ -253,7 +231,9 @@ namespace org.herbal3d.convoar {
             // string separator = "/";     // both .NET and mono are happy with forward slash
             string f = first;
             string l = last;
+            while (f.EndsWith("/")) f = f.Substring(f.Length - 1);
             while (f.EndsWith(separator)) f = f.Substring(f.Length - 1);
+            while (l.StartsWith("/")) l = l.Substring(1, l.Length - 1);
             while (l.StartsWith(separator)) l = l.Substring(1, l.Length - 1);
             return f + separator + l;
         }

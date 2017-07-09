@@ -134,8 +134,11 @@ namespace org.herbal3d.convoar {
 
         public GltfSampler defaultSampler;
 
-        public Gltf() : base() {
+        public PersistRules persist;
+
+        public Gltf(PersistRules pPersist) : base() {
             gltfRoot = this;
+            persist = pPersist;
 
             extensionsUsed = new GltfAttributes();
             asset = new GltfAsset(this);
@@ -1079,7 +1082,7 @@ namespace org.herbal3d.convoar {
 
         public GltfBuffer(Gltf pRoot, string pID, string pType) : base(pRoot, pID) {
             type = pType;
-            persist = new PersistRules(PersistRules.AssetTypeBuff, pID);
+            persist = pRoot.persist.GetTypePersister(PersistRules.AssetTypeBuff, pID);
             gltfRoot.buffers.Add(new BHashULong(gltfRoot.buffers.Count), this);
             LogGltf("{0} GltfBuffer: created empty. ID={1}, Type={2}", "Gltf", ID, type);
         }
@@ -1333,10 +1336,12 @@ namespace org.herbal3d.convoar {
                 underlyingUUID = handleU.GetUUID();
             }
             if (imageInfo.hasTransprency) {
-                persist = new PersistRules(PersistRules.AssetTypeTransImage, imageInfo.handle.ToString());
+                persist = new PersistRules(PersistRules.AssetTypeTransImage, imageInfo.handle.ToString(),
+                            PersistRules.JoinFilePieces(ConvOAR.Globals.parms.TargetDir, ConvOAR.Globals.parms.TexturesDir));
             }
             else {
-                persist = new PersistRules(PersistRules.AssetTypeImage, imageInfo.handle.ToString());
+                persist = new PersistRules(PersistRules.AssetTypeImage, imageInfo.handle.ToString(),
+                            PersistRules.JoinFilePieces(ConvOAR.Globals.parms.TargetDir, ConvOAR.Globals.parms.TexturesDir));
             }
             gltfRoot.images.Add(pImageInfo.GetBHash(), this);
             LogGltf("{0} GltfImage: created. ID={1}, uuid={2}, imgInfoHandle={3}",

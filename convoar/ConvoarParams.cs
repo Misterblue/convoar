@@ -32,32 +32,40 @@ namespace org.herbal3d.convoar {
 
 #pragma warning disable CS0649  // disable 'never assigned' warnings
         public string InputOAR;
-        public string OutputDirectory;
+        public string OutputDir;        // Where to store all the files
+        public string URIBase;          // the URI base to be added to the beginning of the asset name
+
+        // Options for OAR processing
+        public string RegionName;       // Name to use for the region (since it's not in the OAR)
+        public string ConvoarID;        // GUID for 'convoar' identity (used for CreatorID, ...)
         public string Displacement;
         public string Rotation;
 
-        public string ConvoarID;    // GUID for 'convoar' identity (used for CreatorID, ...)
-        public string RegionName;   // Name to use for the region (since it's not in the OAR)
+        // Optimizations
+        public bool MergeStaticMeshes;  // whether to merge meshes with similar materials
+        public bool MergeNonStaticMeshes;   // whether to merge meshes with non-static entities
 
-        public bool MergeStaticMeshes;      // whether to merge meshes with similar materials
-        public bool MergeNonStaticMeshes;      // whether to merge meshes with non-static entities
-
-        public string GltfTargetDir;    // where to store all the Gltf files
+        // Export to files
+        public string TargetDir;        // where to store all the files
+        public bool ExportGltf;         // Output files in GLTF format
+        public string GltfDir;          // sub-directory for GLTF files
+        public int VerticesMaxForBuffer;    // Number of vertices to cause splitting of buffer files
+        public bool ExportGltf2;        // Output files in GLTFv2 format
+        public string Gltf2Dir;         // sub-directory for GLTFv2 files
         public bool ExportTextures;     // also export textures to the target dir
+        public string TexturesDir;        // sub-directory for all the image files
         public int MaxTextureSize;      // the maximum pixel dimension for images if exporting
         public string PreferredTextureFormat;   // "PNG", "JPEG", "GIF", "BMP"
         public string PreferredTextureFormatIfNoTransparency; // "PNG", "JPEG", "GIF", "BMP"
 
-        public bool HalfRezTerrain;     // whether to reduce the terrain resolution by 2
+        // Terrain processing
         public bool AddTerrainMesh;     // whether to create and add a terrain mesh
+        public bool HalfRezTerrain;     // whether to reduce the terrain resolution by 2
         public bool CreateTerrainSplat; // whether to generate a terrain mesh splat texture
-
-        public int VerticesMaxForBuffer;    // Number of vertices to cause splitting of buffer files
 
         public bool DisplayTimeScaling; // 'true' if to delay mesh scaling to display/GPU time
 
-        public string URIBase;          // the URI base to be added to the beginning of the asset name
-
+        // Debugging and Logging
         public bool Verbose;            // if set, force DEBUG logging
         public bool LogBuilding;        // if set, log detailed BScene/BInstance object building
         public bool LogGltfBuilding;    // if set, log detailed Gltf object building
@@ -90,27 +98,42 @@ namespace org.herbal3d.convoar {
         {
             new ParameterDefn<string>("InputOAR", "The input OAR file",
                 null),
-            new ParameterDefn<string>("OutputDirectory", "The directory (relative to simulator) to hold Basil assets",
-                "./BasilAssets", "d" ),
+            new ParameterDefn<string>("OutputDir", "The directory (relative to simulator) to store output files",
+                "./convoar", "d" ),
+            new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
+                "./" ),
+
+            // OAR reading parameters
+            new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",
+                "e67a2ff8-597d-4f03-b559-930aeaf4836b"),
+            new ParameterDefn<string>("RegionName", "Name to use for the region (since it's not in the OAR)",
+                String.Empty ),
             new ParameterDefn<string>("Displacement", "Optional displacement to add to OAR entites",
                 null ),
             new ParameterDefn<string>("Rotation", "Optional rotation to add to OAR entites",
                 null ),
 
-            new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",
-                "e67a2ff8-597d-4f03-b559-930aeaf4836b"),
-            new ParameterDefn<string>("RegionName", "Name to use for the region (since it's not in the OAR)",
-                String.Empty ),
-
+            // Optimizations
             new ParameterDefn<bool>("MergeStaticMeshes", "whether to merge meshes with similar materials",
                 true ),
             new ParameterDefn<bool>("MergeNonStaticMeshes", "whether to merge meshes within non-static entities ",
                 true ),
 
-            new ParameterDefn<string>("GltfTargetDir", "Where to store all the Gltf files",
-                "./gltf" ),
+            // Export to files
+            new ParameterDefn<bool>("ExportGltf", "Output files in GLTF format",
+                true ),
+            new ParameterDefn<string>("GltfDir", "sub-directory for GLTF files",
+                "gltf" ),
+            new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
+                50000 ),
+            new ParameterDefn<bool>("ExportGltf2", "Output files in GLTFv2 format",
+                false ),
+            new ParameterDefn<string>("Gltf2Dir", "sub-directory for GLTFv2 files",
+                "gltf2" ),
             new ParameterDefn<bool>("ExportTextures", "Convert textures to PNGs and export to target dir",
                 true ),
+            new ParameterDefn<string>("TexturesDir", "sub-directory for all the image files",
+                "images" ),
             new ParameterDefn<int>("MaxTextureSize", "The maximum pixel dimension for images if exporting",
                 256 ),
             new ParameterDefn<string>("PreferredTextureFormat", "One of: PNG, JPG, GIF, BMP",
@@ -118,6 +141,7 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPG, GIF, BMP",
                 "JPG"),
 
+            // Terrain processing
             new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
                 true ),
             new ParameterDefn<bool>("HalfRezTerrain", "Whether to reduce the terrain resolution by 2",
@@ -125,14 +149,10 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<bool>("CreateTerrainSplat", "whether to generate a terrain mesh splat texture",
                 true ),
 
-            new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
-                50000 ),
             new ParameterDefn<bool>("DisplayTimeScaling", "If to delay mesh scaling to display/GPU time",
                 false ),
 
-            new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
-                "./" ),
-
+            // Debugging and logging
             new ParameterDefn<bool>("Verbose", "if set, force DEBUG logging",
                 false ),
             new ParameterDefn<bool>("LogBuilding", "if set, log detailed BScene/BInstance object building",

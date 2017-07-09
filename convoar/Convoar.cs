@@ -122,27 +122,34 @@ convoar
                             // Perform any optimizations on the scene and its instances
 
                             // Output the transformed scene
-                            Gltf gltf = new Gltf();
-                            gltf.LoadScene(bScene, assetFetcher);
+                            if (Globals.parms.ExportGltf) {
+                                // Add the rules for persisting the loaded Gltf.
+                                PersistRules gltfPersist = new PersistRules(PersistRules.AssetTypeGltf, bScene.name,
+                                        PersistRules.JoinFilePieces(Globals.parms.TargetDir, Globals.parms.GltfDir));
+                                Gltf gltf = new Gltf(gltfPersist);
 
-                            Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
+                                gltf.LoadScene(bScene, assetFetcher);
 
-                            PersistRules.ResolveAndCreateDir(ConvOAR.Globals.parms.GltfTargetDir);
-                            string gltfFilename = PersistRules.CreateFilename(PersistRules.AssetTypeGltf, bScene.name, "");
+                                Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
 
-                            using (StreamWriter outt = File.CreateText(gltfFilename))
-                            {
-                                gltf.ToJSON(outt);
+                                PersistRules.ResolveAndCreateDir(gltf.persist.baseDirectory);
+
+                                using (StreamWriter outt = File.CreateText(gltfPersist.filename))
+                                {
+                                    gltf.ToJSON(outt);
+                                }
+                                gltf.WriteBinaryFiles();
+
+                                if (Globals.parms.ExportTextures) {
+                                    gltf.WriteImages();
+                                }
                             }
-                            gltf.WriteBinaryFiles();
-
-                            gltf.WriteImages();
 
                         });
                     }
