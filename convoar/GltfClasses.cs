@@ -1082,7 +1082,7 @@ namespace org.herbal3d.convoar {
 
         public GltfBuffer(Gltf pRoot, string pID, string pType) : base(pRoot, pID) {
             type = pType;
-            persist = pRoot.persist.GetTypePersister(PersistRules.AssetTypeBuff, pID);
+            persist = pRoot.persist.GetTypePersister(PersistRules.AssetType.Buff, pID);
             gltfRoot.buffers.Add(new BHashULong(gltfRoot.buffers.Count), this);
             LogGltf("{0} GltfBuffer: created empty. ID={1}, Type={2}", "Gltf", ID, type);
         }
@@ -1323,7 +1323,6 @@ namespace org.herbal3d.convoar {
     public class GltfImage : GltfClass {
         public OMV.UUID underlyingUUID;
         public ImageInfo imageInfo;
-        public PersistRules persist;
     
         public GltfImage(Gltf pRoot, string pID) : base(pRoot, pID) {
             // gltfRoot.images.Add(this);
@@ -1334,14 +1333,6 @@ namespace org.herbal3d.convoar {
             imageInfo = pImageInfo;
             if (pImageInfo.handle is EntityHandleUUID handleU) {
                 underlyingUUID = handleU.GetUUID();
-            }
-            if (imageInfo.hasTransprency) {
-                persist = new PersistRules(PersistRules.AssetTypeTransImage, imageInfo.handle.ToString(),
-                            PersistRules.JoinFilePieces(ConvOAR.Globals.parms.TargetDir, ConvOAR.Globals.parms.TexturesDir));
-            }
-            else {
-                persist = new PersistRules(PersistRules.AssetTypeImage, imageInfo.handle.ToString(),
-                            PersistRules.JoinFilePieces(ConvOAR.Globals.parms.TargetDir, ConvOAR.Globals.parms.TexturesDir));
             }
             gltfRoot.images.Add(pImageInfo.GetBHash(), this);
             LogGltf("{0} GltfImage: created. ID={1}, uuid={2}, imgInfoHandle={3}",
@@ -1359,7 +1350,7 @@ namespace org.herbal3d.convoar {
         public override void ToJSON(StreamWriter outt, int level) {
             outt.Write(" { ");
             bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", persist.uri);
+            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", imageInfo.persist.uri);
             outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
     }

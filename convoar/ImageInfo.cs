@@ -27,6 +27,7 @@ namespace org.herbal3d.convoar {
     public class ImageInfo {
         public EntityHandleUUID handle;
         public bool hasTransprency;
+        public PersistRules persist;    // information in filesystem storage of the image
         public Image image;
         public int xSize;
         public int ySize;
@@ -39,6 +40,7 @@ namespace org.herbal3d.convoar {
             handle = new EntityHandleUUID();
             hasTransprency = false;
             image = null;
+            persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString());
             xSize = ySize = 0;
         }
 
@@ -54,6 +56,12 @@ namespace org.herbal3d.convoar {
             xSize = image.Width;
             ySize = image.Height;
             hasTransprency = CheckForTransparency();
+            if (hasTransprency) {
+                persist = new PersistRules(PersistRules.AssetType.ImageTrans, handle.ToString());
+            }
+            else {
+                persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString());
+            }
             // ConvOAR.Globals.log.DebugFormat("{0} SetImage. ID={1}, xSize={2}, ySize={3}, hasTrans={4}",
             //             _logHeader, handle, xSize, ySize, hasTransprency);
         }

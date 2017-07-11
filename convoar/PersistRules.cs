@@ -37,17 +37,46 @@ namespace org.herbal3d.convoar {
     //     for later processing.
     public class PersistRules {
 
-        public const string AssetTypeImage = "image";    // image of type PNG
-        public const string AssetTypeTransImage = "transimage";    // image that includes transparency
-        public const string AssetTypeMesh = "mesh";
-        public const string AssetTypeBuff = "buff";      // binary buffer
-        public const string AssetTypeGltf = "gltf";
-        public const string AssetTypeGltf2 = "gltf2";
+        public enum AssetType {
+            Image,
+            ImageTrans,
+            Mesh,
+            Buff,
+            Gltf,
+            Gltf2
+        };
 
-        public List<string> AssetTypeImages = new List<string>{ AssetTypeImage, AssetTypeTransImage };
+        public enum TargetType {
+            Default,
+            PNG,
+            JPEG,
+            GIF,
+            BMP,
+            Obj,
+            Fbx,
+            Gltf
+        };
+
+        public Dictionary<AssetType, string> AssetTypeToSubDir = new Dictionary<AssetType, string>()
+            { { AssetType.Image, "image" },
+              { AssetType.ImageTrans, "image" },
+              { AssetType.Mesh, "" },
+              { AssetType.Buff, "" },
+              { AssetType.Gltf, "gltf" },
+              { AssetType.Gltf2, "gltf2" }
+        };
+
+        public Dictionary<TargetType, string> TargetTypeToExtension = new Dictionary<TargetType, string>()
+            { { TargetType.Default, "" },
+              { TargetType.PNG, "png" },
+              { TargetType.JPEG, "jpg" },
+              { TargetType.Obj, "obj" },
+              { TargetType.Gltf, "gltf" }
+        };
 
         private string _baseDirectory;
-        private string _assetType;
+        private AssetType _assetType;
+        private TargetType _targetType;
         private string _assetInfo;
         private string _imageExtension; // the format type of the image as the filename extension
 
@@ -55,37 +84,23 @@ namespace org.herbal3d.convoar {
         private static string _logHeader = "[PersistRules]";
     #pragma warning restore 414
 
-        // Texture cache used when processing one region
-        private static Dictionary<int, ImageInfo> textureCache = new Dictionary<int, ImageInfo>();
-
-        public PersistRules(string pAssetType, string pInfo) {
-            _assetType = pAssetType.ToLower();
+        public PersistRules(AssetType pAssetType, string pInfo) {
+            _assetType = pAssetType;
             _assetInfo = pInfo;
-            string subDirByType = "";
-            if (AssetTypeImages.Contains(_assetType)) {
-                subDirByType = ConvOAR.Globals.parms.TexturesDir;
-            }
-            if (_assetType == AssetTypeGltf) {
-                subDirByType = ConvOAR.Globals.parms.GltfDir;
-            if (_assetType == AssetTypeGltf2) {
-                subDirByType = ConvOAR.Globals.parms.Gltf2Dir;
-            }
+            string subDirByType = AssetTypeToSubDir[_assetType];
             _baseDirectory = JoinFilePieces(ConvOAR.Globals.parms.TargetDir, subDirByType);
         }
 
-        public PersistRules(string pAssetType, string pInfo, string baseDirectory) {
-            _assetType = pAssetType;
-            _assetInfo = pInfo;
-            _baseDirectory = baseDirectory;
-        }
-
         public PersistRules GetTypePersister(string pAssetType, string pInfo) {
-            return new PersistRules(pAssetType, pInfo, _baseDirectory);
+            return new PersistRules(pAssetType, pInfo);
         }
 
         public string baseDirectory {
             get {
                 return _baseDirectory;
+            }
+            set {
+                _baseDirectory = value;
             }
         }
 
@@ -102,7 +117,10 @@ namespace org.herbal3d.convoar {
         }
 
         public void WriteImage(ImageInfo imageInfo) {
-            string texFilename = CreateFilename();
+        }
+
+        public void WriteImage(ImageInfo imageInfo, TargetType targetType) {
+            string texFilename = CreateFilename(targetType);
             if (!File.Exists(texFilename)) {
                 Image texImage = imageInfo.image;
                 try {
@@ -116,20 +134,27 @@ namespace org.herbal3d.convoar {
             }
         }
 
-        private ImageFormat ConvertNameToFormatCode(string formatName) {
+        private ImageFormat ConvertTargetToImageFormatCode(TargetType targetType) {
             ImageFormat ret = ImageFormat.Png;
-            switch (formatName.ToLower()) {
-                case "png":
+            switch (targetType) {
+                case TargetType.PNG:
                     ret = ImageFormat.Png;
                     break;
-                case "gif":
+                case TargetType.GIF:
                     ret = ImageFormat.Gif;
                     break;
-                case "jpg":
+                case TargetType.JPEG:
                     ret = ImageFormat.Jpeg;
                     break;
-                case "bmp":
+                case TargetType.BMP:
                     ret = ImageFormat.Bmp;
+                    break;
+                case TargetType.Default:
+                default:
+                    if (_assetType == AssetType.ImageTrans) {
+                    }
+                    else
+                    
                     break;
             }
             return ret;
@@ -139,21 +164,21 @@ namespace org.herbal3d.convoar {
             return CreateFilename(_assetType, _assetInfo, SetImageExtension(_assetType));
         }
 
-        private string CreateFilename(string assetType, string assetInfo, string imageExtension) {
+        private string CreateFilename(AssetType assetType, string assetInfo, string imageExtension) {
             string fname = "";
 
             string targetDir = _baseDirectory;
             if (targetDir != null) {
-                if (assetType == AssetTypeImage || assetType ==  AssetTypeTransImage) {
+                if (assetType == AssetType.Image || assetType ==  AssetType.ImageTrans) {
                     fname = JoinFilePieces(targetDir, assetInfo + "." + imageExtension);
                 }
-                if (assetType == AssetTypeBuff) {
+                if (assetType == AssetType.Buff) {
                     fname = JoinFilePieces(targetDir, ConvOAR.Globals.contextName + "_" + assetInfo + ".bin");
                 }
-                if (assetType == AssetTypeMesh) {
+                if (assetType == AssetType.Mesh) {
                     fname = JoinFilePieces(targetDir, assetInfo + ".mesh");
                 }
-                if (assetType == AssetTypeGltf) {
+                if (assetType == AssetType.Gltf) {
                     fname = JoinFilePieces(targetDir, assetInfo + ".gltf");
                 }
             }
@@ -164,29 +189,29 @@ namespace org.herbal3d.convoar {
             return CreateURI(_assetType, _assetInfo, SetImageExtension(_assetType));
         }
 
-        private string CreateURI(string assetType, string assetInfo, string imageExtension) {
+        private string CreateURI(AssetType assetType, string assetInfo, string imageExtension) {
             string uuri = "";
 
             string targetDir = _baseDirectory;
             if (targetDir != null) {
-                if (assetType == AssetTypeImage || assetType ==  AssetTypeTransImage) {
+                if (assetType == AssetType.Image || assetType ==  AssetType.ImageTrans) {
                     uuri = ConvOAR.Globals.parms.URIBase + assetInfo + "." + imageExtension;
                 }
-                if (assetType == AssetTypeBuff) {
+                if (assetType == AssetType.Buff) {
                     uuri = ConvOAR.Globals.parms.URIBase + ConvOAR.Globals.contextName + "_" + assetInfo + ".bin";
                 }
-                if (assetType == AssetTypeMesh) {
+                if (assetType == AssetType.Mesh) {
                     uuri = ConvOAR.Globals.parms.URIBase + assetInfo + ".mesh";
                 }
-                if (assetType == AssetTypeGltf) {
+                if (assetType == AssetType.Gltf) {
                     uuri = ConvOAR.Globals.parms.URIBase + assetInfo + ".gltf";
                 }
             }
             return uuri;
         }
 
-        private string SetImageExtension(string assetType) {
-            if (assetType == AssetTypeTransImage) {
+        private string SetImageExtension(AssetType assetType) {
+            if (assetType == AssetType.ImageTrans) {
                 _imageExtension = ConvOAR.Globals.parms.PreferredTextureFormat.ToLower();
             }
             else {
