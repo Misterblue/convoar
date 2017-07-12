@@ -181,13 +181,7 @@ namespace org.herbal3d.convoar {
             GltfScene gltfScene = new GltfScene(this, scene.name);
             defaultSceneID = gltfScene.ID;
 
-            // Load Images
-            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load images");
-            assetFetcher.Images.ForEach(delegate(ImageInfo pImageInfo) {
-                GltfImage newImage = GltfImage.GltfImageFactory(this, pImageInfo);
-                GltfTexture newTexture = GltfTexture.GltfTextureFactory(this, pImageInfo, newImage);
-            });
-            // Load Materials
+            // Load Materials (and adds Textures and Images if referenced)
             ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load materials");
             assetFetcher.Materials.ForEach(delegate (MaterialInfo pMatInfo) {
                 GltfMaterial newMaterial = GltfMaterial.GltfMaterialFactory(this, pMatInfo);
@@ -938,7 +932,7 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfMaterial: created empty. ID={1}, name={2}", "Gltf", ID, name);
         }
 
-        public GltfMaterial(Gltf pRoot, MaterialInfo matInfo) : base(pRoot, matInfo.handle.ToString() + "_mat") {
+        public GltfMaterial(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) : base(pRoot, matInfo.handle.ToString() + "_mat") {
             values = new GltfAttributes();
             extensions = new GltfExtensions(pRoot);
             gltfRoot.materials.Add(matInfo.GetBHash(), this);
@@ -965,21 +959,26 @@ namespace org.herbal3d.convoar {
                         && matInfo.textureID != OMV.UUID.Zero
                         && matInfo.textureID != OMV.Primitive.TextureEntry.WHITE_TEXTURE) {
                 GltfTexture theTexture = null;
-                if (pRoot.textures.GetByUUID((OMV.UUID)matInfo.textureID, out theTexture)) {
-
-                    // Remove the defaults created above and add new values for the texture
-                    ext.values.Remove(GltfExtension.valDiffuse);
-                    ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
-
-                    ext.values.Remove(GltfExtension.valTransparent);
-                    if (theTexture.source != null && theTexture.source.imageInfo.hasTransprency) {
-                        // 'Transparent' says the image has some alpha that needs blending
-                        // the spec says default value is 'false' so only specify if 'true'
-                        ext.values.Add(GltfExtension.valTransparent, true);
+                if (!pRoot.textures.GetByUUID((OMV.UUID)matInfo.textureID, out theTexture)) {
+                    // The material references an image that has not been Gltf'ified.
+                    // Add the image to the Gltf collection of images..
+                    ImageInfo imageInfo;
+                    if (!assetFetcher.Images.TryGetValue(matInfo.image, out imageInfo)) {
+                        ConvOAR.Globals.log.ErrorFormat("{0} GltfMaterial: could not find image for texture. id={1}",
+                                "Gltf", matInfo.image);
                     }
+                    GltfImage newImage = GltfImage.GltfImageFactory(pRoot, imageInfo);
+                    theTexture = GltfTexture.GltfTextureFactory(pRoot, imageInfo, newImage);
                 }
-                else {
-                    ConvOAR.Globals.log.ErrorFormat("GltfClasses.GltfMaterial: texture not found. ID={0}", matInfo.textureID);
+                // Remove the defaults created above and add new values for the texture
+                ext.values.Remove(GltfExtension.valDiffuse);
+                ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
+
+                ext.values.Remove(GltfExtension.valTransparent);
+                if (theTexture.source != null && theTexture.source.imageInfo.hasTransprency) {
+                    // 'Transparent' says the image has some alpha that needs blending
+                    // the spec says default value is 'false' so only specify if 'true'
+                    ext.values.Add(GltfExtension.valTransparent, true);
                 }
             }
 
