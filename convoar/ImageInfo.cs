@@ -126,6 +126,14 @@ namespace org.herbal3d.convoar {
             return ret;
         }
 
+        public override string ToString()
+        {
+            return String.Format("id={0},{1}x{2}{3}", handle.GetUUID(),
+                            xSize, ySize,
+                            hasTransprency ? "/hasTrans" : "");
+        }
+
+
     }
 
 }
