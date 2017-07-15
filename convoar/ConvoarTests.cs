@@ -84,7 +84,7 @@ namespace org.herbal3d.convoar.tests {
                 Assert.Fail("Exception merging parameters: " + exceptionCode.ToString());
             }
             else {
-                Assert.AreEqual(outputDirectory, parms.OutputDirectory, "Output directory specification short form was not set");
+                Assert.AreEqual(outputDirectory, parms.OutputDir, "Output directory specification short form was not set");
                 Assert.AreEqual(true, parms.ExportTextures, "ExportTextures was not parameterized properly");
                 Assert.AreEqual("GIF", parms.PreferredTextureFormat, "Preferred texture format was not set");
                 Assert.AreEqual(true, parms.MergeStaticMeshes, "MergeStaticMeshes was not set");
@@ -189,8 +189,7 @@ namespace org.herbal3d.convoar.tests {
     }
 
     // =========================================================================================
-    // Test whether the coordinates and child rotations happen properly when
-    //    converting linksets.
+    // Test the operations of BHasher and BHash.
     [TestFixture]
     public class BHasherTests : ConvoarTestCase {
 
@@ -287,6 +286,19 @@ namespace org.herbal3d.convoar.tests {
         }
     }
 
+    // =========================================================================================
+    // Test the operations of PersistRules
+    [TestFixture]
+    public class PersistRulesTest : ConvoarTestCase {
+
+        [TestFixtureSetUp]
+        public void Init() {
+        }
+
+        [TestFixtureTearDown]
+        public void TearDown() {
+        }
+    }
     // =========================================================================================
     // Test whether the coordinates and child rotations happen properly when
     //    converting linksets.

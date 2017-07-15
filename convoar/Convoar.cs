@@ -96,7 +96,7 @@ convoar
                 Globals.log.ErrorFormat(Invocation());
                 return;
             }
-            if (String.IsNullOrEmpty(Globals.parms.OutputDirectory)) {
+            if (String.IsNullOrEmpty(Globals.parms.OutputDir)) {
                 _outputDir = "./out";
                 Globals.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
             }
@@ -121,36 +121,58 @@ convoar
 
                             // Perform any optimizations on the scene and its instances
 
-                            // Output the transformed scene
-                            if (Globals.parms.ExportGltf) {
-                                // Add the rules for persisting the loaded Gltf.
-                                PersistRules gltfPersist = new PersistRules(PersistRules.AssetTypeGltf, bScene.name,
-                                        PersistRules.JoinFilePieces(Globals.parms.TargetDir, Globals.parms.GltfDir));
-                                Gltf gltf = new Gltf(gltfPersist);
-
-                                gltf.LoadScene(bScene, assetFetcher);
-
-                                Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
-                                Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
-                                Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
-                                Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
-                                Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
-                                Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
-                                Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
-
-                                PersistRules.ResolveAndCreateDir(gltf.persist.baseDirectory);
-
-                                using (StreamWriter outt = File.CreateText(gltfPersist.filename))
-                                {
-                                    gltf.ToJSON(outt);
+                            // Create reduced resolution versions of the images
+                            int maxTextureSize = Globals.parms.MaxTextureSize;
+                            List<ImageInfo> resizedImages = new List<ImageInfo>();
+                            assetFetcher.Images.ForEach(delegate (ImageInfo img) {
+                                if (img.image.Width > maxTextureSize || img.image.Height > maxTextureSize) {
+                                    ImageInfo newImage = img.Clone();
+                                    newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
+                                    newImage.ConstrainTextureSize(maxTextureSize);
+                                    // The resized images go into a subdir named after the new size
+                                    newImage.persist.baseDirectory =
+                                        PersistRules.JoinFilePieces(newImage.persist.baseDirectory, maxTextureSize.ToString());
+                                    resizedImages.Add(newImage);
                                 }
-                                gltf.WriteBinaryFiles();
-
-                                if (Globals.parms.ExportTextures) {
-                                    gltf.WriteImages();
-                                }
+                            });
+                            if (resizedImages.Count > 0) {
+                                resizedImages.ForEach(img => {
+                                    assetFetcher.Images.Add(img.GetBHash(), img.handle, img);
+                                    Globals.log.DebugFormat("{0} resized image: {1} to {2}", _logHeader, img, img.persist.filename);
+                                });
                             }
 
+                            // Output the transformed scene
+                            if (Globals.parms.ExportGltf) {
+                                Gltf gltf = new Gltf(bScene.name);
+
+                                try {
+                                    gltf.LoadScene(bScene, assetFetcher);
+
+                                    Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
+
+                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+
+                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                        gltf.ToJSON(outt);
+                                    }
+                                    gltf.WriteBinaryFiles();
+
+                                    if (Globals.parms.ExportTextures) {
+                                        gltf.WriteImages();
+                                    }
+                                }
+                                catch (Exception e) {
+                                    Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
+                                }
+
+                            }
                         });
                     }
                     catch (Exception e) {

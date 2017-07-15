@@ -46,7 +46,6 @@ namespace org.herbal3d.convoar {
         public bool MergeNonStaticMeshes;   // whether to merge meshes with non-static entities
 
         // Export to files
-        public string TargetDir;        // where to store all the files
         public bool ExportGltf;         // Output files in GLTF format
         public string GltfDir;          // sub-directory for GLTF files
         public int VerticesMaxForBuffer;    // Number of vertices to cause splitting of buffer files
@@ -98,10 +97,10 @@ namespace org.herbal3d.convoar {
         {
             new ParameterDefn<string>("InputOAR", "The input OAR file",
                 null),
-            new ParameterDefn<string>("OutputDir", "The directory (relative to simulator) to store output files",
+            new ParameterDefn<string>("OutputDir", "The directory (relative to current dir) to store output files",
                 "./convoar", "d" ),
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
-                "./" ),
+                "../" ),
 
             // OAR reading parameters
             new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",

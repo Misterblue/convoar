@@ -135,6 +135,29 @@ namespace org.herbal3d.convoar {
             }
             return imageInfo;
         }
+        // Search through the images and get one that matches the hash but has a
+        //    size smaller than the constraint. Used for reduced resolution versions
+        //    of images.
+        public ImageInfo GetImageInfo(OMV.UUID uuid, int sizeContstraint) {
+            ImageInfo imageInfo = null;
+            lock (Images) {
+                Images.ForEach(delegate (ImageInfo img) {
+                    if (img.imageIdentifier == uuid) {
+                        if (img.xSize <= sizeContstraint && img.ySize <= sizeContstraint) {
+                            if (imageInfo != null) {
+                                if (imageInfo.xSize > img.xSize || imageInfo.ySize > img.ySize) {
+                                    imageInfo = img;
+                                }
+                            }
+                            else {
+                                imageInfo = img;
+                            }
+                        }
+                    }
+                });
+            }
+            return imageInfo;
+        }
 
     }
 

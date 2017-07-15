@@ -22,10 +22,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using OMV = OpenMetaverse;
+
 namespace org.herbal3d.convoar {
 
     public class ImageInfo {
         public EntityHandleUUID handle;
+        public OMV.UUID imageIdentifier;
         public bool hasTransprency;
         public PersistRules persist;    // information in filesystem storage of the image
         public Image image;
@@ -38,6 +41,7 @@ namespace org.herbal3d.convoar {
 
         public ImageInfo() {
             handle = new EntityHandleUUID();
+            imageIdentifier = handle.GetUUID(); // image is unique unless underlying set
             hasTransprency = false;
             image = null;
             persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString());
@@ -46,8 +50,16 @@ namespace org.herbal3d.convoar {
 
         public ImageInfo(Image pImage) {
             handle = new EntityHandleUUID();
+            imageIdentifier = handle.GetUUID(); // image is unique unless underlying set
             hasTransprency = false;
             this.SetImage(pImage);
+        }
+
+        // Create a new ImageInfo that has a copy of all the information from this one.
+        // THis creates a copy of the image so it can be modified without touching the original.
+        public ImageInfo Clone() {
+            Image imageCopy = (Image)image.Clone();
+            return new ImageInfo(imageCopy);
         }
 
         // Set the image into this structure and update all the auxillery info
@@ -121,6 +133,8 @@ namespace org.herbal3d.convoar {
                     g.DrawImage(image, rect);
                 }
                 image = thumbNail;
+                xSize = thumbNail.Width;
+                ySize = thumbNail.Height;
                 ret = true;
             }
             return ret;

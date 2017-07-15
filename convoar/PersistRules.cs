@@ -54,10 +54,14 @@ namespace org.herbal3d.convoar {
             BMP,
             Obj,
             Fbx,
-            Gltf
+            Mesh,
+            Buff,
+            Gltf,
+            Gltf2
         };
 
-        public Dictionary<AssetType, string> AssetTypeToSubDir = new Dictionary<AssetType, string>()
+        // Some asset types have their own sub-directory to live in
+        public readonly static Dictionary<AssetType, string> AssetTypeToSubDir = new Dictionary<AssetType, string>()
             { { AssetType.Image, "image" },
               { AssetType.ImageTrans, "image" },
               { AssetType.Mesh, "" },
@@ -66,42 +70,89 @@ namespace org.herbal3d.convoar {
               { AssetType.Gltf2, "gltf2" }
         };
 
-        public Dictionary<TargetType, string> TargetTypeToExtension = new Dictionary<TargetType, string>()
+        // Asset types have a target type when stored
+        public readonly static Dictionary<AssetType, TargetType> AssetTypeToTargetType = new Dictionary<AssetType, TargetType>()
+            { { AssetType.Image, TargetType.Default},
+              { AssetType.ImageTrans, TargetType.Default},
+              { AssetType.Mesh, TargetType.Mesh},
+              { AssetType.Buff, TargetType.Buff},
+              { AssetType.Gltf, TargetType.Gltf},
+              { AssetType.Gltf2, TargetType.Gltf2}
+        };
+
+        // The extension to add to target type filenames when stored
+        public readonly static Dictionary<TargetType, string> TargetTypeToExtension = new Dictionary<TargetType, string>()
             { { TargetType.Default, "" },
               { TargetType.PNG, "png" },
               { TargetType.JPEG, "jpg" },
+              { TargetType.GIF, "gif" },
+              { TargetType.BMP, "bmp" },
               { TargetType.Obj, "obj" },
-              { TargetType.Gltf, "gltf" }
+              { TargetType.Fbx, "fbx" },
+              { TargetType.Mesh, "mesh" },
+              { TargetType.Buff, "buf" },
+              { TargetType.Gltf, "gltf" },
+              { TargetType.Gltf2, "gltf2" }
         };
 
-        private string _baseDirectory;
+        // Parameter system can specify types to output. THis converts the parameter to a target type code
+        public readonly static Dictionary<string, TargetType> TextureFormatToTargetType = new Dictionary<string, TargetType>()
+            { { "png", TargetType.PNG},
+              { "gif", TargetType.GIF},
+              { "jpg", TargetType.JPEG},
+              { "jpeg", TargetType.JPEG},
+              { "bmp", TargetType.BMP}
+        };
+
+        // Output target formats use different conversion code parameters for .NET
+        public readonly static Dictionary<TargetType, ImageFormat> TargetTypeToImageFormat = new Dictionary<TargetType, ImageFormat>()
+            { { TargetType.PNG, ImageFormat.Png },
+              { TargetType.GIF, ImageFormat.Gif },
+              { TargetType.JPEG, ImageFormat.Jpeg },
+              { TargetType.BMP, ImageFormat.Bmp },
+              { TargetType.Default, ImageFormat.Png },
+        };
+
+        public string baseDirectory { get; set; }
         private AssetType _assetType;
         private TargetType _targetType;
         private string _assetInfo;
-        private string _imageExtension; // the format type of the image as the filename extension
 
     #pragma warning disable 414
         private static string _logHeader = "[PersistRules]";
     #pragma warning restore 414
 
+        // Rules for storing files into TargetDir and into type specific sub-directory therein
         public PersistRules(AssetType pAssetType, string pInfo) {
+            PersistInit(pAssetType, pInfo, TargetType.Default);
+        }
+
+        public PersistRules(AssetType pAssetType, string pInfo, TargetType pTargetType) {
+            PersistInit(pAssetType, pInfo, pTargetType);
+        }
+
+        private void PersistInit(AssetType pAssetType, string pInfo, TargetType pTargetType) {
             _assetType = pAssetType;
             _assetInfo = pInfo;
-            string subDirByType = AssetTypeToSubDir[_assetType];
-            _baseDirectory = JoinFilePieces(ConvOAR.Globals.parms.TargetDir, subDirByType);
+            _targetType = FigureOutTargetType();
+
+            baseDirectory = AssetTypeToSubDir[_assetType];
         }
 
-        public PersistRules GetTypePersister(string pAssetType, string pInfo) {
-            return new PersistRules(pAssetType, pInfo);
-        }
+        // If target type is not specified, select the image type depending on parameters and transparency
+        private TargetType FigureOutTargetType() {
+            TargetType ret = AssetTypeToTargetType[_assetType];
 
-        public string baseDirectory {
-            get {
-                return _baseDirectory;
+            // If target type is not specified, select the image type depending on parameters and transparency
+            if (_targetType == TargetType.Default) {
+                if (_assetType == AssetType.Image) {
+                    ret = TextureFormatToTargetType[ConvOAR.Globals.parms.PreferredTextureFormatIfNoTransparency.ToLower()];
+                }
+                if (_assetType == AssetType.ImageTrans) {
+                    ret = TextureFormatToTargetType[ConvOAR.Globals.parms.PreferredTextureFormat.ToLower()];
+                }
             }
-            set {
-                _baseDirectory = value;
-            }
+            return ret;
         }
 
         public string filename {
@@ -117,16 +168,14 @@ namespace org.herbal3d.convoar {
         }
 
         public void WriteImage(ImageInfo imageInfo) {
-        }
-
-        public void WriteImage(ImageInfo imageInfo, TargetType targetType) {
-            string texFilename = CreateFilename(targetType);
+            string texFilename = CreateFilename();
             if (!File.Exists(texFilename)) {
                 Image texImage = imageInfo.image;
                 try {
                     // _context.log.DebugFormat("{0} WriteOutImageForEP: id={1}, hasAlpha={2}, format={3}",
                     //                 _logHeader, faceInfo.textureID, faceInfo.hasAlpha, texImage.PixelFormat);
-                    texImage.Save(texFilename, ConvertNameToFormatCode(_imageExtension));
+                    PersistRules.ResolveAndCreateDir(texFilename);
+                    texImage.Save(texFilename, TargetTypeToImageFormat[_targetType]);
                 }
                 catch (Exception e) {
                     ConvOAR.Globals.log.ErrorFormat("{0} FAILED PNG FILE CREATION: {0}", e);
@@ -134,90 +183,15 @@ namespace org.herbal3d.convoar {
             }
         }
 
-        private ImageFormat ConvertTargetToImageFormatCode(TargetType targetType) {
-            ImageFormat ret = ImageFormat.Png;
-            switch (targetType) {
-                case TargetType.PNG:
-                    ret = ImageFormat.Png;
-                    break;
-                case TargetType.GIF:
-                    ret = ImageFormat.Gif;
-                    break;
-                case TargetType.JPEG:
-                    ret = ImageFormat.Jpeg;
-                    break;
-                case TargetType.BMP:
-                    ret = ImageFormat.Bmp;
-                    break;
-                case TargetType.Default:
-                default:
-                    if (_assetType == AssetType.ImageTrans) {
-                    }
-                    else
-                    
-                    break;
-            }
-            return ret;
-        }
 
         private string CreateFilename() {
-            return CreateFilename(_assetType, _assetInfo, SetImageExtension(_assetType));
-        }
-
-        private string CreateFilename(AssetType assetType, string assetInfo, string imageExtension) {
-            string fname = "";
-
-            string targetDir = _baseDirectory;
-            if (targetDir != null) {
-                if (assetType == AssetType.Image || assetType ==  AssetType.ImageTrans) {
-                    fname = JoinFilePieces(targetDir, assetInfo + "." + imageExtension);
-                }
-                if (assetType == AssetType.Buff) {
-                    fname = JoinFilePieces(targetDir, ConvOAR.Globals.contextName + "_" + assetInfo + ".bin");
-                }
-                if (assetType == AssetType.Mesh) {
-                    fname = JoinFilePieces(targetDir, assetInfo + ".mesh");
-                }
-                if (assetType == AssetType.Gltf) {
-                    fname = JoinFilePieces(targetDir, assetInfo + ".gltf");
-                }
-            }
-            return fname;
+            string fnbase = JoinFilePieces(ConvOAR.Globals.parms.OutputDir, baseDirectory);
+            return JoinFilePieces(fnbase, _assetInfo + "." + TargetTypeToExtension[_targetType]);
         }
 
         private string CreateURI() {
-            return CreateURI(_assetType, _assetInfo, SetImageExtension(_assetType));
-        }
-
-        private string CreateURI(AssetType assetType, string assetInfo, string imageExtension) {
-            string uuri = "";
-
-            string targetDir = _baseDirectory;
-            if (targetDir != null) {
-                if (assetType == AssetType.Image || assetType ==  AssetType.ImageTrans) {
-                    uuri = ConvOAR.Globals.parms.URIBase + assetInfo + "." + imageExtension;
-                }
-                if (assetType == AssetType.Buff) {
-                    uuri = ConvOAR.Globals.parms.URIBase + ConvOAR.Globals.contextName + "_" + assetInfo + ".bin";
-                }
-                if (assetType == AssetType.Mesh) {
-                    uuri = ConvOAR.Globals.parms.URIBase + assetInfo + ".mesh";
-                }
-                if (assetType == AssetType.Gltf) {
-                    uuri = ConvOAR.Globals.parms.URIBase + assetInfo + ".gltf";
-                }
-            }
-            return uuri;
-        }
-
-        private string SetImageExtension(AssetType assetType) {
-            if (assetType == AssetType.ImageTrans) {
-                _imageExtension = ConvOAR.Globals.parms.PreferredTextureFormat.ToLower();
-            }
-            else {
-                _imageExtension = ConvOAR.Globals.parms.PreferredTextureFormatIfNoTransparency.ToLower();
-            }
-            return _imageExtension;
+            string uribase = JoinURIPieces(ConvOAR.Globals.parms.URIBase, baseDirectory);
+            return JoinURIPieces(uribase, _assetInfo + "." + TargetTypeToExtension[_targetType]);
         }
 
         /// <summary>
@@ -230,6 +204,7 @@ namespace org.herbal3d.convoar {
             string absDir = null;
             try {
                 absDir = Path.GetFullPath(pDir);
+                absDir = Path.GetDirectoryName(absDir);
                 if (!Directory.Exists(absDir)) {
                     Directory.CreateDirectory(absDir);
                 }
@@ -252,14 +227,35 @@ namespace org.herbal3d.convoar {
         /// <param name="last"></param>
         /// <returns></returns>
         public static string JoinFilePieces(string first, string last) {
-            string separator = "" + Path.DirectorySeparatorChar;
-            // string separator = "/";     // both .NET and mono are happy with forward slash
+            // string separator = "" + Path.DirectorySeparatorChar;
+            string separator = "/";     // both .NET and mono are happy with forward slash
             string f = first;
             string l = last;
-            while (f.EndsWith("/")) f = f.Substring(f.Length - 1);
-            while (f.EndsWith(separator)) f = f.Substring(f.Length - 1);
-            while (l.StartsWith("/")) l = l.Substring(1, l.Length - 1);
-            while (l.StartsWith(separator)) l = l.Substring(1, l.Length - 1);
+            if (String.IsNullOrEmpty(f) && String.IsNullOrEmpty(l))
+                return String.Empty;
+            if (String.IsNullOrEmpty(f))
+                return l;
+            if (String.IsNullOrEmpty(l))
+                return f;
+            while (f.EndsWith("/")) f = f.Substring(0, f.Length - 1);
+            // while (f.EndsWith(separator)) f = f.Substring(0, f.Length - 1);
+            while (l.StartsWith("/")) l = l.Substring(1);
+            // while (l.StartsWith(separator)) l = l.Substring(1);
+            return f + separator + l;
+        }
+
+        public static string JoinURIPieces(string first, string last) {
+            string separator = "/";
+            string f = first;
+            string l = last;
+            if (String.IsNullOrEmpty(f) && String.IsNullOrEmpty(l))
+                return String.Empty;
+            if (String.IsNullOrEmpty(f))
+                return l;
+            if (String.IsNullOrEmpty(l))
+                return f;
+            while (f.EndsWith(separator)) f = f.Substring(0, f.Length - 1);
+            while (l.StartsWith(separator)) l = l.Substring(1);
             return f + separator + l;
         }
 

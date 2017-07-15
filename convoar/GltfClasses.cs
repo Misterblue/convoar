@@ -136,9 +136,9 @@ namespace org.herbal3d.convoar {
 
         public PersistRules persist;
 
-        public Gltf(PersistRules pPersist) : base() {
+        public Gltf(string pSceneName) : base() {
             gltfRoot = this;
-            persist = pPersist;
+            persist = new PersistRules(PersistRules.AssetType.Gltf, pSceneName);
 
             extensionsUsed = new GltfAttributes();
             asset = new GltfAsset(this);
@@ -180,12 +180,6 @@ namespace org.herbal3d.convoar {
             ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: loading scene {0}", scene.name);
             GltfScene gltfScene = new GltfScene(this, scene.name);
             defaultSceneID = gltfScene.ID;
-
-            // Load Materials (and adds Textures and Images if referenced)
-            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to load materials");
-            assetFetcher.Materials.ForEach(delegate (MaterialInfo pMatInfo) {
-                GltfMaterial newMaterial = GltfMaterial.GltfMaterialFactory(this, pMatInfo);
-            });
 
             // Adding the nodes creates all the GltfMesh's, etc.
             scene.instances.ForEach(pInstance => {
@@ -524,7 +518,7 @@ namespace org.herbal3d.convoar {
 
         public void WriteImages() {
             foreach (var img in images.Values) {
-                img.persist.WriteImage(img.imageInfo);
+                img.imageInfo.persist.WriteImage(img.imageInfo);
             }
         }
     }
@@ -774,7 +768,7 @@ namespace org.herbal3d.convoar {
             if (pDR is RenderableMeshGroup rmg) {
                 // Add the meshes in the RenderableMeshGroup as primitives in this mesh
                 rmg.meshes.ForEach(oneMesh => {
-                    GltfPrimitive prim = GltfPrimitive.GltfPrimitiveFactory(pRoot, oneMesh);
+                    GltfPrimitive prim = GltfPrimitive.GltfPrimitiveFactory(pRoot, oneMesh, assetFetcher);
                     primitives.Add(new BHashULong(primitives.Count), prim);
                 });
             }
@@ -846,22 +840,22 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfPrimitive: created empty. ID={1}", "Gltf", ID);
         }
 
-        public GltfPrimitive(Gltf pRoot, RenderableMesh pRenderableMesh) : base(pRoot, "primitive") {
+        public GltfPrimitive(Gltf pRoot, RenderableMesh pRenderableMesh, IAssetFetcher assetFetcher) : base(pRoot, "primitive") {
             mode = 4;
             meshInfo = pRenderableMesh.mesh;
             matInfo = pRenderableMesh.material;
 
-            material = GltfMaterial.GltfMaterialFactory(pRoot, matInfo);
+            material = GltfMaterial.GltfMaterialFactory(pRoot, matInfo, assetFetcher);
             BHash hash = pRenderableMesh.mesh.GetBHash();
             ID = hash.ToString();
             pRoot.primitives.Add(hash, this);
             LogGltf("{0} GltfPrimitive: created. ID={1}, mesh={2}", "Gltf", ID, meshInfo);
         }
 
-        public static GltfPrimitive GltfPrimitiveFactory(Gltf pRoot, RenderableMesh pRenderableMesh) {
+        public static GltfPrimitive GltfPrimitiveFactory(Gltf pRoot, RenderableMesh pRenderableMesh, IAssetFetcher assetFetcher) {
             GltfPrimitive prim = null;
             if (!pRoot.primitives.TryGetValue(pRenderableMesh.mesh.GetBHash(), out prim)) {
-                prim = new GltfPrimitive(pRoot, pRenderableMesh);
+                prim = new GltfPrimitive(pRoot, pRenderableMesh, assetFetcher);
             }
             return prim;
         }
@@ -955,21 +949,11 @@ namespace org.herbal3d.convoar {
                 ext.values.Add(GltfExtension.valTransparency, surfaceColor.A);
             }
 
-            if (matInfo.textureID != null
-                        && matInfo.textureID != OMV.UUID.Zero
-                        && matInfo.textureID != OMV.Primitive.TextureEntry.WHITE_TEXTURE) {
-                GltfTexture theTexture = null;
-                if (!pRoot.textures.GetByUUID((OMV.UUID)matInfo.textureID, out theTexture)) {
-                    // The material references an image that has not been Gltf'ified.
-                    // Add the image to the Gltf collection of images..
-                    ImageInfo imageInfo;
-                    if (!assetFetcher.Images.TryGetValue(matInfo.image, out imageInfo)) {
-                        ConvOAR.Globals.log.ErrorFormat("{0} GltfMaterial: could not find image for texture. id={1}",
-                                "Gltf", matInfo.image);
-                    }
-                    GltfImage newImage = GltfImage.GltfImageFactory(pRoot, imageInfo);
-                    theTexture = GltfTexture.GltfTextureFactory(pRoot, imageInfo, newImage);
-                }
+            // If the material has an image
+            if (matInfo.image != null) {
+                ImageInfo imageToUse = CheckForResizedImage(matInfo.image, assetFetcher);
+                GltfImage newImage = GltfImage.GltfImageFactory(pRoot, imageToUse);
+                GltfTexture theTexture = GltfTexture.GltfTextureFactory(pRoot, imageToUse, newImage);
                 // Remove the defaults created above and add new values for the texture
                 ext.values.Remove(GltfExtension.valDiffuse);
                 ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
@@ -987,10 +971,26 @@ namespace org.herbal3d.convoar {
                         "Gltf", ID, name, values.Count, extensions.Count);
         }
 
-        public static GltfMaterial GltfMaterialFactory(Gltf pRoot, MaterialInfo matInfo) {
+        // For Gltf (and the web browser) we can use reduced size images.
+        // Check if that is being done and find the reference to the resized image
+        private ImageInfo CheckForResizedImage(ImageInfo origImage, IAssetFetcher assetFetcher) {
+            ImageInfo ret = origImage;
+            int maxSize = ConvOAR.Globals.parms.MaxTextureSize;
+            if (maxSize > 0 && maxSize < 10000) {
+                if (origImage.xSize > maxSize || origImage.ySize > maxSize) {
+                    ImageInfo constraintedImage = assetFetcher.GetImageInfo(origImage.imageIdentifier, maxSize);
+                    if (constraintedImage != null) {
+                        ret = constraintedImage;
+                    }
+                }
+            }
+            return ret;
+        }
+
+        public static GltfMaterial GltfMaterialFactory(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
             GltfMaterial mat = null;
             if (!pRoot.materials.TryGetValue(matInfo.GetBHash(), out mat)) {
-                mat = new GltfMaterial(pRoot, matInfo);
+                mat = new GltfMaterial(pRoot, matInfo, assetFetcher);
             }
             return mat;
         }
@@ -1081,7 +1081,9 @@ namespace org.herbal3d.convoar {
 
         public GltfBuffer(Gltf pRoot, string pID, string pType) : base(pRoot, pID) {
             type = pType;
-            persist = pRoot.persist.GetTypePersister(PersistRules.AssetType.Buff, pID);
+            persist = new PersistRules(PersistRules.AssetType.Buff, pID);
+            // Buffs go into the directory of the root
+            persist.baseDirectory = pRoot.persist.baseDirectory;
             gltfRoot.buffers.Add(new BHashULong(gltfRoot.buffers.Count), this);
             LogGltf("{0} GltfBuffer: created empty. ID={1}, Type={2}", "Gltf", ID, type);
         }

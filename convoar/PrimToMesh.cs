@@ -269,11 +269,12 @@ namespace org.herbal3d.convoar {
                         .Then( img => {
                             imageInfo.SetImage(img);
                         });
-                    imageInfo.handle = textureHandle;
+                    imageInfo.imageIdentifier = (OMV.UUID)matInfo.textureID;
                     BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: create ImageInfo. hash={1}, id={2}",
                                     _logHeader, textureHash, imageInfo.handle);
                     return imageInfo;
                 });
+                matInfo.image = lookupImageInfo;
 
                 // Update the UV information for the texture mapping
                 BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: Converting tex coords using {1} texture",

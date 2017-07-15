@@ -282,54 +282,5 @@ namespace org.herbal3d.convoar {
                 ConvOAR.Globals.log.Log(msg, args);
             }
         }
-
-        /*
-        /// <summary>
-        /// Scan through all the ExtendedPrims and finish any texture updating.
-        /// This includes UV coordinate mappings and fetching any image that goes with the texture.
-        /// </summary>
-        /// <param name="epGroup">Collections of meshes to update</param>
-        /// <param name="assetFetcher">Fetcher for getting images, etc</param>
-        /// <param name="pMesher"></param>
-        private void UpdateTextureInfo(ExtendedPrimGroup epGroup, IAssetFetcher assetFetcher, PrimToMesh mesher) {
-            ExtendedPrim ep = epGroup.primaryExtendePrim;
-            foreach (FaceInfo faceInfo in ep.faces) {
-
-                // While we're in the neighborhood, map the texture coords based on the prim information
-                mesher.UpdateCoords(faceInfo, ep.fromOS.primitive);
-
-                UpdateFaceInfoWithTexture(faceInfo, assetFetcher);
-            }
-        }
-
-        // Check to see if the FaceInfo has a textureID and, if so, read it in and populate the FaceInfo
-        //    with that texture data.
-        public void UpdateFaceInfoWithTexture(FaceInfo faceInfo, IAssetFetcher assetFetcher) {
-            // If the texture includes an image, read it in.
-            OMV.UUID texID = faceInfo.textureEntry.TextureID;
-            try {
-                faceInfo.hasAlpha = (faceInfo.textureEntry.RGBA.A != 1.0f);
-                if (texID != OMV.UUID.Zero && texID != OMV.Primitive.TextureEntry.WHITE_TEXTURE) {
-                    faceInfo.textureID = texID;
-                    faceInfo.persist = new BasilPersist(Gltf.MakeAssetURITypeImage, texID.ToString());
-                    faceInfo.persist.GetUniqueTextureData(faceInfo, assetFetcher)
-                        .Catch(e => {
-                            // Could not get the texture. Print error and otherwise blank out the texture
-                            faceInfo.textureID = null;
-                            faceInfo.faceImage = null;
-                            ConvOAR.Globals.log.ErrorFormat("{0} UpdateTextureInfo. {1}", _logHeader, e);
-                        })
-                        .Then(imgInfo => {
-                            faceInfo.faceImage = imgInfo.image;
-                            faceInfo.hasAlpha |= imgInfo.hasTransprency;
-                        });
-                }
-            }
-            catch (Exception e) {
-                ConvOAR.Globals.log.ErrorFormat("{0}: UpdateFaceInfoWithTexture: exception updating faceInfo. id={1}: {2}",
-                                    _logHeader, texID, e);
-            }
-        }
-        */
     }
 }
