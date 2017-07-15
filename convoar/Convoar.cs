@@ -125,7 +125,7 @@ convoar
                             int maxTextureSize = Globals.parms.MaxTextureSize;
                             List<ImageInfo> resizedImages = new List<ImageInfo>();
                             assetFetcher.Images.ForEach(delegate (ImageInfo img) {
-                                if (img.image.Width > maxTextureSize || img.image.Height > maxTextureSize) {
+                                if (img.image != null && (img.image.Width > maxTextureSize || img.image.Height > maxTextureSize)) {
                                     ImageInfo newImage = img.Clone();
                                     newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
                                     newImage.ConstrainTextureSize(maxTextureSize);

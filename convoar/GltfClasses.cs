@@ -277,7 +277,7 @@ namespace org.herbal3d.convoar {
             // A key added to the buffer, vertices, and indices names to uniquify them
             byte[] binBuffRaw = new byte[paddedSizeofIndices + sizeofVertices];
             string buffNum =  String.Format("{0:000}", buffers.Count + 1);
-            string buffName = "buffer" + buffNum;
+            string buffName = this.defaultSceneID + "-buffer" + buffNum;
             GltfBuffer binBuff = new GltfBuffer(gltfRoot, buffName, "arraybuffer");
             binBuff.bufferBytes = binBuffRaw;
 

@@ -58,8 +58,11 @@ namespace org.herbal3d.convoar {
         // Create a new ImageInfo that has a copy of all the information from this one.
         // THis creates a copy of the image so it can be modified without touching the original.
         public ImageInfo Clone() {
-            Image imageCopy = (Image)image.Clone();
-            return new ImageInfo(imageCopy);
+            ImageInfo ret = new ImageInfo();
+            if (image != null) {
+                ret.SetImage((Image)image.Clone());
+            }
+            return ret;
         }
 
         // Set the image into this structure and update all the auxillery info
@@ -113,7 +116,7 @@ namespace org.herbal3d.convoar {
         public bool ConstrainTextureSize(int maxTextureSize) {
             bool ret = false;
             int size = maxTextureSize;
-            if (image.Width > size || image.Height > size) {
+            if (image != null && (image.Width > size || image.Height > size)) {
                 int sizeW = size;
                 int sizeH = size;
                 /*

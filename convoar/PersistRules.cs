@@ -169,7 +169,7 @@ namespace org.herbal3d.convoar {
 
         public void WriteImage(ImageInfo imageInfo) {
             string texFilename = CreateFilename();
-            if (!File.Exists(texFilename)) {
+            if (imageInfo.image != null && !File.Exists(texFilename)) {
                 Image texImage = imageInfo.image;
                 try {
                     // _context.log.DebugFormat("{0} WriteOutImageForEP: id={1}, hasAlpha={2}, format={3}",

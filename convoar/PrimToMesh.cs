@@ -266,6 +266,11 @@ namespace org.herbal3d.convoar {
                     // The image is not in the cache yet so create an ImageInfo entry for it
                     ImageInfo imageInfo = new ImageInfo();
                     assetFetcher.FetchTextureAsImage(textureHandle)
+                        .Catch( e => {
+                            // Failure getting the image
+                            ConvOAR.Globals.log.ErrorFormat("{0} Failure fetching texture. id={1}. {2}",
+                                        _logHeader, matInfo.textureID, e);
+                        })
                         .Then( img => {
                             imageInfo.SetImage(img);
                         });
