@@ -270,6 +270,7 @@ namespace org.herbal3d.convoar {
                             // Failure getting the image
                             ConvOAR.Globals.log.ErrorFormat("{0} Failure fetching texture. id={1}. {2}",
                                         _logHeader, matInfo.textureID, e);
+                            // In this case, ImageInfo.image remains 'null' and everyone has to check if it's set.
                         })
                         .Then( img => {
                             imageInfo.SetImage(img);

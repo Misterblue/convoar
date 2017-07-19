@@ -32,12 +32,28 @@ namespace org.herbal3d.convoar {
     public abstract class GltfClass {
         public Gltf gltfRoot;
         public string ID;
+        public int referenceID;
         public abstract void ToJSON(StreamWriter outt, int level);
 
         public GltfClass() { }
         public GltfClass(Gltf pRoot, string pID) {
             gltfRoot = pRoot;
             ID = pID;
+            referenceID = -1;   // illegal value that could show up when debugging
+        }
+
+        // Depending on the Gltf version, return the proper reference to this instance
+        public Object VersionRef {
+            get {
+                Object ret = null;
+                if (gltfRoot.IsGltfv2) {
+                    ret = referenceID;
+                }
+                else {
+                    ret = ID;
+                }
+                return ret;
+            }
         }
 
         // Output messge of --LogGltfBuilding was specified
@@ -57,7 +73,23 @@ namespace org.herbal3d.convoar {
             gltfRoot = pRoot;
         }
 
+        // Gltfv2 references items by array index. Make sure all reference index
+        //    numbers are up to date.
+        public void UpdateGltfv2ReferenceIndexes() {
+            int refIndex = 0;
+            foreach (T entry in this.Values) {
+                GltfClass entryGltf = entry as GltfClass;
+                if (entryGltf != null) {
+                    entryGltf.referenceID = refIndex;
+                }
+                refIndex++;
+            }
+        }
+
         public void ToJSONArrayOfIDs(StreamWriter outt, int level) {
+            // An array of references.
+            // GltfClass.VersionRef will return either a number or name depending on
+            //    whether GLTFv1 or GLTFv2.
             outt.Write("[ ");
             if (this.Count != 0)
                 outt.Write("\n");
@@ -67,13 +99,49 @@ namespace org.herbal3d.convoar {
                     outt.Write(",\n");
                 }
                 GltfClass gl = xx as GltfClass;
-                outt.Write(JSONHelpers.Indent(level) + "\"" + gl.ID +"\"");
+                outt.Write(JSONHelpers.Indent(level) + "\"" + gl.VersionRef + "\"");
                 first = false;
             };
             outt.Write("]");
         }
 
-        public void ToJSONMapOfJSON(StreamWriter outt, int level) {
+        public void ToJSONReferencedObjects(StreamWriter outt, int level) {
+            if (gltfRoot.IsGltfv2) {
+                outt.Write("[ ");
+                // GLTFv2 keeps referenced objects as an array indexed by number
+                if (this.Count != 0)
+                    outt.Write("\n");
+                bool first = true;
+                foreach (var xx in this.Values) {
+                    if (!first) {
+                        outt.Write(",\n");
+                    }
+                    GltfClass gl = xx as GltfClass;
+                    gl.ToJSON(outt, level + 1);
+                    first = false;
+                };
+                outt.Write(" ]");
+            }
+            else {
+                // GLTFv1 keeps referenced objects as a dictionary indexed by an object name
+                outt.Write("{ ");
+                if (this.Count != 0)
+                    outt.Write("\n");
+                bool first = true;
+                foreach (var xx in this.Values) {
+                    if (!first) {
+                        outt.Write(",\n");
+                    }
+                    GltfClass gl = xx as GltfClass;
+                    outt.Write(JSONHelpers.Indent(level) + "\"" + gl.ID + "\": ");
+                    gl.ToJSON(outt, level + 1);
+                    first = false;
+                };
+                outt.Write(" }");
+            }
+        }
+
+        public void ToJSONMapOfNames(StreamWriter outt, int level) {
             outt.Write("{ ");
             if (this.Count != 0)
                 outt.Write("\n");
@@ -84,7 +152,7 @@ namespace org.herbal3d.convoar {
                 }
                 GltfClass gl = xx as GltfClass;
                 outt.Write(JSONHelpers.Indent(level) + "\"" + gl.ID + "\": ");
-                gl.ToJSON(outt, level+1);
+                gl.ToJSON(outt, level + 1);
                 first = false;
             };
             outt.Write(" }");
@@ -111,6 +179,8 @@ namespace org.herbal3d.convoar {
     public class Gltf : GltfClass {
         private static string _logHeader = "[Gltf]";
 
+        public int GltfVersion = 1;
+
         public GltfAttributes extensionsUsed;   // list of extensions used herein
 
         public string defaultSceneID;   // ID of default scene
@@ -136,9 +206,15 @@ namespace org.herbal3d.convoar {
 
         public PersistRules persist;
 
-        public Gltf(string pSceneName) : base() {
+        public Gltf(string pSceneName, int pGltfVersion) : base() {
             gltfRoot = this;
-            persist = new PersistRules(PersistRules.AssetType.Gltf, pSceneName);
+            GltfVersion = pGltfVersion;
+            if (IsGltfv2) {
+                persist = new PersistRules(PersistRules.AssetType.Gltf2, pSceneName);
+            }
+            else {
+                persist = new PersistRules(PersistRules.AssetType.Gltf, pSceneName);
+            }
 
             extensionsUsed = new GltfAttributes();
             asset = new GltfAsset(this);
@@ -165,6 +241,32 @@ namespace org.herbal3d.convoar {
             defaultSampler.values.Add("minFilter", WebGLConstants.LINEAR_MIPMAP_LINEAR);
             defaultSampler.values.Add("wrapS", WebGLConstants.REPEAT);
             defaultSampler.values.Add("wrapT", WebGLConstants.REPEAT);
+        }
+
+        public void UpdateGltfv2ReferenceIndexes() {
+            // extensionsUsed.UpdateGltfv2ReferenceIndexes();
+            // asset.UpdateGltfv2ReferenceIndexes();
+            scenes.UpdateGltfv2ReferenceIndexes();
+            nodes.UpdateGltfv2ReferenceIndexes();
+            meshes.UpdateGltfv2ReferenceIndexes();
+            materials.UpdateGltfv2ReferenceIndexes();
+            accessors.UpdateGltfv2ReferenceIndexes();
+            bufferViews.UpdateGltfv2ReferenceIndexes();
+            buffers.UpdateGltfv2ReferenceIndexes();
+            techniques.UpdateGltfv2ReferenceIndexes();
+            programs.UpdateGltfv2ReferenceIndexes();
+            shaders.UpdateGltfv2ReferenceIndexes();
+            textures.UpdateGltfv2ReferenceIndexes();
+            images.UpdateGltfv2ReferenceIndexes();
+            samplers.UpdateGltfv2ReferenceIndexes();
+
+            primitives.UpdateGltfv2ReferenceIndexes();
+        }
+
+        // Return 'true' if processing in Gltf version 2 format
+        public bool IsGltfv2 {
+            get { return GltfVersion == 2; }
+            set { GltfVersion = 2; }
         }
 
         // Say this scene is using the extension.
@@ -195,6 +297,7 @@ namespace org.herbal3d.convoar {
             //   the meshes and create the Buffers, BufferViews, and Accessors.
             ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to build buffers");
             BuildAccessorsAndBuffers();
+            UpdateGltfv2ReferenceIndexes();
             ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: done loading");
         }
 
@@ -415,6 +518,7 @@ namespace org.herbal3d.convoar {
         }
 
         public void ToJSON(StreamWriter outt) {
+            UpdateGltfv2ReferenceIndexes();
             this.ToJSON(outt, 0);
         }
 
@@ -423,6 +527,13 @@ namespace org.herbal3d.convoar {
 
             if (extensionsUsed.Count > 0) {
                 outt.Write(JSONHelpers.Indent(level) + "\"extensionsUsed\": ");
+                // the extensions are listed here as an array of names
+                extensionsUsed.ToJSONIDArray(outt, level+1);
+                outt.Write(",\n");
+            }
+
+            if (gltfRoot.IsGltfv2 && extensionsUsed.Count > 0) {
+                outt.Write(JSONHelpers.Indent(level) + "\"extensionsRequired\": ");
                 // the extensions are listed here as an array of names
                 extensionsUsed.ToJSONIDArray(outt, level+1);
                 outt.Write(",\n");
@@ -561,15 +672,16 @@ namespace org.herbal3d.convoar {
 
     // =============================================================
     public class GltfAsset : GltfClass {
-        public string generator = "BasilConversion";
+        public string generator = "Convoar";
         public bool premulitpliedAlpha = false;
-        public string version = "1.1";
+        public string version = "1";
         public GltfAttributes profile;
 
         public GltfAsset(Gltf pRoot) : base(pRoot, "") {
             profile = new GltfAttributes();
             profile.Add("api", "WebGL");
             profile.Add("version", "1.0");
+            version = pRoot.GltfVersion.ToString();
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
@@ -590,7 +702,7 @@ namespace org.herbal3d.convoar {
         public GltfScenes(Gltf pRoot) : base(pRoot) {
         }
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -626,7 +738,7 @@ namespace org.herbal3d.convoar {
         }
             
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             outt.Write(JSONHelpers.Indent(level) + "\"nodes\": ");
@@ -706,6 +818,7 @@ namespace org.herbal3d.convoar {
             bool first = true;
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
             if (matrix != OMV.Matrix4.Zero) {
+                // If a matrix is specified, output the matrix rather than the translation, scale, ...
                 JSONHelpers.WriteJSONValueLine(outt, level, ref first, "matrix", matrix);
             }
             else {
@@ -713,12 +826,19 @@ namespace org.herbal3d.convoar {
                 JSONHelpers.WriteJSONValueLine(outt, level, ref first, "scale", scale);
                 JSONHelpers.WriteJSONValueLine(outt, level, ref first, "rotation", OMV.Quaternion.Normalize(rotation));
             }
-            JSONHelpers.WriteJSONLineEnding(outt, ref first);
-            outt.Write(JSONHelpers.Indent(level) + "\"children\": ");
-            children.ToJSONArrayOfIDs(outt, level+1);
+            if (children.Count > 0) {
+                JSONHelpers.WriteJSONLineEnding(outt, ref first);
+                outt.Write(JSONHelpers.Indent(level) + "\"children\": ");
+                children.ToJSONArrayOfIDs(outt, level+1);
+            }
 
             // JSONHelpers.WriteJSONValueLine(outt, level, ref first, "mesh", mesh.ID);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "meshes", new string[] { mesh.ID } );
+            if (gltfRoot.IsGltfv2) {
+                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "mesh", mesh.referenceID );
+            }
+            else {
+                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "meshes", new string[] { mesh.ID } );
+            }
             outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
     }
@@ -729,7 +849,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -786,7 +906,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write("{\n");
+            outt.Write(JSONHelpers.Indent(level) + "{\n");
             bool first = true;
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
             JSONHelpers.WriteJSONLineEnding(outt, ref first);
@@ -802,7 +922,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -866,22 +986,22 @@ namespace org.herbal3d.convoar {
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "mode", mode);
 
             if (indices != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "indices", indices.ID);
+                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "indices", indices.VersionRef);
             }
             if (material != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "material", material.ID);
+                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "material", material.VersionRef);
             }
             JSONHelpers.WriteJSONLineEnding(outt, ref first);
             bool first2 = true;
             outt.Write(JSONHelpers.Indent(level) + "\"attributes\": {\n");
             if (normals != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "NORMAL", normals.ID);
+                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "NORMAL", normals.VersionRef);
             }
             if (position != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "POSITION", position.ID);
+                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "POSITION", position.VersionRef);
             }
             if (texcoord != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "TEXCOORD_0", texcoord.ID);
+                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "TEXCOORD_0", texcoord.VersionRef);
             }
             outt.Write("\n" + JSONHelpers.Indent(level) + "}");
             outt.Write("\n" + JSONHelpers.Indent(level) + " }");
@@ -894,7 +1014,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -956,7 +1076,7 @@ namespace org.herbal3d.convoar {
                 GltfTexture theTexture = GltfTexture.GltfTextureFactory(pRoot, imageToUse, newImage);
                 // Remove the defaults created above and add new values for the texture
                 ext.values.Remove(GltfExtension.valDiffuse);
-                ext.values.Add(GltfExtension.valDiffuse, theTexture.ID);
+                ext.values.Add(GltfExtension.valDiffuse, theTexture.VersionRef);
 
                 ext.values.Remove(GltfExtension.valTransparent);
                 if (theTexture.source != null && theTexture.source.imageInfo.hasTransprency) {
@@ -1019,7 +1139,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1043,7 +1163,7 @@ namespace org.herbal3d.convoar {
         public override void ToJSON(StreamWriter outt, int level) {
             outt.Write(" { ");
             bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "bufferView", bufferView.ID);
+            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "bufferView", bufferView.VersionRef);
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "count", count);
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "componentType", componentType);
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "type", type);
@@ -1063,7 +1183,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1104,7 +1224,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1125,7 +1245,7 @@ namespace org.herbal3d.convoar {
         public override void ToJSON(StreamWriter outt, int level) {
             outt.Write(" { ");
             bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "buffer", buffer.ID);
+            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "buffer", buffer.VersionRef);
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "byteOffset", byteOffset);
             if (byteLength > 0)
                 JSONHelpers.WriteJSONValueLine(outt, level, ref first, "byteLength", byteLength);
@@ -1141,7 +1261,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1175,7 +1295,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1200,7 +1320,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1225,7 +1345,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1290,9 +1410,9 @@ namespace org.herbal3d.convoar {
             if (internalFormat != 0)
                 JSONHelpers.WriteJSONValueLine(outt, level, ref first, "internalFormat", internalFormat);
             if (source != null)
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "source", source.ID);
+                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "source", source.VersionRef);
             if (sampler != null)
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "sampler", sampler.ID);
+                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "sampler", sampler.VersionRef);
             outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
     }
@@ -1303,7 +1423,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1362,7 +1482,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONReferencedObjects(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
@@ -1388,7 +1508,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfJSON(outt, level+1);
+            this.ToJSONMapOfNames(outt, level+1);
         }
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);

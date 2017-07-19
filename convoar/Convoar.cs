@@ -142,9 +142,9 @@ convoar
                                 });
                             }
 
-                            // Output the transformed scene
+                            // Output the transformed scene as Gltf version 1 or 2
                             if (Globals.parms.ExportGltf) {
-                                Gltf gltf = new Gltf(bScene.name);
+                                Gltf gltf = new Gltf(bScene.name, 1);
 
                                 try {
                                     gltf.LoadScene(bScene, assetFetcher);
@@ -171,8 +171,37 @@ convoar
                                 catch (Exception e) {
                                     Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
                                 }
-
                             }
+                            if (Globals.parms.ExportGltf2) {
+                                Gltf gltf = new Gltf(bScene.name, 2);
+
+                                try {
+                                    gltf.LoadScene(bScene, assetFetcher);
+
+                                    Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
+
+                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+
+                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                        gltf.ToJSON(outt);
+                                    }
+                                    gltf.WriteBinaryFiles();
+
+                                    if (Globals.parms.ExportTextures) {
+                                        gltf.WriteImages();
+                                    }
+                                }
+                                catch (Exception e) {
+                                    Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
+                                }
+                            }
+
                         });
                     }
                     catch (Exception e) {
