@@ -56,6 +56,7 @@ namespace org.herbal3d.convoar {
         public int MaxTextureSize;      // the maximum pixel dimension for images if exporting
         public string PreferredTextureFormat;   // "PNG", "JPEG", "GIF", "BMP"
         public string PreferredTextureFormatIfNoTransparency; // "PNG", "JPEG", "GIF", "BMP"
+        public bool DoubleSided;        // specify whether double sided mesh rendering
 
         // Terrain processing
         public bool AddTerrainMesh;     // whether to create and add a terrain mesh
@@ -139,6 +140,8 @@ namespace org.herbal3d.convoar {
                 "PNG"),
             new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPG, GIF, BMP",
                 "JPG"),
+            new ParameterDefn<bool>("DoubleSided", "specify whether double sided mesh rendering",
+                true),
 
             // Terrain processing
             new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
