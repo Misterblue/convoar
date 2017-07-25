@@ -125,6 +125,19 @@ namespace org.herbal3d.convoar {
                 }
                 ret += " ]";
             }
+            else if (val is Dictionary<string,Object>) {
+                Dictionary<string, Object> dict = (Dictionary<string, Object>)val;
+                ret = " { ";
+                bool first = true;
+                foreach (var key in dict.Keys) {
+                    if (!first) ret += ",";
+                    first = false;
+                    ret += "\"" + key + "\": ";
+                    ret += CreateJSONValue(dict[key]);
+                }
+                ret += " }";
+
+            }
             else {
                 ret = val.ToString();
             }
