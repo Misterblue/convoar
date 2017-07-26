@@ -62,8 +62,8 @@ namespace org.herbal3d.convoar {
 
         // Some asset types have their own sub-directory to live in
         public readonly static Dictionary<AssetType, string> AssetTypeToSubDir = new Dictionary<AssetType, string>()
-            { { AssetType.Image, "image" },
-              { AssetType.ImageTrans, "image" },
+            { { AssetType.Image, "images" },
+              { AssetType.ImageTrans, "images" },
               { AssetType.Mesh, "" },
               { AssetType.Buff, "" },
               { AssetType.Gltf, "gltf" },
@@ -92,7 +92,7 @@ namespace org.herbal3d.convoar {
               { TargetType.Mesh, "mesh" },
               { TargetType.Buff, "buf" },
               { TargetType.Gltf, "gltf" },
-              { TargetType.Gltf2, "gltf2" }
+              { TargetType.Gltf2, "gltf" }
         };
 
         // Parameter system can specify types to output. THis converts the parameter to a target type code

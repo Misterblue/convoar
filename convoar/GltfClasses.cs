@@ -37,6 +37,10 @@ namespace org.herbal3d.convoar {
 
         public GltfClass() { }
         public GltfClass(Gltf pRoot, string pID) {
+            BaseInit(pRoot, pID);
+        }
+
+        protected void BaseInit(Gltf pRoot, string pID) {
             gltfRoot = pRoot;
             ID = pID;
             referenceID = -1;   // illegal value that could show up when debugging
@@ -99,7 +103,7 @@ namespace org.herbal3d.convoar {
                     outt.Write(",\n");
                 }
                 GltfClass gl = xx as GltfClass;
-                outt.Write(JSONHelpers.Indent(level) + "\"" + gl.VersionRef + "\"");
+                outt.Write(JSONHelpers.Indent(level) + JSONHelpers.CreateJSONValue(gl.VersionRef));
                 first = false;
             };
             outt.Write("]");
@@ -646,11 +650,16 @@ namespace org.herbal3d.convoar {
         // Note: to add an array, do: GltfAttribute.Add(key, new Object[] { 1, 2, 3, 4 } );
         public void ToJSON(StreamWriter outt, int level) {
             outt.Write(" {\n");
+            this.ToJSONNoBrackets(outt, level);
+            outt.Write(JSONHelpers.Indent(level) + "}\n");
+        }
+
+        public void ToJSONNoBrackets(StreamWriter outt, int level) {
             bool first = true;
             foreach (KeyValuePair<string, Object> kvp in this) {
                 JSONHelpers.WriteJSONValueLine(outt, level, ref first, kvp.Key, kvp.Value);
             }
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+            outt.Write("\n");
         }
 
         // Output an array of the keys. 
@@ -1019,38 +1028,57 @@ namespace org.herbal3d.convoar {
         public override void ToJSONIDArray(StreamWriter outt, int level) {
             this.ToJSONArrayOfIDs(outt, level+1);
         }
-
-        /*
-        // Find the material in this collection that has the hash from the texture entry
-        public bool GetHash(int hash, out GltfMaterial foundMaterial) {
-            foreach (GltfMaterial mat in this) {
-                if (mat.hash == hash) {
-                    foundMaterial = mat;
-                    return true;
-                }
-            }
-            foundMaterial = null;
-            return false;
-        }
-        */
     }
 
-    public class GltfMaterial : GltfClass {
+    public abstract class GltfMaterial : GltfClass {
         public string name;
-        public GltfAttributes values;
+        public GltfAttributes values;   // top level values that are output as part of the material
         public GltfExtensions extensions;
-        public GltfMaterial(Gltf pRoot, string pID) : base(pRoot, pID) {
-            values = new GltfAttributes();
-            extensions = new GltfExtensions(pRoot);
-            // gltfRoot.materials.Add(this);
-            LogGltf("{0} GltfMaterial: created empty. ID={1}, name={2}", "Gltf", ID, name);
-        }
 
-        public GltfMaterial(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) : base(pRoot, matInfo.handle.ToString() + "_mat") {
+        public OMV.Vector4? ambient;      // ambient color of surface (OMV.Vector4)
+        public OMV.Color4? diffuse;       // diffuse color of surface (OMV.Vector4 or textureID)
+        public GltfTexture diffuseTexture;  // diffuse color of surface (OMV.Vector4 or textureID)
+        public bool? doubleSided;         // whether surface has backside ('true' or 'false')
+        public float? emission;           // light emitted by surface (OMV.Vector4 or textureID)
+        public float? specular;           // color reflected by surface (OMV.Vector4 or textureID)
+        public float? shininess;          // specular reflection from surface (float)
+        public float? transparency;       // transparency of surface (float)
+        public bool? transparent;         // whether the surface has transparency ('true' or 'false;)
+
+        protected void MaterialInit(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
             values = new GltfAttributes();
             extensions = new GltfExtensions(pRoot);
+            BaseInit(pRoot, matInfo.handle.ToString() + "_mat");
             gltfRoot.materials.Add(matInfo.GetBHash(), this);
 
+            OMV.Color4 surfaceColor = matInfo.RGBA;
+            OMV.Color4 aColor = OMV.Color4.Black;
+
+            diffuse = surfaceColor;
+            if (surfaceColor.A != 1.0f) {
+                transparency = surfaceColor.A;
+                transparent = true;
+            }
+            if (ConvOAR.Globals.parms.DoubleSided) {
+                doubleSided = ConvOAR.Globals.parms.DoubleSided;
+            }
+            if (matInfo.shiny != OMV.Shininess.None) {
+                shininess = (float)matInfo.shiny / 256f;
+            }
+
+            if (matInfo.image != null) {
+                ImageInfo imageToUse = CheckForResizedImage(matInfo.image, assetFetcher);
+                GltfImage newImage = GltfImage.GltfImageFactory(pRoot, imageToUse);
+                diffuseTexture = GltfTexture.GltfTextureFactory(pRoot, imageToUse, newImage);
+
+                if (diffuseTexture.source != null && diffuseTexture.source.imageInfo.hasTransprency) {
+                    // 'Transparent' says the image has some alpha that needs blending
+                    // the spec says default value is 'false' so only specify if 'true'
+                    transparent = true;
+                }
+            }
+
+            /*
             GltfExtension ext = new GltfExtension(gltfRoot, "KHR_materials_common");
             ext.technique = "BLINN";  // 'LAMBERT' or 'BLINN' or 'PHONG'
 
@@ -1087,8 +1115,24 @@ namespace org.herbal3d.convoar {
             }
 
             extensions.Add(new BHashULong(extensions.Count), ext);
-            LogGltf("{0} GltfMaterial: created. ID={1}, name='{2}', numAttr={3}, numExt={4}",
-                        "Gltf", ID, name, values.Count, extensions.Count);
+            */
+            LogGltf("{0} GltfMaterial: created. ID={1}, name='{2}', numExt={3}",
+                        "Gltf", ID, name, extensions.Count);
+        }
+
+        public override void ToJSON(StreamWriter outt, int level) {
+            outt.Write(" { ");
+            bool first = true;
+            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
+            if (values != null && values.Count > 0) {
+                values.ToJSONNoBrackets(outt, level);
+            }
+            if (extensions != null && extensions.Count > 0) {
+                JSONHelpers.WriteJSONLineEnding(outt, ref first);
+                outt.Write(JSONHelpers.Indent(level) + "\"extensions\": ");
+                extensions.ToJSON(outt, level + 1);
+            }
+            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
 
         // For Gltf (and the web browser) we can use reduced size images.
@@ -1110,26 +1154,90 @@ namespace org.herbal3d.convoar {
         public static GltfMaterial GltfMaterialFactory(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
             GltfMaterial mat = null;
             if (!pRoot.materials.TryGetValue(matInfo.GetBHash(), out mat)) {
-                mat = new GltfMaterial(pRoot, matInfo, assetFetcher);
+                if (pRoot.IsGltfv2) {
+                    mat = new GltfMaterialCommon2(pRoot, matInfo, assetFetcher);
+                }
+                else {
+                    mat = new GltfMaterialCommon(pRoot, matInfo, assetFetcher);
+                }
             }
             return mat;
         }
+    }
+
+    // Material as a KHR_Common_Material for GLTF version 1
+    public class GltfMaterialCommon : GltfMaterial {
+        GltfExtension materialCommonExt;
+
+        public GltfMaterialCommon(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
+            MaterialInit(pRoot, matInfo, assetFetcher);
+            materialCommonExt= new GltfExtension(gltfRoot, "KHR_materials_common");
+            extensions.Add(new BHashULong(extensions.Count), materialCommonExt);
+        }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
-            if (values.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"values\": ");
-                values.ToJSON(outt, level+1);
+            // Version 1 common material had values in separate 'values' attribute list.
+            // Copy the values set on the material into the extension instance.
+            GltfAttributes vals = new GltfAttributes();
+            materialCommonExt.values.Add("technique", "BLINN");
+            materialCommonExt.values.Add("values", vals);
+
+            vals.Add(GltfExtension.valDiffuse, diffuse.Value);
+            if (doubleSided.HasValue && doubleSided.Value) {
+                vals.Add(GltfExtension.valDoubleSided, doubleSided.Value);
             }
-            if (extensions != null && extensions.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"extensions\": ");
-                extensions.ToJSON(outt, level + 1);
+            // values.Add(GltfExtension.valEmission, aColor);
+            if (shininess.HasValue) {
+                vals.Add(GltfExtension.valShininess, shininess.Value);
             }
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+            if (diffuse.HasValue && diffuse.Value.A != 1.0f) {
+                vals.Add(GltfExtension.valTransparency, diffuse.Value.A);
+            }
+            if (transparent.HasValue) {
+                vals.Add(GltfExtension.valTransparent, transparent.Value);
+            }
+            if (diffuseTexture != null) {
+                vals.Remove(GltfExtension.valDiffuse);
+                vals.Add(GltfExtension.valDiffuse, diffuseTexture.ID);
+            }
+
+            base.ToJSON(outt, level);
+        }
+    }
+
+    // Material as a HDR_Common_Material for GLTF version 2
+    public class GltfMaterialCommon2 : GltfMaterial {
+        GltfExtension materialCommonExt;
+
+        public GltfMaterialCommon2(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
+            MaterialInit(pRoot, matInfo, assetFetcher);
+            materialCommonExt = new GltfExtension(gltfRoot, "KHR_materials_common");
+            extensions.Add(new BHashULong(extensions.Count), materialCommonExt);
+        }
+
+        public override void ToJSON(StreamWriter outt, int level) {
+            // Pack the material set values into the extension
+            materialCommonExt.values.Add("type", "commonBlinn");
+            materialCommonExt.values.Add("diffuseFactor", diffuse.Value);
+            if (diffuseTexture != null) {
+                materialCommonExt.values.Add("diffuseTexture", diffuseTexture.VersionRef);
+            }
+            if (specular.HasValue) {
+                materialCommonExt.values.Add("specularFactor", specular.Value);
+            }
+            if (shininess.HasValue) {
+                materialCommonExt.values.Add("shininessFactor", shininess.Value);
+            }
+            if (transparent.HasValue) {
+                // OPAQUE, MASK, or BLEND
+                this.values.Add("alphaMode", "BLEND");
+                // this.values.Add("alphaCutoff", 0.5f);
+            }
+            if (doubleSided.HasValue) {
+                this.values.Add("doubleSided", doubleSided.Value);
+            }
+
+            base.ToJSON(outt, level);
         }
     }
 
@@ -1516,7 +1624,6 @@ namespace org.herbal3d.convoar {
     }
 
     public class GltfExtension : GltfClass {
-        public string technique;
         public GltfAttributes values;
         // possible entries in 'values'
         public static string valAmbient = "ambient";    // ambient color of surface (OMV.Vector4)
@@ -1535,13 +1642,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "technique", technique);
-            JSONHelpers.WriteJSONLineEnding(outt, ref first);
-            outt.Write(JSONHelpers.Indent(level) + "\"values\": ");
             values.ToJSON(outt, level+1);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
     }
 }

@@ -34,7 +34,7 @@ namespace org.herbal3d.convoar {
             bool first = true;
             foreach (object obj in vals) {
                 if (!first) buff.Append(", ");
-                buff.Append(obj.ToString());
+                buff.Append(CreateJSONValue(obj));
                 first = false;
             }
             buff.Append(" ] ");
@@ -42,16 +42,7 @@ namespace org.herbal3d.convoar {
         }
 
         public static string ArrayToJSONArray(float[] vals) {
-            StringBuilder buff = new StringBuilder();
-            buff.Append(" [ ");
-            bool first = true;
-            foreach (object obj in vals) {
-                if (!first) buff.Append(", ");
-                buff.Append(obj.ToString());
-                first = false;
-            }
-            buff.Append(" ]");
-            return buff.ToString();
+            return ParamsToJSONArray(vals);
         }
 
         public static string Indent(int level) {

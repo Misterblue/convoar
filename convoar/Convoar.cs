@@ -138,7 +138,7 @@ convoar
                             if (resizedImages.Count > 0) {
                                 resizedImages.ForEach(img => {
                                     assetFetcher.Images.Add(img.GetBHash(), img.handle, img);
-                                    Globals.log.DebugFormat("{0} resized image: {1} to {2}", _logHeader, img, img.persist.filename);
+                                    // Globals.log.DebugFormat("{0} resized image: {1} to {2}", _logHeader, img, img.persist.filename);
                                 });
                             }
 
