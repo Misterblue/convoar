@@ -47,15 +47,17 @@ namespace org.herbal3d.convoar {
 
         // Export to files
         public bool ExportGltf;         // Output files in GLTF format
-        public string GltfDir;          // sub-directory for GLTF files
         public int VerticesMaxForBuffer;    // Number of vertices to cause splitting of buffer files
         public bool ExportGltf2;        // Output files in GLTFv2 format
-        public string Gltf2Dir;         // sub-directory for GLTFv2 files
+        public bool ExportIndividualGltf;   // Export scene objects as individual GLTF files
+        public int IndividualGltfVersion;   // GLTF version to export individual instances
+
         public bool ExportTextures;     // also export textures to the target dir
         public string TexturesDir;        // sub-directory for all the image files
         public int MaxTextureSize;      // the maximum pixel dimension for images if exporting
         public string PreferredTextureFormat;   // "PNG", "JPEG", "GIF", "BMP"
         public string PreferredTextureFormatIfNoTransparency; // "PNG", "JPEG", "GIF", "BMP"
+
         public bool DoubleSided;        // specify whether double sided mesh rendering
 
         // Terrain processing
@@ -121,15 +123,16 @@ namespace org.herbal3d.convoar {
 
             // Export to files
             new ParameterDefn<bool>("ExportGltf", "Output files in GLTF format",
-                true ),
-            new ParameterDefn<string>("GltfDir", "sub-directory for GLTF files",
-                "gltf" ),
+                false ),
             new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
                 50000 ),
             new ParameterDefn<bool>("ExportGltf2", "Output files in GLTFv2 format",
                 false ),
-            new ParameterDefn<string>("Gltf2Dir", "sub-directory for GLTFv2 files",
-                "gltf2" ),
+            new ParameterDefn<bool>("ExportIndividualGltf", "Export scene objects as individual GLTF files",
+                false ),
+            new ParameterDefn<int>("IndividualGltfVersion", "GLTF version to export individual instances",
+                1 ),
+
             new ParameterDefn<bool>("ExportTextures", "Convert textures to PNGs and export to target dir",
                 true ),
             new ParameterDefn<string>("TexturesDir", "sub-directory for all the image files",

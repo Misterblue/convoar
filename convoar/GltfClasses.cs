@@ -181,7 +181,9 @@ namespace org.herbal3d.convoar {
 
     // =============================================================
     public class Gltf : GltfClass {
+#pragma warning disable 414     // disable 'assigned but not used' warning
         private static string _logHeader = "[Gltf]";
+#pragma warning restore 414
 
         public int GltfVersion = 1;
 
@@ -299,7 +301,6 @@ namespace org.herbal3d.convoar {
 
             // Meshes, etc  have been added to the scene. Pass over all
             //   the meshes and create the Buffers, BufferViews, and Accessors.
-            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: about to build buffers");
             BuildAccessorsAndBuffers();
             UpdateGltfv2ReferenceIndexes();
             ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: done loading");
@@ -348,9 +349,9 @@ namespace org.herbal3d.convoar {
                     }
                 });
             });
-            ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total meshes = {1}", _logHeader, numMeshes);
-            ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total vertices = {1}", _logHeader, numVerts);
-            ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total unique vertices = {1}", _logHeader, vertInd);
+            // ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total meshes = {1}", _logHeader, numMeshes);
+            // ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total vertices = {1}", _logHeader, numVerts);
+            // ConvOAR.Globals.log.DebugFormat("{0} BuildBuffers: total unique vertices = {1}", _logHeader, vertInd);
 
 
             // Remap all the indices to the new, compacted vertex collection.
@@ -552,25 +553,35 @@ namespace org.herbal3d.convoar {
             asset.ToJSON(outt, level+1);
             outt.Write(",\n");
 
-            outt.Write(JSONHelpers.Indent(level) + "\"scenes\": ");
-            scenes.ToJSON(outt, level+1);
-            outt.Write(",\n");
+            if (scenes.Count > 0) {
+                outt.Write(JSONHelpers.Indent(level) + "\"scenes\": ");
+                scenes.ToJSON(outt, level + 1);
+                outt.Write(",\n");
+            }
 
-            outt.Write(JSONHelpers.Indent(level) + "\"nodes\": ");
-            nodes.ToJSON(outt, level+1);
-            outt.Write(",\n");
+            if (nodes.Count > 0) {
+                outt.Write(JSONHelpers.Indent(level) + "\"nodes\": ");
+                nodes.ToJSON(outt, level + 1);
+                outt.Write(",\n");
+            }
 
-            outt.Write(JSONHelpers.Indent(level) + "\"meshes\": ");
-            meshes.ToJSON(outt, level+1);
-            outt.Write(",\n");
+            if (meshes.Count > 0) {
+                outt.Write(JSONHelpers.Indent(level) + "\"meshes\": ");
+                meshes.ToJSON(outt, level + 1);
+                outt.Write(",\n");
+            }
 
-            outt.Write(JSONHelpers.Indent(level) + "\"accessors\": ");
-            accessors.ToJSON(outt, level+1);
-            outt.Write(",\n");
+            if (accessors.Count > 0) {
+                outt.Write(JSONHelpers.Indent(level) + "\"accessors\": ");
+                accessors.ToJSON(outt, level + 1);
+                outt.Write(",\n");
+            }
 
-            outt.Write(JSONHelpers.Indent(level) + "\"bufferViews\": ");
-            bufferViews.ToJSON(outt, level+1);
-            outt.Write(",\n");
+            if (bufferViews.Count > 0) {
+                outt.Write(JSONHelpers.Indent(level) + "\"bufferViews\": ");
+                bufferViews.ToJSON(outt, level + 1);
+                outt.Write(",\n");
+            }
 
             if (materials.Count > 0) {
                 outt.Write(JSONHelpers.Indent(level) + "\"materials\": ");
@@ -620,7 +631,7 @@ namespace org.herbal3d.convoar {
             outt.Write("\n");
 
             outt.Write(" }\n");
-        }
+        } 
 
         // Write the binary files into the specified target directory
         public void WriteBinaryFiles() {
@@ -681,28 +692,25 @@ namespace org.herbal3d.convoar {
 
     // =============================================================
     public class GltfAsset : GltfClass {
-        public string generator = "Convoar";
-        public bool premulitpliedAlpha = false;
-        public string version = "1";
-        public GltfAttributes profile;
+        public GltfAttributes values;
 
         public GltfAsset(Gltf pRoot) : base(pRoot, "") {
-            profile = new GltfAttributes();
-            profile.Add("api", "WebGL");
-            profile.Add("version", "1.0");
-            version = pRoot.GltfVersion.ToString();
+            values = new GltfAttributes();
+            values.Add("generator", "convoar");
+            values.Add("version", pRoot.GltfVersion.ToString());
+            // values.Add("copyright", "Suitable copyright string");
+
+            // left over from GLTFv1
+            if (!pRoot.IsGltfv2) {
+                GltfAttributes profile = new GltfAttributes();
+                profile.Add("api", "WebGL");
+                profile.Add("version", "1.0");
+                values.Add("profile", profile);
+            }
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "generator", generator);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "premultipliedAlpha", premulitpliedAlpha);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "version", version);
-            JSONHelpers.WriteJSONLineEnding(outt, ref first);
-            outt.Write(JSONHelpers.Indent(level) + "\"profile\": ");
-            profile.ToJSON(outt, level+1);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+            values.ToJSON(outt, level);
         }
     }
 
@@ -880,6 +888,7 @@ namespace org.herbal3d.convoar {
     public class GltfMesh : GltfClass {
         public string name;
         public EntityHandle handle;
+        public BHash bHash;
         public GltfPrimitives primitives;
         public GltfAttributes attributes;
         public Displayable underlyingDisplayable;
@@ -901,6 +910,12 @@ namespace org.herbal3d.convoar {
                     primitives.Add(new BHashULong(primitives.Count), prim);
                 });
             }
+            BHasher hasher = new BHasherSHA256();
+            primitives.Values.ToList().ForEach(prim => {
+                hasher.Add(prim.bHash);
+            });
+            bHash = hasher.Finish();
+            name = bHash.ToString();
             gltfRoot.meshes.Add(pDR.GetBHash(), this);
             LogGltf("{0} GltfMesh: created from DR. ID={1}, handle={2}, numPrimitives={3}",
                         "Gltf", ID, handle, primitives.Count);
@@ -957,6 +972,7 @@ namespace org.herbal3d.convoar {
     public class GltfPrimitive : GltfClass {
         public MeshInfo meshInfo;
         public MaterialInfo matInfo;
+        public BHash bHash;          // generated from meshes and materials for this primitive
         public ushort[] newIndices; // remapped indices posinting to global vertex list
         public int mode;
         public GltfAccessor indices;
@@ -974,16 +990,17 @@ namespace org.herbal3d.convoar {
             meshInfo = pRenderableMesh.mesh;
             matInfo = pRenderableMesh.material;
 
-            material = GltfMaterial.GltfMaterialFactory(pRoot, matInfo, assetFetcher);
-            BHash hash = pRenderableMesh.mesh.GetBHash();
-            ID = hash.ToString();
-            pRoot.primitives.Add(hash, this);
-            LogGltf("{0} GltfPrimitive: created. ID={1}, mesh={2}", "Gltf", ID, meshInfo);
+            // My hash is the same as the underlying renderable mesh/material
+            bHash = pRenderableMesh.GetBHash();
+            ID = bHash.ToString();
+
+            LogGltf("{0} GltfPrimitive: created. ID={1}, mesh={2}, hash={3}", "Gltf", ID, meshInfo, bHash);
+            pRoot.primitives.Add(bHash, this);
         }
 
         public static GltfPrimitive GltfPrimitiveFactory(Gltf pRoot, RenderableMesh pRenderableMesh, IAssetFetcher assetFetcher) {
             GltfPrimitive prim = null;
-            if (!pRoot.primitives.TryGetValue(pRenderableMesh.mesh.GetBHash(), out prim)) {
+            if (!pRoot.primitives.TryGetValue(pRenderableMesh.GetBHash(), out prim)) {
                 prim = new GltfPrimitive(pRoot, pRenderableMesh, assetFetcher);
             }
             return prim;

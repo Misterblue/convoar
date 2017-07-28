@@ -143,8 +143,7 @@ namespace org.herbal3d.convoar {
         public override BHash GetBHash() {
             BHasher hasher = new BHasherMdjb2();
             meshes.ForEach(m => {
-                hasher.Add(m.mesh.GetBHash());
-                hasher.Add(m.material.GetBHash());
+                m.GetBHash(hasher);
             });
             return hasher.Finish();
         }
@@ -154,5 +153,16 @@ namespace org.herbal3d.convoar {
         public int num;                 // number of this face on the prim
         public MeshInfo mesh;
         public MaterialInfo material;
+
+        public BHash GetBHash() {
+            BHasher hasher = new BHasherMdjb2();
+            GetBHash(hasher);
+            return hasher.Finish();
+        }
+        // Add my hashes to an in-progress hashing
+        public void GetBHash(BHasher hasher) {
+            hasher.Add(mesh.GetBHash());
+            hasher.Add(material.GetBHash());
+        }
     }
 } 

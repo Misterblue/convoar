@@ -142,7 +142,7 @@ convoar
                                 });
                             }
 
-                            // Output the transformed scene as Gltf version 1 or 2
+                            // Output the transformed scene as Gltf version 1
                             if (Globals.parms.ExportGltf) {
                                 Gltf gltf = new Gltf(bScene.name, 1);
 
@@ -172,6 +172,8 @@ convoar
                                     Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
                                 }
                             }
+
+                            // Output the transformed scene as Gltf version 2
                             if (Globals.parms.ExportGltf2) {
                                 Gltf gltf = new Gltf(bScene.name, 2);
 
@@ -202,6 +204,39 @@ convoar
                                 }
                             }
 
+                            // Output all the instances in the scene as individual GLTF files
+                            if (Globals.parms.ExportIndividualGltf) {
+                                bScene.instances.ForEach(instance => {
+                                    string instanceName = instance.handle.ToString();
+                                    Gltf gltf = new Gltf(instanceName, Globals.parms.IndividualGltfVersion);
+                                    gltf.persist.baseDirectory = bScene.name;
+                                    gltf.defaultSceneID = instanceName;
+                                    // gltf.persist.baseDirectory = PersistRules.JoinFilePieces(bScene.name, instanceName);
+                                    GltfScene gltfScene = new GltfScene(gltf, instanceName);
+
+                                    Displayable rootDisp = instance.Representation;
+                                    GltfNode rootNode = GltfNode.GltfNodeFactory(gltf, gltfScene, rootDisp, assetFetcher);
+                                    rootNode.translation = instance.Position;
+                                    rootNode.rotation = instance.Rotation;
+
+                                    gltf.BuildAccessorsAndBuffers();
+                                    gltf.UpdateGltfv2ReferenceIndexes();
+
+                                    // After the building, get rid of the default scene name as we're not outputting a scene
+                                    gltf.defaultSceneID = null;
+
+                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+
+                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                        gltf.ToJSON(outt);
+                                    }
+                                    gltf.WriteBinaryFiles();
+
+                                    if (Globals.parms.ExportTextures) {
+                                        gltf.WriteImages();
+                                    }
+                                });
+                            }
                         });
                     }
                     catch (Exception e) {

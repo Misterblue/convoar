@@ -45,7 +45,7 @@ namespace org.herbal3d.convoar {
         public abstract void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage);
         public abstract void Dispose();
 
-#pragma warning disable 414
+#pragma warning disable 414     // disable 'assigned but not used' warning
         private static string _logHeader = "[IAssetFetcher]";
 #pragma warning restore 414
 
