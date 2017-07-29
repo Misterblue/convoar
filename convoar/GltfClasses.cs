@@ -662,16 +662,15 @@ namespace org.herbal3d.convoar {
         // Note: to add an array, do: GltfAttribute.Add(key, new Object[] { 1, 2, 3, 4 } );
         public void ToJSON(StreamWriter outt, int level) {
             outt.Write(" {\n");
-            this.ToJSONNoBrackets(outt, level);
+            bool first = true;
+            this.ToJSONNoBrackets(outt, level, ref first);
             outt.Write(JSONHelpers.Indent(level) + "}\n");
         }
 
-        public void ToJSONNoBrackets(StreamWriter outt, int level) {
-            bool first = true;
+        public void ToJSONNoBrackets(StreamWriter outt, int level, ref bool first) {
             foreach (KeyValuePair<string, Object> kvp in this) {
                 JSONHelpers.WriteJSONValueLine(outt, level, ref first, kvp.Key, kvp.Value);
             }
-            outt.Write("\n");
         }
 
         // Output an array of the keys. 
@@ -1105,44 +1104,6 @@ namespace org.herbal3d.convoar {
                 }
             }
 
-            /*
-            GltfExtension ext = new GltfExtension(gltfRoot, "KHR_materials_common");
-            ext.technique = "BLINN";  // 'LAMBERT' or 'BLINN' or 'PHONG'
-
-            OMV.Color4 surfaceColor = matInfo.RGBA;
-            OMV.Color4 aColor = OMV.Color4.Black;
-
-            ext.values.Add(GltfExtension.valDiffuse, surfaceColor);
-            ext.values.Add(GltfExtension.valDoubleSided, true);
-            // ext.values.Add(GltfExtension.valEmission, aColor);
-            // ext.values.Add(GltfExtension.valSpecular, aColor); // not a value in LAMBERT
-            if (matInfo.shiny != OMV.Shininess.None) {
-                float shine = (float)matInfo.shiny / 256f;
-                ext.values.Add(GltfExtension.valShininess, shine);
-            }
-            if (surfaceColor.A != 1.0f) {
-                ext.values.Add(GltfExtension.valTransparency, surfaceColor.A);
-            }
-
-            // If the material has an image
-            if (matInfo.image != null) {
-                ImageInfo imageToUse = CheckForResizedImage(matInfo.image, assetFetcher);
-                GltfImage newImage = GltfImage.GltfImageFactory(pRoot, imageToUse);
-                GltfTexture theTexture = GltfTexture.GltfTextureFactory(pRoot, imageToUse, newImage);
-                // Remove the defaults created above and add new values for the texture
-                ext.values.Remove(GltfExtension.valDiffuse);
-                ext.values.Add(GltfExtension.valDiffuse, theTexture.VersionRef);
-
-                ext.values.Remove(GltfExtension.valTransparent);
-                if (theTexture.source != null && theTexture.source.imageInfo.hasTransprency) {
-                    // 'Transparent' says the image has some alpha that needs blending
-                    // the spec says default value is 'false' so only specify if 'true'
-                    ext.values.Add(GltfExtension.valTransparent, true);
-                }
-            }
-
-            extensions.Add(new BHashULong(extensions.Count), ext);
-            */
             LogGltf("{0} GltfMaterial: created. ID={1}, name='{2}', numExt={3}",
                         "Gltf", ID, name, extensions.Count);
         }
@@ -1152,7 +1113,7 @@ namespace org.herbal3d.convoar {
             bool first = true;
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
             if (values != null && values.Count > 0) {
-                values.ToJSONNoBrackets(outt, level);
+                values.ToJSONNoBrackets(outt, level, ref first);
             }
             if (extensions != null && extensions.Count > 0) {
                 JSONHelpers.WriteJSONLineEnding(outt, ref first);
