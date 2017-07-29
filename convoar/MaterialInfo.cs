@@ -67,29 +67,15 @@ namespace org.herbal3d.convoar {
             if (force) _hash = null;
 
             if (_hash == null) {
-                int intHash;
-                if (faceTexture != null) {
-                    intHash =
-                        faceTexture.RGBA.GetHashCode() ^
-                        // faceTexture.RepeatU.GetHashCode() ^
-                        // faceTexture.RepeatV.GetHashCode() ^
-                        // faceTexture.OffsetU.GetHashCode() ^
-                        // faceTexture.OffsetV.GetHashCode() ^
-                        // faceTexture.Rotation.GetHashCode() ^
-                        faceTexture.Glow.GetHashCode() ^
-                        faceTexture.Bump.GetHashCode() ^
-                        faceTexture.Shiny.GetHashCode() ^
-                        faceTexture.Fullbright.GetHashCode() ^
-                        faceTexture.MediaFlags.GetHashCode() ^
-                        faceTexture.TexMapType.GetHashCode() ^
-                        faceTexture.TextureID.GetHashCode() ^
-                        faceTexture.MaterialID.GetHashCode();
+                BHasher hasher = new BHasherMdjb2();
+                hasher.Add(RGBA.GetHashCode());
+                hasher.Add(bump.GetHashCode());
+                hasher.Add(glow.GetHashCode());
+                hasher.Add(shiny.GetHashCode());
+                if (textureID.HasValue) {
+                    hasher.Add(textureID.Value.GetHashCode());
                 }
-                else {
-                    var rnd = new Random();
-                    intHash = rnd.Next();
-                }
-                _hash = new BHashULong(intHash);
+                _hash = hasher.Finish();
             }
             return _hash;
         }

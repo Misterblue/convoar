@@ -51,6 +51,7 @@ namespace org.herbal3d.convoar {
         public bool ExportGltf2;        // Output files in GLTFv2 format
         public bool ExportIndividualGltf;   // Export scene objects as individual GLTF files
         public int IndividualGltfVersion;   // GLTF version to export individual instances
+        public bool AddUniqueCodes;     // Add an extras.unique value to some GLTF objects as a unique hash
 
         public bool ExportTextures;     // also export textures to the target dir
         public string TexturesDir;        // sub-directory for all the image files
@@ -132,6 +133,8 @@ namespace org.herbal3d.convoar {
                 false ),
             new ParameterDefn<int>("IndividualGltfVersion", "GLTF version to export individual instances",
                 1 ),
+            new ParameterDefn<bool>("AddUniqueCodes", "Add an extras.unique value to some GLTF objects as a unique hash",
+                true ),
 
             new ParameterDefn<bool>("ExportTextures", "Convert textures to PNGs and export to target dir",
                 true ),

@@ -210,9 +210,9 @@ convoar
                                     string instanceName = instance.handle.ToString();
                                     Gltf gltf = new Gltf(instanceName, Globals.parms.IndividualGltfVersion);
                                     gltf.persist.baseDirectory = bScene.name;
-                                    gltf.defaultSceneID = instanceName;
                                     // gltf.persist.baseDirectory = PersistRules.JoinFilePieces(bScene.name, instanceName);
                                     GltfScene gltfScene = new GltfScene(gltf, instanceName);
+                                    gltf.defaultScene = gltfScene;
 
                                     Displayable rootDisp = instance.Representation;
                                     GltfNode rootNode = GltfNode.GltfNodeFactory(gltf, gltfScene, rootDisp, assetFetcher);
@@ -223,7 +223,7 @@ convoar
                                     gltf.UpdateGltfv2ReferenceIndexes();
 
                                     // After the building, get rid of the default scene name as we're not outputting a scene
-                                    gltf.defaultSceneID = null;
+                                    gltf.defaultScene = null;
 
                                     PersistRules.ResolveAndCreateDir(gltf.persist.filename);
 
