@@ -43,7 +43,6 @@ namespace org.herbal3d.convoar {
         public abstract IPromise<byte[]> FetchRawAsset(EntityHandle handle);
         public abstract void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data);
         public abstract void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage);
-        public abstract void Dispose();
 
 #pragma warning disable 414     // disable 'assigned but not used' warning
         private static string _logHeader = "[IAssetFetcher]";
@@ -51,14 +50,26 @@ namespace org.herbal3d.convoar {
 
         // Displayables are the linksetable prim equivilient
         // The top Displayable is the root prim and the children Displayables are the linkset members
+        // Displayable == linkset
         public Dictionary<BHash, Displayable> Displayables;
         // DisplayableRenderables are the rendering mesh for a Displayable (usually a list of meshes).
         // The list of meshes are the faces of a prim.
+        // DisplayableRenderable == prim
         public Dictionary<BHash, DisplayableRenderable> Renderables;
         // Meshes are each of the individual meshes with material
+        // Mesh == prim faces (that optionally reference a MaterialInfo and/or ImageInfo)
         public OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo> Meshes;
         public OMV.DoubleDictionary<BHash, EntityHandle, MaterialInfo> Materials;
         public OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo> Images;
+
+        // When done with this instance, clear all the lists
+        public virtual void Dispose() {
+            Displayables.Clear();
+            Renderables.Clear();
+            Meshes.Clear();
+            Materials.Clear();
+            Images.Clear();
+        }
 
         public IAssetFetcher() {
             Displayables = new Dictionary<BHash, Displayable>();
@@ -74,8 +85,10 @@ namespace org.herbal3d.convoar {
             bool ret = false;
             Displayable maybeDisp;
             BHash dispHash = disp.GetBHash();
-            if (!Displayables.TryGetValue(dispHash, out maybeDisp)) {
-                Displayables.Add(dispHash, disp);
+            lock (Displayables) {
+                if (!Displayables.TryGetValue(dispHash, out maybeDisp)) {
+                    Displayables.Add(dispHash, disp);
+                }
             }
             return ret;
         }
@@ -84,6 +97,9 @@ namespace org.herbal3d.convoar {
             return Displayables.TryGetValue(hash, out disp);
         }
 
+        // Fetch a DisplayableRenderable corresponding to the passed hash but, if the
+        //   DisplayableRenderable is not in the table, invoke the passed builder to create
+        //   an instance of the needed DisplayableRenderable.
         public delegate DisplayableRenderable RenderableBuilder();
         public DisplayableRenderable GetRenderable(BHash hash, RenderableBuilder builder) {
             DisplayableRenderable renderable = null;
@@ -91,7 +107,12 @@ namespace org.herbal3d.convoar {
             lock (Renderables) {
                 if (!Renderables.TryGetValue(hash, out renderable)) {
                     try {
-                        renderable = builder();
+                        if (builder != null) {
+                            renderable = builder();
+                        }
+                        else {
+                            renderable = null;
+                        }
                     }
                     catch (Exception e) {
                         ConvOAR.Globals.log.ErrorFormat("{0} GetRenderable: builder exception: {1}", _logHeader, e);
@@ -101,40 +122,124 @@ namespace org.herbal3d.convoar {
             }
             return renderable;
         }
+        // Short form that just returns 'null' if not found.
+        public DisplayableRenderable GetRenderable(BHash hash) {
+            return GetRenderable(hash, null);
+        }
 
+        // Add the passed MeshInfo the to list if it is not already in the list
+        public void AddUniqueMeshInfo(MeshInfo meshInfo) {
+            lock (Meshes) {
+                MeshInfo existingMeshInfo = null;
+                if (!Meshes.TryGetValue(meshInfo.GetBHash(), out existingMeshInfo)) {
+                    // If not already in the list, add this MeshInfo
+                    Meshes.Add(meshInfo.GetBHash(), meshInfo.handle, meshInfo);
+                }
+            }
+        }
+
+        // Fetch a MeshInfo corresponding to the passed hash but, if the
+        //   MeshInfo is not in the table, invoke the passed builder to create
+        //   an instance of the needed MeshInfo.
         public delegate MeshInfo MeshInfoBuilder();
         public MeshInfo GetMeshInfo(BHash hash, MeshInfoBuilder builder) {
             MeshInfo meshInfo = null;
             lock (Meshes) {
                 if (!Meshes.TryGetValue(hash, out meshInfo)) {
-                    meshInfo = builder();
-                    Meshes.Add(hash, meshInfo.handle, meshInfo);
+                    if (builder != null) {
+                        meshInfo = builder();
+                        Meshes.Add(hash, meshInfo.handle, meshInfo);
+                        // Assert the hash we're indexing it under is the one in meshInfo
+                        if (!hash.Equals(meshInfo.GetBHash())) {
+                            ConvOAR.Globals.log.ErrorFormat(
+                                "AssetFetcher.GetMeshInfo: adding mesh with different hash!");
+                            ConvOAR.Globals.log.ErrorFormat(
+                                "AssetFetcher.GetMeshInfo: meshInfo.handle={0}, passed hash={1}, meshInfo.hash={2}",
+                                        meshInfo.handle, hash.ToString(), meshInfo.GetBHash().ToString());
+                        }
+                    }
+                    else {
+                        meshInfo = null;
+                    }
                 }
             }
             return meshInfo;
         }
+        // Short form that just returns 'null' if not found.
+        public MeshInfo GetMeshInfo(BHash hash) {
+            return GetMeshInfo(hash, null);
+        }
+
+        // Add the passed MaterialInfo the to list if it is not already in the list
+        public void AddUniqueMatInfo(MaterialInfo matInfo) {
+            lock (Materials) {
+                MaterialInfo existingMatInfo = null;
+                if (!Materials.TryGetValue(matInfo.GetBHash(), out existingMatInfo)) {
+                    // If not already in the list, add this MeshInfo
+                    Materials.Add(matInfo.GetBHash(), matInfo.handle, matInfo);
+                }
+            }
+        }
+
+        // Fetch a MaterialInfo corresponding to the passed hash but, if the
+        //   MaterialInfo is not in the table, invoke the passed builder to create
+        //   an instance of the needed MaterialInfo.
         public delegate MaterialInfo MaterialInfoBuilder();
         public MaterialInfo GetMaterialInfo(BHash hash, MaterialInfoBuilder builder) {
             MaterialInfo matInfo = null;
             lock (Materials) {
                 if (!Materials.TryGetValue(hash, out matInfo)) {
-                    matInfo = builder();
-                    Materials.Add(hash, matInfo.handle, matInfo);
+                    if (builder != null) {
+                        matInfo = builder();
+                        Materials.Add(hash, matInfo.handle, matInfo);
+                    }
+                    else {
+                        matInfo = null;
+                    }
                 }
             }
             return matInfo;
         }
+        // Short form that just returns 'null' if not found.
+        public MaterialInfo GetMaterialInfo(BHash hash) {
+            return GetMaterialInfo(hash, null);
+        }
+
+        // Add the passed MaterialInfo the to list if it is not already in the list
+        public void AddUniqueImageInfo(ImageInfo imgInfo) {
+            lock (Images) {
+                ImageInfo existingImageInfo = null;
+                if (!Images.TryGetValue(imgInfo.GetBHash(), out existingImageInfo)) {
+                    // If not already in the list, add this MeshInfo
+                    Images.Add(imgInfo.GetBHash(), imgInfo.handle, imgInfo);
+                }
+            }
+        }
+
+        // Fetch a ImageInfo corresponding to the passed hash but, if the
+        //   ImageInfo is not in the table, invoke the passed builder to create
+        //   an instance of the needed ImageInfo.
         public delegate ImageInfo ImageInfoBuilder();
         public ImageInfo GetImageInfo(BHash hash, ImageInfoBuilder builder) {
             ImageInfo imageInfo = null;
             lock (Images) {
                 if (!Images.TryGetValue(hash, out imageInfo)) {
-                    imageInfo = builder();
-                    Images.Add(hash, imageInfo.handle, imageInfo);
+                    if (builder != null) {
+                        imageInfo = builder();
+                        Images.Add(hash, imageInfo.handle, imageInfo);
+                    }
+                    else {
+                        imageInfo = null;
+                    }
                 }
             }
             return imageInfo;
         }
+        // Short form that just returns 'null' if not found.
+        public ImageInfo GetImageInfo(BHash hash) {
+            return GetImageInfo(hash, null);
+        }
+
         // Search through the images and get one that matches the hash but has a
         //    size smaller than the constraint. Used for reduced resolution versions
         //    of images.
@@ -159,6 +264,42 @@ namespace org.herbal3d.convoar {
             return imageInfo;
         }
 
+    }
+
+    // An AssetFetcher that does not have an asset system behind it but is used for the
+    //    lists and their access functions in the base class;
+    public class NullAssetFetcher : IAssetFetcher {
+
+        public NullAssetFetcher() : base() {
+        }
+
+        public override IPromise<byte[]> FetchRawAsset(EntityHandle handle) {
+            throw new NotImplementedException();
+        }
+
+        public override IPromise<OMVA.AssetTexture> FetchTexture(EntityHandle handle) {
+            throw new NotImplementedException();
+        }
+
+        public override IPromise<Image> FetchTextureAsImage(EntityHandle handle) {
+            throw new NotImplementedException();
+        }
+
+        public override int GetHashCode() {
+            return base.GetHashCode();
+        }
+
+        public override void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data) {
+            throw new NotImplementedException();
+        }
+
+        public override void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage) {
+            throw new NotImplementedException();
+        }
+
+        public override string ToString() {
+            return base.ToString();
+        }
     }
 
     // Fetch an asset from  the OpenSimulator asset system
@@ -287,6 +428,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override void Dispose() {
+            base.Dispose();
             _assetService = null;
         }
     }

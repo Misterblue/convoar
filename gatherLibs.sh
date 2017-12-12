@@ -2,6 +2,8 @@
 
 OPENSIM=../opensim-github/bin
 LIBOMV=../libopenmetaverse/bin
+ASSIMP=../assimp/lib/RelWithDebInfo
+ASSIMPNET=../AssimpNet/AssimpNet/bin/Net45-Release
 
 # Copy the dll file and the PDB file if it exists
 function GetLib() {
@@ -39,4 +41,8 @@ GetLib "$LIBOMV" "OpenMetaverseTypes.XML"
 GetLib "$LIBOMV" "OpenMetaverse.StructuredData.dll"
 GetLib "$LIBOMV" "OpenMetaverse.StructuredData.XML"
 GetLib "$LIBOMV" "OpenMetaverse.Rendering.Meshmerizer.dll"
+
+cp "$ASSIMP/assimp-vc140-mt.lib" libs
+
+GetLib "$ASSIMPNET" "AssimpNet.dll"
 

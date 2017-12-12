@@ -122,19 +122,24 @@ convoar
                             // Perform any optimizations on the scene and its instances
 
                             // Create reduced resolution versions of the images
-                            int maxTextureSize = Globals.parms.MaxTextureSize;
+                            List<int> textureSizes = Globals.parms.ReducedTextureSizes.Split(',').Select<string,int>(x => { return int.Parse(x); }).ToList();
                             List<ImageInfo> resizedImages = new List<ImageInfo>();
-                            assetFetcher.Images.ForEach(delegate (ImageInfo img) {
-                                if (img.image != null && (img.image.Width > maxTextureSize || img.image.Height > maxTextureSize)) {
-                                    ImageInfo newImage = img.Clone();
-                                    newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
-                                    newImage.ConstrainTextureSize(maxTextureSize);
-                                    // The resized images go into a subdir named after the new size
-                                    newImage.persist.baseDirectory =
-                                        PersistRules.JoinFilePieces(newImage.persist.baseDirectory, maxTextureSize.ToString());
-                                    resizedImages.Add(newImage);
-                                }
+                            textureSizes.ForEach(maxTextureSize => {
+                                assetFetcher.Images.ForEach(delegate (ImageInfo img) {
+                                    if (img.image != null && (img.image.Width > maxTextureSize || img.image.Height > maxTextureSize)) {
+                                        ImageInfo newImage = img.Clone();
+                                        newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
+                                        newImage.ConstrainTextureSize(maxTextureSize);
+                                        // The resized images go into a subdir named after the new size
+                                        newImage.persist.baseDirectory =
+                                            PersistRules.JoinFilePieces(newImage.persist.baseDirectory, maxTextureSize.ToString());
+                                        resizedImages.Add(newImage);
+                                    }
+                                });
                             });
+                            // The resized versions of the images go back into the list of available images.
+                            // Note: all images have the same UUID handle (since they are the same image. You need to
+                            //     use the asset fetch with image size to get the version needed.
                             if (resizedImages.Count > 0) {
                                 resizedImages.ForEach(img => {
                                     assetFetcher.Images.Add(img.GetBHash(), img.handle, img);
@@ -237,6 +242,57 @@ convoar
                                     }
                                 });
                             }
+
+                            if (Globals.parms.ExportAssimp) {
+                                using (AssimpInterface assimp = new AssimpInterface()) {
+                                    Assimp.Scene aScene = assimp.ConvertBSceneToAssimpScene(bScene, assetFetcher, Globals.parms.TextureMaxSize);
+                                    // format dae, desc = COLLADA - Digital Asset Exchange Schema, id = collada
+                                    // format x, desc = X Files, id = x
+                                    // format stp, desc = Step Files, id = stp
+                                    // format obj, desc = Wavefront OBJ format, id = obj
+                                    // format obj, desc = Wavefront OBJ format without material file, id = objnomtl
+                                    // format stl, desc = Stereolithography, id = stl
+                                    // format stl, desc = Stereolithography(binary), id = stlb
+                                    // format ply, desc = Stanford Polygon Library, id = ply
+                                    // format ply, desc = Stanford Polygon Library(binary), id = plyb
+                                    // format 3ds, desc = Autodesk 3DS(legacy), id = 3ds
+                                    // format gltf, desc = GL Transmission Format, id = gltf
+                                    // format glb, desc = GL Transmission Format(binary), id = glb
+                                    // format gltf2, desc = GL Transmission Format v. 2, id = gltf2
+                                    // format assbin, desc = Assimp Binary, id = assbin
+                                    // format assxml, desc = Assxml Document, id = assxml
+                                    // format x3d, desc = Extensible 3D, id = x3d
+                                    // format 3mf, desc = The 3MF - File - Format, id = 3mf
+                                    // Assimp.PostProcessSteps postProcessingFlags = Assimp.PostProcessSteps.None;
+                                    Assimp.PostProcessSteps postProcessingFlags = 
+                                              Assimp.PostProcessSteps.None
+                                            // Flips all UV coordinates along the y-axis
+                                            // and adjusts material settings/bitangents accordingly.
+                                            // | Assimp.PostProcessSteps.FlipUVs
+                                            // Searches for redundant/unreferenced materials and removes them.
+                                            | Assimp.PostProcessSteps.RemoveRedundantMaterials
+                                            // Re-orders triangles for better vertex cache locality.
+                                            | Assimp.PostProcessSteps.ImproveCacheLocality
+                                            // This step converts non-UV mappings (such as spherical or
+                                            // cylindrical mapping) to proper texture coordinate channels.
+                                            // | Assimp.PostProcessSteps.TransformUVCoords
+                                            // Identifies and joins identical vertex data sets within all imported meshes.
+                                            | Assimp.PostProcessSteps.JoinIdenticalVertices
+                                            // Optimizes scene hierarchy. Nodes with no animations, bones,
+                                            // lights, or cameras assigned are collapsed and joined.
+                                            | Assimp.PostProcessSteps.OptimizeGraph
+                                            // Attempts to reduce the number of meshes (and draw calls). 
+                                            | Assimp.PostProcessSteps.OptimizeMeshes
+                                            // Removes the node graph and "bakes" (pre-transforms) all
+                                            // vertices with the local transformation matrices of their nodes.
+                                            | Assimp.PostProcessSteps.PreTransformVertices
+                                            // Splits large meshes into smaller submeshes.
+                                            // | Assimp.PostProcessSteps.SplitLargeMeshes
+                                            | Assimp.PostProcessSteps.None;
+                                    assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2", postProcessingFlags);
+                                    // assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2");
+                                }
+                            }
                         });
                     }
                     catch (Exception e) {
@@ -263,6 +319,7 @@ convoar
         // Parameters are in 'ConvOAR.Globals.params'.
         // For the moment, the OAR file must be specified with a string because of how OpenSimulator
         //     processes the input files. Note that the filename can be an 'http:' type URL.
+        // (Tried building this with Promises but had execution problems so resorted to using a callback)
         public delegate void BSceneLoadedCallback(BScene loadedScene);
         public bool LoadOAR(IAssetService assetService, IAssetFetcher assetFetcher, BSceneLoadedCallback loadedCallback) {
             bool ret = false;

@@ -58,6 +58,7 @@ namespace org.herbal3d.convoar {
         // If no Add's before, can do the hashing without copying the byte array
         BHash Finish(byte[] c);
         BHash Finish(byte[] c, int offset, int len);
+        // Get the hash code after doing a Finish()
         BHash Hash();
     }
 
@@ -69,8 +70,8 @@ namespace org.herbal3d.convoar {
         public abstract ulong ToULong();  // returns the hash of the hash if not int based hash
         public abstract bool Equals(BHash other);
         public abstract int CompareTo(BHash obj);
-        // public abstract int Compare(BHash x, BHash y);
-        public abstract override int GetHashCode();
+        // public abstract int Compare(BHash x, BHash y);   // TODO: do we need this function?
+        public abstract override int GetHashCode(); // to match the C# standard hash function
     }
 
     // A hash that is an UInt64
@@ -117,7 +118,7 @@ namespace org.herbal3d.convoar {
             return ret;
         }
         public override int GetHashCode() {
-            ulong upper = (_hash >> 32 )& 0xffffffff;
+            ulong upper = (_hash >> 32) & 0xffffffff;
             ulong lower = _hash & 0xffffffff;
             return (int)(upper ^ lower);
         }
@@ -350,6 +351,7 @@ namespace org.herbal3d.convoar {
         public override BHash Finish(byte[] c) {
             return this.Finish(c, 0, c.Length);
         }
+
         public override BHash Finish(byte[] c, int offset, int len) {
             MD5 md5 = MD5.Create();
             if (building.Length > 0) {
@@ -382,6 +384,10 @@ namespace org.herbal3d.convoar {
             return hash;
         }
 
+        public override BHash Finish(byte[] c) {
+            return this.Finish(c, 0, c.Length);
+        }
+
         public override BHash Finish(byte[] c, int offset, int len) {
             using (SHA256CryptoServiceProvider SHA256 = new SHA256CryptoServiceProvider()) {
                 if (building.Length > 0) {
@@ -391,6 +397,43 @@ namespace org.herbal3d.convoar {
                 else {
                     // if no 'Add's were done, don't copy the input data
                     hash = new BHashBytes(SHA256.ComputeHash(c, offset, len));
+                }
+            }
+            return hash;
+        }
+
+        public override BHash Hash() {
+            return hash;
+        }
+    }
+
+    // ======================================================================
+    public class BHasherSHA512 : BHasherBytes, IBHasher {
+        BHashBytes hash = new BHashBytes();
+
+        public BHasherSHA512() : base() {
+        }
+
+        public override BHash Finish() {
+            using (SHA512CryptoServiceProvider SHA512 = new SHA512CryptoServiceProvider()) {
+                hash = new BHashBytes(SHA512.ComputeHash(building, 0, buildingLoc));
+            }
+            return hash;
+        }
+
+        public override BHash Finish(byte[] c) {
+            return this.Finish(c, 0, c.Length);
+        }
+
+        public override BHash Finish(byte[] c, int offset, int len) {
+            using (SHA512CryptoServiceProvider SHA512 = new SHA512CryptoServiceProvider()) {
+                if (building.Length > 0) {
+                    AddBytes(c, offset, len);
+                    hash = new BHashBytes(SHA512.ComputeHash(building, 0, buildingLoc));
+                }
+                else {
+                    // if no 'Add's were done, don't copy the input data
+                    hash = new BHashBytes(SHA512.ComputeHash(c, offset, len));
                 }
             }
             return hash;

@@ -54,12 +54,16 @@ namespace org.herbal3d.convoar {
         public bool AddUniqueCodes;     // Add an extras.unique value to some GLTF objects as a unique hash
 
         public bool ExportTextures;     // also export textures to the target dir
-        public string TexturesDir;        // sub-directory for all the image files
-        public int MaxTextureSize;      // the maximum pixel dimension for images if exporting
+        public string TexturesDir;      // sub-directory for all the image files
+        public int TextureMaxSize;      // The maximum size of textures for a simple export",
+        public string ReducedTextureSizes;// a list of reduced texture sizes (eg, "512,256,100")
         public string PreferredTextureFormat;   // "PNG", "JPEG", "GIF", "BMP"
         public string PreferredTextureFormatIfNoTransparency; // "PNG", "JPEG", "GIF", "BMP"
 
         public bool DoubleSided;        // specify whether double sided mesh rendering
+
+        // Assimp conversions
+        public bool ExportAssimp;       // use AssimpNet to convert and output files
 
         // Terrain processing
         public bool AddTerrainMesh;     // whether to create and add a terrain mesh
@@ -140,13 +144,19 @@ namespace org.herbal3d.convoar {
                 true ),
             new ParameterDefn<string>("TexturesDir", "sub-directory for all the image files",
                 "images" ),
-            new ParameterDefn<int>("MaxTextureSize", "The maximum pixel dimension for images if exporting",
+            new ParameterDefn<int>("TextureMaxSize", "The maximum size of textures for a simple export",
                 256 ),
+            new ParameterDefn<string>("ReducedTextureSizes", "List of reduced texture sizes (eg, '512,256,100')",
+                "256,128,64" ),
             new ParameterDefn<string>("PreferredTextureFormat", "One of: PNG, JPG, GIF, BMP",
                 "PNG"),
             new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPG, GIF, BMP",
                 "JPG"),
             new ParameterDefn<bool>("DoubleSided", "specify whether double sided mesh rendering",
+                true),
+
+            // AssimpNet
+            new ParameterDefn<bool>("ExportAssimp", "use AssimpNet to convert and output files",
                 true),
 
             // Terrain processing
