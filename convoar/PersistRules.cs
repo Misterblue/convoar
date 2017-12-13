@@ -131,6 +131,11 @@ namespace org.herbal3d.convoar {
             PersistInit(pAssetType, pInfo, pTargetType);
         }
 
+        public PersistRules Clone() {
+            PersistRules pr = new PersistRules(this._assetType, this._assetInfo, this._targetType);
+            return pr;
+        }
+
         private void PersistInit(AssetType pAssetType, string pInfo, TargetType pTargetType) {
             _assetType = pAssetType;
             _assetInfo = pInfo;
@@ -185,7 +190,8 @@ namespace org.herbal3d.convoar {
 
 
         private string CreateFilename() {
-            string fnbase = JoinFilePieces(ConvOAR.Globals.parms.OutputDir, baseDirectory);
+            // string fnbase = JoinFilePieces(ConvOAR.Globals.parms.OutputDir, baseDirectory);
+            string fnbase = baseDirectory;
             return JoinFilePieces(fnbase, _assetInfo + "." + TargetTypeToExtension[_targetType]);
         }
 

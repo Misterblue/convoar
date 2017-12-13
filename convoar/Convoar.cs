@@ -125,15 +125,20 @@ convoar
                             List<int> textureSizes = Globals.parms.ReducedTextureSizes.Split(',').Select<string,int>(x => { return int.Parse(x); }).ToList();
                             List<ImageInfo> resizedImages = new List<ImageInfo>();
                             textureSizes.ForEach(maxTextureSize => {
-                                assetFetcher.Images.ForEach(delegate (ImageInfo img) {
+                                assetFetcher.Images.ForEach(img => {
                                     if (img.image != null && (img.image.Width > maxTextureSize || img.image.Height > maxTextureSize)) {
-                                        ImageInfo newImage = img.Clone();
-                                        newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
-                                        newImage.ConstrainTextureSize(maxTextureSize);
-                                        // The resized images go into a subdir named after the new size
-                                        newImage.persist.baseDirectory =
-                                            PersistRules.JoinFilePieces(newImage.persist.baseDirectory, maxTextureSize.ToString());
-                                        resizedImages.Add(newImage);
+                                        // See if the image has already been resized and is in the filesystem
+                                        PersistRules pr = img.persist.Clone();
+                                        pr.baseDirectory = PersistRules.JoinFilePieces(img.persist.baseDirectory, maxTextureSize.ToString());
+                                        // if (!File.Exists(pr.filename)) {
+                                            // If it hasn't been cached, create the resized image
+                                            ImageInfo newImage = img.Clone();
+                                            newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
+                                            newImage.ConstrainTextureSize(maxTextureSize);
+                                            // The resized images go into a subdir named after the new size
+                                            newImage.persist.baseDirectory = pr.baseDirectory;
+                                            resizedImages.Add(newImage);
+                                        // }
                                     }
                                 });
                             });
@@ -246,6 +251,11 @@ convoar
                             if (Globals.parms.ExportAssimp) {
                                 using (AssimpInterface assimp = new AssimpInterface()) {
                                     Assimp.Scene aScene = assimp.ConvertBSceneToAssimpScene(bScene, assetFetcher, Globals.parms.TextureMaxSize);
+
+                                    if (Globals.parms.ExportTextures) {
+                                        assimp.WriteImages(aScene);
+                                    }
+
                                     // format dae, desc = COLLADA - Digital Asset Exchange Schema, id = collada
                                     // format x, desc = X Files, id = x
                                     // format stp, desc = Step Files, id = stp
@@ -264,6 +274,7 @@ convoar
                                     // format x3d, desc = Extensible 3D, id = x3d
                                     // format 3mf, desc = The 3MF - File - Format, id = 3mf
                                     // Assimp.PostProcessSteps postProcessingFlags = Assimp.PostProcessSteps.None;
+                                    /*
                                     Assimp.PostProcessSteps postProcessingFlags = 
                                               Assimp.PostProcessSteps.None
                                             // Flips all UV coordinates along the y-axis
@@ -290,7 +301,8 @@ convoar
                                             // | Assimp.PostProcessSteps.SplitLargeMeshes
                                             | Assimp.PostProcessSteps.None;
                                     assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2", postProcessingFlags);
-                                    // assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2");
+                                    */
+                                    assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2");
                                 }
                             }
                         });

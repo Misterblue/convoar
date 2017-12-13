@@ -36,6 +36,7 @@ namespace org.herbal3d.convoar {
         public OMV.Bumpiness bump;
         public float glow;
         public OMV.Shininess shiny; // None, Low, Medium, High
+        public bool twoSided;
 
         private BHash _hash = null;
 
@@ -57,6 +58,7 @@ namespace org.herbal3d.convoar {
             bump = faceTexture.Bump;
             glow = faceTexture.Glow;
             shiny = faceTexture.Shiny;
+            twoSided = ConvOAR.Globals.parms.DoubleSided;
         }
 
         public BHash GetBHash() {
