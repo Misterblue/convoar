@@ -60,6 +60,22 @@ namespace org.herbal3d.convoar {
             }
         }
 
+        public Assimp.ExportFormatDescription[] GetExportFormatDescription() {
+            return assimpContext.GetSupportedExportFormats();
+        }
+
+        public string GetFileExtensionForFormat(string format) {
+            string ret = String.Empty;
+            Assimp.ExportFormatDescription[] formats = assimpContext.GetSupportedExportFormats();
+            for (int ii = 0; ii < formats.Length; ii++) {
+                if (String.Compare(formats[ii].FormatId, format, true) == 0) {
+                    ret = formats[ii].FileExtension;
+                    break;
+                }
+            }
+            return ret;
+        }
+
         // Pass over everything in the scene and convert everything to AssimpNet structures.
         public Assimp.Scene ConvertBSceneToAssimpScene(BScene bScene, IAssetFetcher contextAssets, int imageSizeConstraint) {
             Assimp.Scene aScene = new Assimp.Scene();

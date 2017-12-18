@@ -55,6 +55,8 @@ namespace org.herbal3d.convoar {
             return @"Invocation:
 convoar
      -d directoryForOutputFiles
+     --subregion <x,y,z>
+     --exportFormat format
      --displacement <x,y,z>
      --rotation degrees
      --verbose
@@ -302,7 +304,12 @@ convoar
                                             | Assimp.PostProcessSteps.None;
                                     assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2", postProcessingFlags);
                                     */
-                                    assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2");
+                                    string exportFormat = Globals.parms.ExportFormat;
+                                    Globals.log.DebugFormat("{0}: Doing Assimp export to format '{1}'", _logHeader, exportFormat);
+                                    string ext = assimp.GetFileExtensionForFormat(exportFormat);
+                                    assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat);
+                                    // assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2");
+                                    Globals.log.DebugFormat("{0}: Export completed", _logHeader, exportFormat);
                                 }
                             }
                         });

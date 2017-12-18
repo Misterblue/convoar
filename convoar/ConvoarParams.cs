@@ -40,6 +40,7 @@ namespace org.herbal3d.convoar {
         public string ConvoarID;        // GUID for 'convoar' identity (used for CreatorID, ...)
         public string Displacement;
         public string Rotation;
+        public string SubRegion;        // Bounds of a sub-region of the whole region that will be exported
 
         // Optimizations
         public bool MergeStaticMeshes;  // whether to merge meshes with similar materials
@@ -64,6 +65,8 @@ namespace org.herbal3d.convoar {
 
         // Assimp conversions
         public bool ExportAssimp;       // use AssimpNet to convert and output files
+        public string ExportFormat;     // format to export the OAR file
+        public bool ListExportFormats;  // list the possible export formats
 
         // Terrain processing
         public bool AddTerrainMesh;     // whether to create and add a terrain mesh
@@ -119,6 +122,8 @@ namespace org.herbal3d.convoar {
                 null ),
             new ParameterDefn<string>("Rotation", "Optional rotation to add to OAR entites",
                 null ),
+            new ParameterDefn<string>("Subregion", "Bounds of subregion to export. Whole region if empty or null",
+                null ),
 
             // Optimizations
             new ParameterDefn<bool>("MergeStaticMeshes", "whether to merge meshes with similar materials",
@@ -159,6 +164,10 @@ namespace org.herbal3d.convoar {
             // AssimpNet
             new ParameterDefn<bool>("ExportAssimp", "use AssimpNet to convert and output files",
                 true),
+            new ParameterDefn<string>("ExportFormat", "Format to export the region as",
+                "gltf2"),
+            new ParameterDefn<bool>("ListExportFormats", "List the possible export formats",
+                false),
 
             // Terrain processing
             new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
