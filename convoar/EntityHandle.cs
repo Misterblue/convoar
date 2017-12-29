@@ -44,6 +44,9 @@ namespace org.herbal3d.convoar {
         public override abstract string ToString();
 
         public abstract BHash GetBHash();
+
+        // THis is usually overridden by the sub-class
+        public abstract OMV.UUID GetUUID();
     }
 
     public class EntityHandleUUID : EntityHandle {
@@ -62,7 +65,7 @@ namespace org.herbal3d.convoar {
             _uuid = id;
         }
 
-        public OMV.UUID GetUUID() {
+        public override OMV.UUID GetUUID() {
             return _uuid;
         }
 

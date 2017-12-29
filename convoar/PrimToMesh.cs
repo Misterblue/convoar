@@ -140,43 +140,6 @@ namespace org.herbal3d.convoar {
         private Promise<DisplayableRenderable> MeshFromPrimMeshData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
 
-            /*
-            // Fetch mesh from our asset storage.
-            // This assumes the hash for the mesh defintion is the UUID of the asset (in 'SculptTexture')
-            EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
-            BHash meshHash = new BHashULong(meshHandle.GetUUID().GetHashCode());
-            return assetFetcher.GetRenderable(meshHash, () => {
-                // If the mesh asset doesn't already exist, build it.
-                return new Promise<DisplayableRenderable>((resolve, reject) => {
-                    assetFetcher.FetchRawAsset(meshHandle)
-                        .Catch(e => {
-                            ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimMeshData: exception: {1}", _logHeader, e);
-                            reject(e);
-                        })
-                        .Then(meshBytes => {
-                            // OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
-                            // if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
-                            OMVR.FacetedMesh fMesh = null;
-                            try
-                            {
-                                fMesh = _mesher.GenerateFacetedMeshMesh(prim, meshBytes);
-                            }
-                            catch (Exception e)
-                            {
-                                ConvOAR.Globals.log.ErrorFormat("{0} Exception in GenerateFacetedMeshMesh: {1}", _logHeader, e);
-                            }
-                            if (fMesh != null) {
-                                DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
-                                resolve(dr);
-                            }
-                            else {
-                                reject(new Exception("MeshFromPrimMeshData: could not decode mesh information from asset. ID="
-                                                + prim.ID.ToString()));
-                            }
-                        });
-                });
-            });
-            */
                 EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
                     assetFetcher.FetchRawAsset(meshHandle)
@@ -266,7 +229,8 @@ namespace org.herbal3d.convoar {
                 BHash textureHash = new BHashULong(textureHandle.GetUUID().GetHashCode());
                 ImageInfo lookupImageInfo = assetFetcher.GetImageInfo(textureHash, () => {
                     // The image is not in the cache yet so create an ImageInfo entry for it
-                    ImageInfo imageInfo = new ImageInfo();
+                    // Note that image gets the same UUID as the OpenSim texture
+                    ImageInfo imageInfo = new ImageInfo(textureHandle);
                     assetFetcher.FetchTextureAsImage(textureHandle)
                         .Catch( e => {
                             // Failure getting the image

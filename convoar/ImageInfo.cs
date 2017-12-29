@@ -27,7 +27,7 @@ using OMV = OpenMetaverse;
 namespace org.herbal3d.convoar {
 
     public class ImageInfo {
-        public EntityHandleUUID handle;
+        public EntityHandle handle;
         public OMV.UUID imageIdentifier;
         public bool hasTransprency;
         public PersistRules persist;    // information in filesystem storage of the image
@@ -39,8 +39,11 @@ namespace org.herbal3d.convoar {
         private string _logHeader = "[ImageInfo]";
 #pragma warning restore 414
 
-        public ImageInfo() {
-            handle = new EntityHandleUUID();
+        public ImageInfo() : this(new EntityHandleUUID() ){
+        }
+
+        public ImageInfo(EntityHandle pHandle) {
+            handle = pHandle;
             imageIdentifier = handle.GetUUID(); // image is unique unless underlying set
             hasTransprency = false;
             image = null;

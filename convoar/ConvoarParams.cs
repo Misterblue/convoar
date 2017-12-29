@@ -122,7 +122,7 @@ namespace org.herbal3d.convoar {
                 null ),
             new ParameterDefn<string>("Rotation", "Optional rotation to add to OAR entites",
                 null ),
-            new ParameterDefn<string>("SubRegion", "Bounds of subregion to export. Whole region if empty or null",
+            new ParameterDefn<string>("SubRegion", "Bounds of subregion to export (X,Y,Z,X,Y,Z). Whole region if empty or null",
                 null ),
 
             // Optimizations

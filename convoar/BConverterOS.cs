@@ -61,13 +61,19 @@ namespace org.herbal3d.convoar {
             Dictionary<string, object> options = new Dictionary<string, object>();
             // options.Add("merge", false);
             string optDisplacement = ConvOAR.Globals.parms.Displacement;
-            if (optDisplacement != null) options.Add("displacement", optDisplacement);
+            if (optDisplacement != null) options.Add("displacement", OMV.Vector3.Parse(optDisplacement));
             string optRotation = ConvOAR.Globals.parms.Rotation;
-            if (optRotation != null) options.Add("rotation", optRotation);
+            if (optRotation != null) options.Add("rotation", float.Parse(optRotation, System.Threading.Thread.CurrentThread.CurrentCulture));
             // options.Add("default-user", OMV.UUID.Random());
-            // if (_optSkipAssets != null) options.Add('skipAssets', true);
-            // if (_optForceTerrain != null) options.Add("force-terrain", true);
-            // if (_optNoObjects != null) options.Add("no-objects", true);
+            // if (optSkipAssets != null) options.Add('skipAssets', true);
+            // if (optForceTerrain != null) options.Add("force-terrain", true);
+            // if (optNoObjects != null) options.Add("no-objects", true);
+            string optSubRegion = ConvOAR.Globals.parms.SubRegion;
+            if (optSubRegion != null) {
+                List<float> bounds = optSubRegion.Split(',').Select<string,float>(x => { return float.Parse(x); }).ToList();
+                options.Add("bounding-origin", new OMV.Vector3(bounds[0], bounds[1], bounds[2]));
+                options.Add("bounding-size", new OMV.Vector3(bounds[3]-bounds[0], bounds[4]-bounds[1], bounds[5]-bounds[2]));
+            }
 
             string regionName = "convoar";
             if (String.IsNullOrEmpty(ConvOAR.Globals.parms.RegionName)) {
