@@ -133,6 +133,7 @@ namespace org.herbal3d.convoar {
 
         public PersistRules Clone() {
             PersistRules pr = new PersistRules(this._assetType, this._assetInfo, this._targetType);
+            pr.baseDirectory = this.baseDirectory;
             return pr;
         }
 
