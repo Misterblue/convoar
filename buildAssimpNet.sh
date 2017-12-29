@@ -2,6 +2,7 @@
 
 TARGET=Debug
 
+cd ..
 HERE=$(pwd)
 
 # Assimp has been built as $TARGET
