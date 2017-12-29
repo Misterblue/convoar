@@ -88,17 +88,17 @@ convoar
                 return;
             }
 
-            if (Globals.parms.Verbose) {
-                Globals.log.SetVerbose(Globals.parms.Verbose);
+            if (Globals.parms.P<bool>("Verbose")) {
+                Globals.log.SetVerbose(Globals.parms.P<bool>("Verbose"));
             }
 
             // Validate parameters
-            if (String.IsNullOrEmpty(Globals.parms.InputOAR)) {
+            if (String.IsNullOrEmpty(Globals.parms.P<string>("InputOAR"))) {
                 Globals.log.ErrorFormat("An input OAR file must be specified");
                 Globals.log.ErrorFormat(Invocation());
                 return;
             }
-            if (String.IsNullOrEmpty(Globals.parms.OutputDir)) {
+            if (String.IsNullOrEmpty(Globals.parms.P<string>("OutputDir"))) {
                 _outputDir = "./out";
                 Globals.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
             }
@@ -124,7 +124,9 @@ convoar
                             // Perform any optimizations on the scene and its instances
 
                             // Create reduced resolution versions of the images
-                            List<int> textureSizes = Globals.parms.ReducedTextureSizes.Split(',').Select<string,int>(x => { return int.Parse(x); }).ToList();
+                            List<int> textureSizes = Globals.parms.P<string>("ReducedTextureSizes").Split(',').Select<string,int>(x => {
+                                return int.Parse(x);
+                            }).ToList();
                             List<ImageInfo> resizedImages = new List<ImageInfo>();
                             textureSizes.ForEach(maxTextureSize => {
                                 assetFetcher.Images.ForEach(img => {
@@ -155,7 +157,7 @@ convoar
                             }
 
                             // Output the transformed scene as Gltf version 1
-                            if (Globals.parms.ExportGltf) {
+                            if (Globals.parms.P<bool>("ExportGltf")) {
                                 Gltf gltf = new Gltf(bScene.name, 1);
 
                                 try {
@@ -176,7 +178,7 @@ convoar
                                     }
                                     gltf.WriteBinaryFiles();
 
-                                    if (Globals.parms.ExportTextures) {
+                                    if (Globals.parms.P<bool>("ExportTextures")) {
                                         gltf.WriteImages();
                                     }
                                 }
@@ -186,7 +188,7 @@ convoar
                             }
 
                             // Output the transformed scene as Gltf version 2
-                            if (Globals.parms.ExportGltf2) {
+                            if (Globals.parms.P<bool>("ExportGltf2")) {
                                 Gltf gltf = new Gltf(bScene.name, 2);
 
                                 try {
@@ -207,7 +209,7 @@ convoar
                                     }
                                     gltf.WriteBinaryFiles();
 
-                                    if (Globals.parms.ExportTextures) {
+                                    if (Globals.parms.P<bool>("ExportTextures")) {
                                         gltf.WriteImages();
                                     }
                                 }
@@ -217,10 +219,10 @@ convoar
                             }
 
                             // Output all the instances in the scene as individual GLTF files
-                            if (Globals.parms.ExportIndividualGltf) {
+                            if (Globals.parms.P<bool>("ExportIndividualGltf")) {
                                 bScene.instances.ForEach(instance => {
                                     string instanceName = instance.handle.ToString();
-                                    Gltf gltf = new Gltf(instanceName, Globals.parms.IndividualGltfVersion);
+                                    Gltf gltf = new Gltf(instanceName, Globals.parms.P<int>("IndividualGltfVersion"));
                                     gltf.persist.baseDirectory = bScene.name;
                                     // gltf.persist.baseDirectory = PersistRules.JoinFilePieces(bScene.name, instanceName);
                                     GltfScene gltfScene = new GltfScene(gltf, instanceName);
@@ -244,17 +246,18 @@ convoar
                                     }
                                     gltf.WriteBinaryFiles();
 
-                                    if (Globals.parms.ExportTextures) {
+                                    if (Globals.parms.P<bool>("ExportTextures")) {
                                         gltf.WriteImages();
                                     }
                                 });
                             }
 
-                            if (Globals.parms.ExportAssimp) {
+                            if (Globals.parms.P<bool>("ExportAssimp")) {
                                 using (AssimpInterface assimp = new AssimpInterface()) {
-                                    Assimp.Scene aScene = assimp.ConvertBSceneToAssimpScene(bScene, assetFetcher, Globals.parms.TextureMaxSize);
+                                    Assimp.Scene aScene = assimp.ConvertBSceneToAssimpScene(bScene, assetFetcher,
+                                                    Globals.parms.P<int>("TextureMaxSize"));
 
-                                    if (Globals.parms.ExportTextures) {
+                                    if (Globals.parms.P<bool>("ExportTextures")) {
                                         assimp.WriteImages(aScene);
                                     }
 
@@ -275,39 +278,44 @@ convoar
                                     // format assxml, desc = Assxml Document, id = assxml
                                     // format x3d, desc = Extensible 3D, id = x3d
                                     // format 3mf, desc = The 3MF - File - Format, id = 3mf
-                                    // Assimp.PostProcessSteps postProcessingFlags = Assimp.PostProcessSteps.None;
-                                    /*
-                                    Assimp.PostProcessSteps postProcessingFlags = 
-                                              Assimp.PostProcessSteps.None
-                                            // Flips all UV coordinates along the y-axis
-                                            // and adjusts material settings/bitangents accordingly.
-                                            // | Assimp.PostProcessSteps.FlipUVs
-                                            // Searches for redundant/unreferenced materials and removes them.
-                                            | Assimp.PostProcessSteps.RemoveRedundantMaterials
-                                            // Re-orders triangles for better vertex cache locality.
-                                            | Assimp.PostProcessSteps.ImproveCacheLocality
-                                            // This step converts non-UV mappings (such as spherical or
-                                            // cylindrical mapping) to proper texture coordinate channels.
-                                            // | Assimp.PostProcessSteps.TransformUVCoords
-                                            // Identifies and joins identical vertex data sets within all imported meshes.
-                                            | Assimp.PostProcessSteps.JoinIdenticalVertices
-                                            // Optimizes scene hierarchy. Nodes with no animations, bones,
-                                            // lights, or cameras assigned are collapsed and joined.
-                                            | Assimp.PostProcessSteps.OptimizeGraph
-                                            // Attempts to reduce the number of meshes (and draw calls). 
-                                            | Assimp.PostProcessSteps.OptimizeMeshes
-                                            // Removes the node graph and "bakes" (pre-transforms) all
-                                            // vertices with the local transformation matrices of their nodes.
-                                            | Assimp.PostProcessSteps.PreTransformVertices
-                                            // Splits large meshes into smaller submeshes.
-                                            // | Assimp.PostProcessSteps.SplitLargeMeshes
-                                            | Assimp.PostProcessSteps.None;
-                                    assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2", postProcessingFlags);
-                                    */
-                                    string exportFormat = Globals.parms.ExportFormat;
+
+                                    Assimp.PostProcessSteps postProcessingFlags = Assimp.PostProcessSteps.None;
+                                    // Flips all UV coordinates along the y-axis
+                                    // and adjusts material settings/bitangents accordingly.
+                                    if (Globals.parms.P<bool>("FlipUVs"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.FlipUVs;
+                                    // Searches for redundant/unreferenced materials and removes them.
+                                    if (Globals.parms.P<bool>("RemoveRedundantMaterials"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.RemoveRedundantMaterials;
+                                    // Re-orders triangles for better vertex cache locality.
+                                    if (Globals.parms.P<bool>("ImproveCacheLocality"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.ImproveCacheLocality;
+                                    // This step converts non-UV mappings (such as spherical or
+                                    // cylindrical mapping) to proper texture coordinate channels.
+                                    if (Globals.parms.P<bool>("TransformUVCoords"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.TransformUVCoords;
+                                    // Identifies and joins identical vertex data sets within all imported meshes.
+                                    if (Globals.parms.P<bool>("JoinIdenticalVertices"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.JoinIdenticalVertices;
+                                    // Optimizes scene hierarchy. Nodes with no animations, bones,
+                                    // lights, or cameras assigned are collapsed and joined.
+                                    if (Globals.parms.P<bool>("OptimizeGraph"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.OptimizeGraph;
+                                    // Attempts to reduce the number of meshes (and draw calls). 
+                                    if (Globals.parms.P<bool>("OptimizeMeshes"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.OptimizeMeshes;
+                                    // Removes the node graph and "bakes" (pre-transforms) all
+                                    // vertices with the local transformation matrices of their nodes.
+                                    if (Globals.parms.P<bool>("PreTransformVertices"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.PreTransformVertices;
+                                    // Splits large meshes into smaller submeshes.
+                                    if (Globals.parms.P<bool>("SplitLargeMeshes"))
+                                        postProcessingFlags |= Assimp.PostProcessSteps.SplitLargeMeshes;
+
+                                    string exportFormat = Globals.parms.P<string>("ExportFormat");
                                     Globals.log.DebugFormat("{0}: Doing Assimp export to format '{1}'", _logHeader, exportFormat);
                                     string ext = assimp.GetFileExtensionForFormat(exportFormat);
-                                    assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat);
+                                    assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat, postProcessingFlags);
                                     // assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2");
                                     Globals.log.DebugFormat("{0}: Export completed", _logHeader, exportFormat);
                                 }

@@ -211,7 +211,7 @@ namespace org.herbal3d.convoar {
             BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: faceId={1}, numVert={2}, numInd={3}",
                  _logHeader, face.ID, meshInfo.vertexs.Count, meshInfo.indices.Count);
 
-            if (!ConvOAR.Globals.parms.DisplayTimeScaling) {
+            if (!ConvOAR.Globals.parms.P<bool>("DisplayTimeScaling")) {
                 if (ScaleMeshes(meshInfo, primScale)) {
                     BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: scaled mesh to {1}",
                              _logHeader, primScale);

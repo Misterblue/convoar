@@ -58,7 +58,7 @@ namespace org.herbal3d.convoar {
             bump = faceTexture.Bump;
             glow = faceTexture.Glow;
             shiny = faceTexture.Shiny;
-            twoSided = ConvOAR.Globals.parms.DoubleSided;
+            twoSided = ConvOAR.Globals.parms.P<bool>("DoubleSided");
         }
 
         public BHash GetBHash() {

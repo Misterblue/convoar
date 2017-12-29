@@ -60,15 +60,15 @@ namespace org.herbal3d.convoar {
             // Read in OAR
             Dictionary<string, object> options = new Dictionary<string, object>();
             // options.Add("merge", false);
-            string optDisplacement = ConvOAR.Globals.parms.Displacement;
+            string optDisplacement = ConvOAR.Globals.parms.P<string>("Displacement");
             if (optDisplacement != null) options.Add("displacement", OMV.Vector3.Parse(optDisplacement));
-            string optRotation = ConvOAR.Globals.parms.Rotation;
+            string optRotation = ConvOAR.Globals.parms.P<string>("Rotation");
             if (optRotation != null) options.Add("rotation", float.Parse(optRotation, System.Threading.Thread.CurrentThread.CurrentCulture));
             // options.Add("default-user", OMV.UUID.Random());
             // if (optSkipAssets != null) options.Add('skipAssets', true);
             // if (optForceTerrain != null) options.Add("force-terrain", true);
             // if (optNoObjects != null) options.Add("no-objects", true);
-            string optSubRegion = ConvOAR.Globals.parms.SubRegion;
+            string optSubRegion = ConvOAR.Globals.parms.P<string>("SubRegion");
             if (optSubRegion != null) {
                 List<float> bounds = optSubRegion.Split(',').Select<string,float>(x => { return float.Parse(x); }).ToList();
                 options.Add("bounding-origin", new OMV.Vector3(bounds[0], bounds[1], bounds[2]));
@@ -76,17 +76,17 @@ namespace org.herbal3d.convoar {
             }
 
             string regionName = "convoar";
-            if (String.IsNullOrEmpty(ConvOAR.Globals.parms.RegionName)) {
+            if (String.IsNullOrEmpty(ConvOAR.Globals.parms.P<String>("RegionName"))) {
                 // Try to build the region name from the OAR filesname
-                regionName = Path.GetFileNameWithoutExtension(ConvOAR.Globals.parms.InputOAR);
+                regionName = Path.GetFileNameWithoutExtension(ConvOAR.Globals.parms.P<string>("InputOAR"));
             }
             else {
-                regionName = ConvOAR.Globals.parms.RegionName;
+                regionName = ConvOAR.Globals.parms.P<string>("RegionName");
             }
             Scene scene = CreateScene(assetService, regionName);
 
             // Load the archive into our scene
-            ArchiveReadRequest archive = new ArchiveReadRequest(scene, ConvOAR.Globals.parms.InputOAR, Guid.Empty, options);
+            ArchiveReadRequest archive = new ArchiveReadRequest(scene, ConvOAR.Globals.parms.P<string>("InputOAR"), Guid.Empty, options);
             archive.DearchiveRegion(false);
 
             // Convert SOGs from OAR into EntityGroups
@@ -110,7 +110,7 @@ namespace org.herbal3d.convoar {
                 instanceList.AddRange(instances);
 
                 // Add the terrain mesh to the scene
-                if (ConvOAR.Globals.parms.AddTerrainMesh) {
+                if (ConvOAR.Globals.parms.P<bool>("AddTerrainMesh")) {
                     ConvOAR.Globals.log.DebugFormat("{0} Adding terrain to scene", _logHeader);
                     instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher));
                 }
@@ -250,7 +250,7 @@ namespace org.herbal3d.convoar {
                 inst.Rotation = sog.GroupRotation;
                 inst.Representation = rootDisplayable;
 
-                if (ConvOAR.Globals.parms.LogBuilding) {
+                if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
                     DumpInstance(inst);
                 }
 
@@ -261,7 +261,7 @@ namespace org.herbal3d.convoar {
         }
 
         private void DumpInstance(BInstance inst) {
-            if (ConvOAR.Globals.parms.LogBuilding) {
+            if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
                 Displayable instDisplayable = inst.Representation;
                 LogBProgress("{0} created instance. handle={1}, pos={2}, rot={3}",
                     _logHeader, inst.handle, inst.Position, inst.Rotation);
@@ -284,7 +284,7 @@ namespace org.herbal3d.convoar {
         }
 
         public static void LogBProgress(string msg, params Object[] args) {
-            if (ConvOAR.Globals.parms.LogBuilding) {
+            if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
                 ConvOAR.Globals.log.Log(msg, args);
             }
         }

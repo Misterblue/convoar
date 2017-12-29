@@ -62,7 +62,7 @@ namespace org.herbal3d.convoar {
 
         // Output messge of --LogGltfBuilding was specified
         protected void LogGltf(string msg, params object[] args) {
-            if (ConvOAR.Globals.parms.LogGltfBuilding) {
+            if (ConvOAR.Globals.parms.P<bool>("LogGltfBuilding")) {
                 ConvOAR.Globals.log.Log(msg, args);
             }
         }
@@ -308,7 +308,7 @@ namespace org.herbal3d.convoar {
         // After all the nodes have been added to a Gltf class, build all the
         //    dependent structures
         public void BuildAccessorsAndBuffers() {
-            int maxVerticesPerBuffer = ConvOAR.Globals.parms.VerticesMaxForBuffer;
+            int maxVerticesPerBuffer = ConvOAR.Globals.parms.P<int>("VerticesMaxForBuffer");
 
             // Partition the meshes into smaller groups based on number of vertices going out
             List<GltfPrimitive> partial = new List<GltfPrimitive>();
@@ -918,7 +918,7 @@ namespace org.herbal3d.convoar {
                 hasher.Add(prim.bHash);
             });
             bHash = hasher.Finish();
-            if (ConvOAR.Globals.parms.AddUniqueCodes) {
+            if (ConvOAR.Globals.parms.P<bool>("AddUniqueCodes")) {
                 // Add a unique code to the extras section
                 extras.Add("uniqueHash", bHash.ToString());
             }
@@ -1085,8 +1085,8 @@ namespace org.herbal3d.convoar {
                 transparency = surfaceColor.A;
                 transparent = true;
             }
-            if (ConvOAR.Globals.parms.DoubleSided) {
-                doubleSided = ConvOAR.Globals.parms.DoubleSided;
+            if (ConvOAR.Globals.parms.P<bool>("DoubleSided")) {
+                doubleSided = ConvOAR.Globals.parms.P<bool>("DoubleSided");
             }
             if (matInfo.shiny != OMV.Shininess.None) {
                 shininess = (float)matInfo.shiny / 256f;
@@ -1127,7 +1127,7 @@ namespace org.herbal3d.convoar {
         // Check if that is being done and find the reference to the resized image
         private ImageInfo CheckForResizedImage(ImageInfo origImage, IAssetFetcher assetFetcher) {
             ImageInfo ret = origImage;
-            int maxSize = ConvOAR.Globals.parms.TextureMaxSize;
+            int maxSize = ConvOAR.Globals.parms.P<int>("TextureMaxSize");
             if (maxSize > 0 && maxSize < 10000) {
                 if (origImage.xSize > maxSize || origImage.ySize > maxSize) {
                     ImageInfo constraintedImage = assetFetcher.GetImageInfo(origImage.imageIdentifier, maxSize);

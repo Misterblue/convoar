@@ -30,60 +30,6 @@ namespace org.herbal3d.convoar {
             SetParameterDefaultValues();
         }
 
-#pragma warning disable CS0649  // disable 'never assigned' warnings
-        public string InputOAR;
-        public string OutputDir;        // Where to store all the files
-        public string URIBase;          // the URI base to be added to the beginning of the asset name
-
-        // Options for OAR processing
-        public string RegionName;       // Name to use for the region (since it's not in the OAR)
-        public string ConvoarID;        // GUID for 'convoar' identity (used for CreatorID, ...)
-        public string Displacement;
-        public string Rotation;
-        public string SubRegion;        // Bounds of a sub-region of the whole region that will be exported
-
-        // Optimizations
-        public bool MergeStaticMeshes;  // whether to merge meshes with similar materials
-        public bool MergeNonStaticMeshes;   // whether to merge meshes with non-static entities
-
-        // Export to files
-        public bool ExportGltf;         // Output files in GLTF format
-        public int VerticesMaxForBuffer;    // Number of vertices to cause splitting of buffer files
-        public bool ExportGltf2;        // Output files in GLTFv2 format
-        public bool ExportIndividualGltf;   // Export scene objects as individual GLTF files
-        public int IndividualGltfVersion;   // GLTF version to export individual instances
-        public bool AddUniqueCodes;     // Add an extras.unique value to some GLTF objects as a unique hash
-
-        public bool ExportTextures;     // also export textures to the target dir
-        public string TexturesDir;      // sub-directory for all the image files
-        public int TextureMaxSize;      // The maximum size of textures for a simple export",
-        public string ReducedTextureSizes;// a list of reduced texture sizes (eg, "512,256,100")
-        public string PreferredTextureFormat;   // "PNG", "JPEG", "GIF", "BMP"
-        public string PreferredTextureFormatIfNoTransparency; // "PNG", "JPEG", "GIF", "BMP"
-
-        public bool DoubleSided;        // specify whether double sided mesh rendering
-
-        // Assimp conversions
-        public bool ExportAssimp;       // use AssimpNet to convert and output files
-        public string ExportFormat;     // format to export the OAR file
-        public bool ListExportFormats;  // list the possible export formats
-
-        // Terrain processing
-        public bool AddTerrainMesh;     // whether to create and add a terrain mesh
-        public bool HalfRezTerrain;     // whether to reduce the terrain resolution by 2
-        public bool CreateTerrainSplat; // whether to generate a terrain mesh splat texture
-
-        public bool DisplayTimeScaling; // 'true' if to delay mesh scaling to display/GPU time
-
-        // Debugging and Logging
-        public bool Verbose;            // if set, force DEBUG logging
-        public bool LogBuilding;        // if set, log detailed BScene/BInstance object building
-        public bool LogGltfBuilding;    // if set, log detailed Gltf object building
-        public bool LogConversionStats; // output numbers about number of entities converted
-        public bool LogDetailedSharedFaceStats; // output numbers about face mesh sharing
-        public bool LogDetailedEntityInfo;      // output detailed information about each entity
-#pragma warning restore CS0649
-
         // =====================================================================================
         // =====================================================================================
         // List of all of the externally visible parameters.
@@ -169,6 +115,25 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<bool>("ListExportFormats", "List the possible export formats",
                 false),
 
+            new ParameterDefn<bool>("FlipUVs", "Flips all UV coordinates along the y-axis and adjusts material settings/bitangents accordingly",
+                false),
+            new ParameterDefn<bool>("RemoveRedundantMaterials", "Searches for redundant/unreferenced materials and removes them.",
+                false),
+            new ParameterDefn<bool>("ImproveCacheLocality", "Re-orders triangles for better vertex cache locality.",
+                false),
+            new ParameterDefn<bool>("TransformUVCoords", "This step converts non-UV mappings (such as spherical or cylindrical mapping) to proper texture coordinate channels.",
+                false),
+            new ParameterDefn<bool>("JoinIdenticalVertices", "Identifies and joins identical vertex data sets within all imported meshes.",
+                false),
+            new ParameterDefn<bool>("OptimizeGraph", "Optimizes scene hierarchy. Nodes with no animations, bones, lights, or cameras assigned are collapsed and joined.",
+                false),
+            new ParameterDefn<bool>("OptimizeMeshes", "Attempts to reduce the number of meshes (and draw calls). ",
+                false),
+            new ParameterDefn<bool>("PreTransformVertices", "Removes the node graph and 'bakes' (pre-transforms) all vertices with the local transformation matrices of their nodes.",
+                false),
+            new ParameterDefn<bool>("SplitLargeMeshes", "Splits large meshes into smaller submeshes.",
+                false),
+
             // Terrain processing
             new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
                 true ),
@@ -219,65 +184,30 @@ namespace org.herbal3d.convoar {
         }
 
         // Specific parameter definition for a parameter of a specific type.
-        public delegate T PGetValue<T>();
-        public delegate void PSetValue<T>(T val);
         public sealed class ParameterDefn<T> : ParameterDefnBase {
             public T defaultValue;
+            public T value;
             public override Type GetValueType() {
                 return typeof(T);
             }
-            private PSetValue<T> setter;
-            private PGetValue<T> getter;
-            public ParameterDefn(string pName, string pDesc, T pDefault, PGetValue<T> pGetter, PSetValue<T> pSetter, params string[] symbols)
-                : base(pName, pDesc, symbols) {
-                defaultValue = pDefault;
-                setter = pSetter;
-                getter = pGetter;
-            }
-            // Simple parameter variable where property name is the same as the INI file name
-            //     and the value is only a simple get and set.
             public ParameterDefn(string pName, string pDesc, T pDefault, params string[] symbols)
                 : base(pName, pDesc, symbols) {
                 defaultValue = pDefault;
-                setter = (v) => { SetValueByName(name, v); };
-                getter = () => { return GetValueByName(name); };
             }
-            // Use reflection to find the property named 'pName' in Param and assign 'val' to same.
-            private void SetValueByName(string pName, T val) {
-                FieldInfo prop = context.GetType().GetField(pName);
-                if (prop == null) {
-                    // This should only be output when someone adds a new INI parameter and misspells the name.
-                    // m_log.ErrorFormat("{0} SetValueByName: did not find '{1}'. Verify specified property name is the same as the given INI parameters name.", LogHeader, pName);
-                    System.Console.WriteLine("{0} SetValueByName: did not find '{1}'. Verify specified field name is the same as the given INI parameters name.", _logHeader, pName);
-                }
-                else {
-                    prop.SetValue(context, val);
-                }
-            }
-            // Use reflection to find the property named 'pName' in Param and return the value in same.
-            private T GetValueByName(string pName)
-            {
-                FieldInfo prop = context.GetType().GetField(pName);
-                if (prop == null) {
-                    // This should only be output when someone adds a new INI parameter and misspells the name.
-                    // m_log.ErrorFormat("{0} GetValueByName: did not find '{1}'. Verify specified property name is the same as the given INI parameter name.", LogHeader, pName);
-                    System.Console.WriteLine("{0} GetValueByName: did not find '{1}'. Verify specified field name is the same as the given INI parameter name.", _logHeader, pName);
-                }
-                return (T)prop.GetValue(context);
+            public T Value() {
+                return value;
             }
             public override void AssignDefault() {
-                setter(defaultValue);
+                value = defaultValue;
             }
             public override string GetValue() {
-                return getter().ToString();
+                return value.ToString();
             }
             public override void SetValue(String valAsString) {
-                // Get the generic type of the setter
-                Type genericType = setter.GetType().GetGenericArguments()[0];
                 // Find the 'Parse' method on that type
                 System.Reflection.MethodInfo parser = null;
                 try {
-                    parser = genericType.GetMethod("Parse", new Type[] { typeof(String) } );
+                    parser = GetValueType().GetMethod("Parse", new Type[] { typeof(String) } );
                 }
                 catch {
                     parser = null;
@@ -285,10 +215,10 @@ namespace org.herbal3d.convoar {
                 if (parser != null) {
                     // Parse the input string
                     try {
-                        T setValue = (T)parser.Invoke(genericType, new Object[] { valAsString });
+                        T setValue = (T)parser.Invoke(GetValueType(), new Object[] { valAsString });
                         // System.Console.WriteLine("SetValue: setting value on {0} to {1}", this.name, setValue);
                         // Store the parsed value
-                        setter(setValue);
+                        value = setValue;
                         // m_log.DebugFormat("{0} Parameter {1} = {2}", LogHeader, name, setValue);
                     }
                     catch {
@@ -298,8 +228,8 @@ namespace org.herbal3d.convoar {
                 else {
                     // If there is not a parser, try doing a conversion
                     try {
-                        T setValue = (T)Convert.ChangeType(valAsString, genericType);
-                        setter(setValue);
+                        T setValue = (T)Convert.ChangeType(valAsString, GetValueType());
+                        value = setValue;
                     }
                     catch (Exception e) {
                         System.Console.WriteLine("{0} Conversion failed for {1}: {2}", _logHeader, this.name, e);
@@ -335,6 +265,25 @@ namespace org.herbal3d.convoar {
                 if (ret) break;
             }
             defn = foundDefn;
+            return ret;
+        }
+
+        // Return a value for the parameter.
+        // This is used by most callers to get parameter values.
+        // Note that it outputs a console message if not found. Not found means that the caller
+        //     used the wrong string name.
+        public T P<T>(string paramName) {
+            T ret = default(T);
+            ParameterDefnBase pbase = null;
+            if (TryGetParameter(paramName, out pbase)) {
+                ParameterDefn<T> pdef = pbase as ParameterDefn<T>;
+                if (pdef != null) {
+                    ret = pdef.Value();
+                }
+                else {
+                    System.Console.WriteLine("{0} Fetched unknown parameter. Param={1}", _logHeader, paramName);
+                }
+            }
             return ret;
         }
 

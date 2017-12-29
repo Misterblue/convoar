@@ -152,10 +152,10 @@ namespace org.herbal3d.convoar {
             // If target type is not specified, select the image type depending on parameters and transparency
             if (_targetType == TargetType.Default) {
                 if (_assetType == AssetType.Image) {
-                    ret = TextureFormatToTargetType[ConvOAR.Globals.parms.PreferredTextureFormatIfNoTransparency.ToLower()];
+                    ret = TextureFormatToTargetType[ConvOAR.Globals.parms.P<string>("PreferredTextureFormatIfNoTransparency").ToLower()];
                 }
                 if (_assetType == AssetType.ImageTrans) {
-                    ret = TextureFormatToTargetType[ConvOAR.Globals.parms.PreferredTextureFormat.ToLower()];
+                    ret = TextureFormatToTargetType[ConvOAR.Globals.parms.P<string>("PreferredTextureFormat").ToLower()];
                 }
             }
             return ret;
@@ -197,7 +197,7 @@ namespace org.herbal3d.convoar {
         }
 
         private string CreateURI() {
-            string uribase = JoinURIPieces(ConvOAR.Globals.parms.URIBase, baseDirectory);
+            string uribase = JoinURIPieces(ConvOAR.Globals.parms.P<string>("URIBase"), baseDirectory);
             return JoinURIPieces(uribase, _assetInfo + "." + TargetTypeToExtension[_targetType]);
         }
 

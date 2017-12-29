@@ -89,7 +89,7 @@ namespace org.herbal3d.convoar {
                 offsetPosition = baseSOP.OffsetPosition;
                 offsetRotation = baseSOP.RotationOffset;
             }
-            if (ConvOAR.Globals.parms.DisplayTimeScaling) {
+            if (ConvOAR.Globals.parms.P<bool>("DisplayTimeScaling")) {
                 scale = sop.Scale;
             }
 

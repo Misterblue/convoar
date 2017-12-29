@@ -46,7 +46,7 @@ namespace org.herbal3d.convoar {
             int YSize = terrainDef.Height;
 
             float[,] heightMap = new float[XSize, YSize];
-            if (ConvOAR.Globals.parms.HalfRezTerrain) {
+            if (ConvOAR.Globals.parms.P<bool>("HalfRezTerrain")) {
                 ConvOAR.Globals.log.DebugFormat("{0}: CreateTerrainMesh. creating half sized terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
                 // Half resolution mesh that approximates the heightmap
                 heightMap = new float[XSize/2, YSize/2];
@@ -70,7 +70,7 @@ namespace org.herbal3d.convoar {
             }
 
             // Number found in RegionSettings.cs as DEFAULT_TERRAIN_TEXTURE_3
-            OMV.UUID convoarID = new OMV.UUID(ConvOAR.Globals.parms.ConvoarID);
+            OMV.UUID convoarID = new OMV.UUID(ConvOAR.Globals.parms.P<string>("ConvoarID"));
 
             OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
             OMV.Primitive.TextureEntryFace terrainFace = new OMV.Primitive.TextureEntryFace(null);
@@ -79,7 +79,7 @@ namespace org.herbal3d.convoar {
             EntityHandleUUID terrainTextureHandle = new EntityHandleUUID();
             MaterialInfo terrainMaterialInfo = new MaterialInfo(terrainFace);
 
-            if (ConvOAR.Globals.parms.CreateTerrainSplat) {
+            if (ConvOAR.Globals.parms.P<bool>("CreateTerrainSplat")) {
                 // Use the OpenSim maptile generator to create a texture for the terrain
                 var terrainRenderer = new TexturedMapTileRenderer();
                 terrainRenderer.Initialise(scene, null);    // doesn't use config param
