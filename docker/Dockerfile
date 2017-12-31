@@ -1,22 +1,23 @@
 # Dockerfile for building a runnable version of convoar
 
-ENV CONVOAR_PASSWORD convoarconvoar
+# FROM alpine
+FROM ubuntu:latest
+
 # ENV TARGET=Release
 ENV TARGET=Debug
 
-# An account is created in the docker file for building and running the app
+# An account is created in the docker file for building and running the app.
+# Set the real password in the calling environment. This is just a default.
 ENV USER=convoar
+ENV CONVOAR_PASSWORD=convoarconvoar
 
 # Optout of the .NET Core Telemetry (https://aka.ms/dotnet-cli-telemetry)
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
 
-# FROM alpine
-FROM ubuntu:latest
-
 LABEL Version="0.1"
 LABEL Description="Docker container convoar"
 
-# setup to fetch mono executables from Mono-Project
+# add the development environment and base tools
 RUN apt-get update \
     && apt-get upgrade \
     && apt-get install -y \
@@ -29,7 +30,6 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /tmp/* var/tmp/* \
     && rm -rf /var/lib/apt/lists/*
-# mono-devel, mono-complete, mono-dbg, referenceassemblies-pcl, ca-certificates-mono
 
 # Install the latest and greatest mono
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
@@ -42,24 +42,26 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
     && apt-get clean \
     && rm -rf /tmp/* var/tmp/* \
     && rm -rf /var/lib/apt/lists/*
+# mono-devel, mono-complete, mono-dbg, referenceassemblies-pcl, ca-certificates-mono
 
 # Install the .NET stuff
-RUN curl -s https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft.gpg \
+RUN curl -s https://packages.microsoft.com/keys/microsoft.asc \
+                | gpg --dearmor > /tmp/microsoft.gpg \
     && mv /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" \
                 | tee /etc/apt/sources.list.d/dotnetdev.list \
     && apt-get update \
-    && apt-get install \
+    && apt-get install -y \
         dotnet-sdk-2.0.2 \
         nuget \
     && apt-get clean \
     && rm -rf /tmp/* var/tmp/* \
     && rm -rf /var/lib/apt/lists/*
 
+# Add and switch to user 'convoar'
 # (From https://stackoverflow.com/questions/27701930/add-user-to-docker-container)
 RUN adduser --disabled-password --gecos 'Convoar user' ${USER} \
-#    && echo "${USER}:${CONVOAR_PASSWORD}" | chpasswd
-
+    && echo "${USER}:${CONVOAR_PASSWORD}" | chpasswd
 WORKDIR /home/${USER}
 USER ${USER}:${USER}
 
@@ -68,21 +70,34 @@ RUN git clone https://github.com/Misterblue/convoar.git \
     && mkdir -p /home/${USER}/bin
 
 # Fetch and build the C++ library for converting scene formats
-RUN git clone https://github.com/assimp/assimp.git \
+RUN cd /home/${USER} \
+    && git clone https://github.com/assimp/assimp.git \
     && cd /home/${USER}/assimp \
     && cmake -G "Unix Makefiles" \
+        -DMAKE_BUILD_TYPE=$TARGET \
         -DASSIMP_BUILD_TESTS=off \
+        -DASSIMP_BUILD_ASSIMP_VIEW=off \
+        -DASSIMP_BUILD_ASSIMP_TOOLS=off \
+        -DBUILD_TESTING=off \
     && make \
-    && cp lib/* /home/${USER}/bin
+    && cp "bin/${TARGET}/assimp*" "bin/${TARGET}/zlib*" /home/${USER}/bin
 
-# Fetch and build the C# interface between managed convoar and unmanaged assimp
+# Fetch and build the C# interface between managed convoar and unmanaged assimp.
+# AssimpNet relies on some packages so use nuget to fetch them.
+# Also, copy the executables for 'assimp' here and rename to what AssimpNet
+#   is looking for.      
 RUN git clone https://bitbucket.org/Starnick/AssimpNet.git \
     && cd AssimpNet \
     && mkdir packages \
     && cd packages \
     && nuget install ../AssimpNet.Interop.Generator/packages.config \
     && cd /home/${USER}/AssimpNet \
-    && cp /home/${USER}/assimp/lib/* libs/Assimp/
+    && cp /home/${USER}/bin/assimp* libs/Assimp/ \
+    && cd libs/Assimp \
+    && mv assimp-vc140-mt.dll Assimp64.dll \
+    && mv assimp-vc140-mt.pdb Assimp64.pdb \
+    && mv assimp-vc140-mt.ilk Assimp64.ilk \
+    && cd /home/AssimpNet \
     && msbuild /p:Configuration=Net45-${TARGET} AssimpNet.sln
 
 # COPY run.opensim.sh /home/opensim
