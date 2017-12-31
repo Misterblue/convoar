@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
+using OMV = OpenMetaverse;
+
 namespace org.herbal3d.convoar {
     public class ConvoarParams {
         private static string _logHeader = "[CONVOAR PARAMS]";
@@ -50,10 +52,10 @@ namespace org.herbal3d.convoar {
         //
         // The single letter parameters for the delegates are:
         //    v = value (appropriate type)
-        private ParameterDefnBase[] ParameterDefinitions =
+        public ParameterDefnBase[] ParameterDefinitions =
         {
             new ParameterDefn<string>("InputOAR", "The input OAR file",
-                null),
+                null, "i"),
             new ParameterDefn<string>("OutputDir", "The directory (relative to current dir) to store output files",
                 "./convoar", "d" ),
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
@@ -64,8 +66,8 @@ namespace org.herbal3d.convoar {
                 "e67a2ff8-597d-4f03-b559-930aeaf4836b"),
             new ParameterDefn<string>("RegionName", "Name to use for the region (since it's not in the OAR)",
                 String.Empty ),
-            new ParameterDefn<string>("Displacement", "Optional displacement to add to OAR entites",
-                null ),
+            new ParameterDefn<OMV.Vector3>("Displacement", "Optional displacement to add to OAR entites",
+                OMV.Vector3.Zero ),
             new ParameterDefn<string>("Rotation", "Optional rotation to add to OAR entites",
                 null ),
             new ParameterDefn<string>("SubRegion", "Bounds of subregion to export (X,Y,Z,X,Y,Z). Whole region if empty or null",
@@ -147,7 +149,7 @@ namespace org.herbal3d.convoar {
 
             // Debugging and logging
             new ParameterDefn<bool>("Verbose", "if set, force DEBUG logging",
-                false ),
+                false, "v" ),
             new ParameterDefn<bool>("LogBuilding", "if set, log detailed BScene/BInstance object building",
                 false ),
             new ParameterDefn<bool>("LogGltfBuilding", "if set, log detailed Gltf object building",
@@ -201,7 +203,11 @@ namespace org.herbal3d.convoar {
                 value = defaultValue;
             }
             public override string GetValue() {
-                return value.ToString();
+                string ret = String.Empty;
+                if (value != null) {
+                    ret = value.ToString();
+                }
+                return ret;
             }
             public override void SetValue(String valAsString) {
                 // Find the 'Parse' method on that type
@@ -235,6 +241,46 @@ namespace org.herbal3d.convoar {
                         System.Console.WriteLine("{0} Conversion failed for {1}: {2}", _logHeader, this.name, e);
                     }
                 }
+            }
+            const int leader = 20;
+            public override string ToString() {
+                StringBuilder buff = new StringBuilder();
+                if (symbols.Length > 0) {
+                    buff.Append("[ ");
+                    buff.Append("--");
+                    buff.Append(name);
+                    foreach (string sym in symbols) {
+                        buff.Append(" | ");
+                        buff.Append("-");
+                        buff.Append(sym);
+                    }
+                    buff.Append(" ]: ");
+                }
+                else {
+                    buff.Append("--");
+                    buff.Append(name);
+                    buff.Append(": ");
+                }
+                if (buff.Length < leader) {
+                    buff.Append("                                        ".Substring(0, leader - buff.Length));
+                }
+                buff.Append(desc);
+                buff.Append("(");
+                buff.Append("Type=");
+                switch (GetValueType().ToString()) {
+                    case "System.Boolean": buff.Append("bool"); break;
+                    case "System.Int32": buff.Append("int"); break;
+                    case "System.Float": buff.Append("float"); break;
+                    case "System.Double": buff.Append("double"); break;
+                    case "System.String": buff.Append("string"); break;
+                    case "OpenMetaverse.Vector3": buff.Append("vector3"); break;
+                    default: buff.Append(GetValueType().ToString()); break;
+                }
+                buff.Append(",Default=");
+                buff.Append(GetValue());
+                buff.Append(")");
+
+                return buff.ToString();
             }
         }
 

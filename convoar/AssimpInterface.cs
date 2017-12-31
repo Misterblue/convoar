@@ -113,20 +113,24 @@ namespace org.herbal3d.convoar {
                             aT[08], aT[09], aT[10], aT[11],
                             aT[12], aT[13], aT[14], aT[15] );
 
-            DisplayableRenderable dr = assets.GetRenderable(disp.renderable.GetBHash(), null);
-                if (dr != null) {
-                    RenderableMeshGroup rmg = dr as RenderableMeshGroup;
-                    if (rmg != null) {
-                        rmg.meshes.ForEach(renderableMesh => {
-                            ConvOAR.Globals.log.DebugFormat("{0} AddChild: renderableMesh={1}", _logHeader, renderableMesh.num);
-                            string meshName = renderableMesh.GetBHash().ToString();
-                            // Find this mesh in the scene (or create the mesh/material if needed)
-                            int meshIndex = FindOrCreateMesh(aScene, meshName, renderableMesh, assets);
-                            newNode.MeshIndices.Add(meshIndex);
-                        });
-                        
-                    }
+            // DisplayableRenderable dr = assets.GetRenderable(disp.renderable.GetBHash(), null);
+            DisplayableRenderable dr = disp.renderable;
+            if (dr != null) {
+                RenderableMeshGroup rmg = dr as RenderableMeshGroup;
+                if (rmg != null) {
+                    rmg.meshes.ForEach(renderableMesh => {
+                        ConvOAR.Globals.log.DebugFormat("{0} AddChild: renderableMesh={1}", _logHeader, renderableMesh.num);
+                        string meshName = renderableMesh.GetBHash().ToString();
+                        // Find this mesh in the scene (or create the mesh/material if needed)
+                        int meshIndex = FindOrCreateMesh(aScene, meshName, renderableMesh, assets);
+                        newNode.MeshIndices.Add(meshIndex);
+                    });
+
                 }
+            }
+            else {
+                ConvOAR.Globals.log.DebugFormat("{0} AddChild: Couldn't find DisplayableRenderable. name={1}", _logHeader, disp.name);
+            }
 
             // Recursivily add the children to this node
             disp.children.ForEach(child => {

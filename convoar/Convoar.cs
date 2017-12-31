@@ -52,17 +52,12 @@ namespace org.herbal3d.convoar {
         string _outputDir;
 
         private string Invocation() {
-            return @"Invocation:
-convoar
-     -d directoryForOutputFiles
-     --subregion <x,y,z>
-     --exportFormat format
-     --displacement <x,y,z>
-     --rotation degrees
-     --verbose
-     inputOARfile
-";
-
+            StringBuilder buff = new StringBuilder();
+            buff.AppendLine(" Invocation: convoar <parameters> inputOARfile");
+            buff.AppendLine("where possible parameters are (negate bool parameters by prepending 'no'):");
+            string[] paramDescs = Globals.parms.ParameterDefinitions.Select(pp => { return pp.ToString(); }).ToArray();
+            buff.AppendLine(String.Join(Environment.NewLine, paramDescs));
+            return buff.ToString();
         }
 
         static void Main(string[] args) {
@@ -76,6 +71,12 @@ convoar
         public void Start(string[] args) {
             Globals = new GlobalContext(new ConvoarParams(), new LoggerLog4Net());
             Globals.stats = new ConvoarStats();
+
+            // A single parameter of '--help' outputs the invocation parameters
+            if (args.Length == 2 && args[1] == "--help") {
+                System.Console.Write(Invocation());
+                return;
+            }
 
             // 'ConvoarParams' initializes to default values.
             // Over ride default values with command line parameters.
