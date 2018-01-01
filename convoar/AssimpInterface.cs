@@ -272,42 +272,6 @@ namespace org.herbal3d.convoar {
             return ret;
         }
 
-        /*
-        // Scan all the instances in the passed scene and fill 'dstAssets' with the referenced
-        //    meshes, images, and materials in 'srcAssets'.
-        private void CollectPiecesForThisScene(BScene bScene, IAssetFetcher srcAssets, IAssetFetcher dstAssets, int imageSizeConstraint) {
-            // Function to recursively walk the node tree
-            void CollectAllChildren (Displayable child, int sizeConstraint) {
-                DisplayableRenderable disp = srcAssets.GetRenderable(child.renderable.GetBHash(), null);
-                if (disp != null) {
-                    RenderableMeshGroup rmg = disp as RenderableMeshGroup;
-                    if (rmg != null) {
-                        rmg.meshes.ForEach(renderableMesh => {
-                            dstAssets.AddUniqueMeshInfo(renderableMesh.mesh);
-                            dstAssets.AddUniqueMatInfo(renderableMesh.material);
-                            if (renderableMesh.material.textureID != null) {
-                                ImageInfo imgInfo = srcAssets.GetImageInfo((OMV.UUID)renderableMesh.material.textureID, sizeConstraint);
-                                if (imgInfo != null) {
-                                    dstAssets.AddUniqueImageInfo(imgInfo);
-                                }
-                            }
-                        });
-                        
-                    }
-                }
-                // Follow down the tree of children
-                child.children.ForEach(subchild => {
-                    CollectAllChildren(subchild, imageSizeConstraint);
-                });
-            }
-
-            // Pass through all instances and add the used meshes, materials, and images
-            bScene.instances.ForEach(inst => {
-                CollectAllChildren(inst.Representation, imageSizeConstraint);
-            });
-        }
-        */
-
         // Export the passed scene in the specified format in the specified place
         public void Export(Assimp.Scene aScene, string path, string format) {
             assimpContext.ExportFile(aScene, path, format);
