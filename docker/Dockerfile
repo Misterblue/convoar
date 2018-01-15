@@ -80,7 +80,6 @@ RUN cd /home/${USER} \
         -DASSIMP_BUILD_TESTS=off \
         -DASSIMP_BUILD_ASSIMP_VIEW=off \
         -DASSIMP_BUILD_ASSIMP_TOOLS=off \
-        -DBUILD_TESTING=off \
     && make \
     && cp "bin/${TARGET}/assimp*" "bin/${TARGET}/zlib*" /home/${USER}/bin
 
