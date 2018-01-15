@@ -2,7 +2,7 @@
 
 OPENSIM=../opensim-github/bin
 LIBOMV=../libopenmetaverse/bin
-ASSIMP=../assimp/lib/RelWithDebInfo
+ASSIMP=../assimp/lib/Release
 ASSIMPNET=../AssimpNet/AssimpNet/bin/Net45-Release
 
 # Copy the dll file and the PDB file if it exists

@@ -135,15 +135,19 @@ namespace org.herbal3d.convoar {
                                         // See if the image has already been resized and is in the filesystem
                                         PersistRules pr = img.persist.Clone();
                                         pr.baseDirectory = PersistRules.JoinFilePieces(img.persist.baseDirectory, maxTextureSize.ToString());
-                                        // if (!File.Exists(pr.filename)) {
+                                        ImageInfo newImage = new ImageInfo();
+                                        newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
+                                        newImage.persist.baseDirectory = pr.baseDirectory;
+                                        if (File.Exists(pr.filename)) {
+                                            // If the file exists, just read it in
+                                            newImage.SetImage(System.Drawing.Image.FromFile(pr.filename));
+                                        }
+                                        else {
                                             // If it hasn't been cached, create the resized image
-                                            ImageInfo newImage = img.Clone();
-                                            newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
+                                            newImage.SetImage(img.image);
                                             newImage.ConstrainTextureSize(maxTextureSize);
-                                            // The resized images go into a subdir named after the new size
-                                            newImage.persist.baseDirectory = pr.baseDirectory;
-                                            resizedImages.Add(newImage);
-                                        // }
+                                        }
+                                        resizedImages.Add(newImage);
                                     }
                                 });
                             });

@@ -3,8 +3,8 @@
 # FROM alpine
 FROM ubuntu:latest
 
-# ENV TARGET=Release
-ENV TARGET=Debug
+ENV TARGET=Release
+# ENV TARGET=Debug
 
 # An account is created in the docker file for building and running the app.
 # Set the real password in the calling environment. This is just a default.
@@ -66,15 +66,17 @@ WORKDIR /home/${USER}
 USER ${USER}:${USER}
 
 # Get the 'convoar' sources
-RUN git clone https://github.com/Misterblue/convoar.git \
-    && mkdir -p /home/${USER}/bin
-
-# Fetch and build the C++ library for converting scene formats
 RUN cd /home/${USER} \
-    && git clone https://github.com/assimp/assimp.git \
+    && git clone https://github.com/Misterblue/convoar.git \
+    && mkdir -p /home/${USER}/bin/$TARGET
+
+# Fetch and build the C++ library for converting scene formats.
+# The version of Assimp used is a modified fork (until GLTF2 export is fixed)
+RUN cd /home/${USER} \
+    && git clone https://github.com/Misterblue/assimp.git \
     && cd /home/${USER}/assimp \
+    && git checkout convoar \
     && cmake -G "Unix Makefiles" \
-        -DMAKE_BUILD_TYPE=$TARGET \
         -DASSIMP_BUILD_TESTS=off \
         -DASSIMP_BUILD_ASSIMP_VIEW=off \
         -DASSIMP_BUILD_ASSIMP_TOOLS=off \
