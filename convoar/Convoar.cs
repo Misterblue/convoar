@@ -104,11 +104,25 @@ namespace org.herbal3d.convoar {
                 Globals.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
             }
 
+            // There used to be GLTF version 1 and version 2. Version 1 is no
+            //     more so force version 2.
+            if (Globals.parms.P<string>("ExportFormat") == "gltf") {
+                Globals.parms.SetParameterValue("ExportFormat", "gltf2");
+            }
+
+            // If the format is not gltf, must use Assimp
+            if (Globals.parms.P<string>("ExportFormat") != "gltf2") {
+                Globals.parms.SetParameterValue("UseAssimp", "true");
+            }
+            else {
+                Globals.parms.SetParameterValue("ExportGltf", "true");
+            }
+
             // Base asset storage system -- 'MemAssetService' is in-memory storage
             using (MemAssetService memAssetService = new MemAssetService()) {
 
-                // Asset cache and fetching wrapper code -- where all the mesh, material, and instance
-                //    information is stored for later processing.
+                // 'assetFetcher' is the asset cache and fetching code -- where all the mesh,
+                //    material, and instance information is stored for later processing.
                 using (IAssetFetcher assetFetcher = new OSAssetFetcher(memAssetService)) {
 
                     try {
@@ -161,103 +175,9 @@ namespace org.herbal3d.convoar {
                                 });
                             }
 
-                            // Output the transformed scene as Gltf version 1
-                            if (Globals.parms.P<bool>("ExportGltf")) {
-                                Gltf gltf = new Gltf(bScene.name, 1);
+                            if (Globals.parms.P<bool>("UseAssimp")) {
+                                Globals.log.DebugFormat("{0} initializing Assimp", _logHeader);
 
-                                try {
-                                    gltf.LoadScene(bScene, assetFetcher);
-
-                                    Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
-
-                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
-
-                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
-                                        gltf.ToJSON(outt);
-                                    }
-                                    gltf.WriteBinaryFiles();
-
-                                    if (Globals.parms.P<bool>("ExportTextures")) {
-                                        gltf.WriteImages();
-                                    }
-                                }
-                                catch (Exception e) {
-                                    Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
-                                }
-                            }
-
-                            // Output the transformed scene as Gltf version 2
-                            if (Globals.parms.P<bool>("ExportGltf2")) {
-                                Gltf gltf = new Gltf(bScene.name, 2);
-
-                                try {
-                                    gltf.LoadScene(bScene, assetFetcher);
-
-                                    Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
-
-                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
-
-                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
-                                        gltf.ToJSON(outt);
-                                    }
-                                    gltf.WriteBinaryFiles();
-
-                                    if (Globals.parms.P<bool>("ExportTextures")) {
-                                        gltf.WriteImages();
-                                    }
-                                }
-                                catch (Exception e) {
-                                    Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
-                                }
-                            }
-
-                            // Output all the instances in the scene as individual GLTF files
-                            if (Globals.parms.P<bool>("ExportIndividualGltf")) {
-                                bScene.instances.ForEach(instance => {
-                                    string instanceName = instance.handle.ToString();
-                                    Gltf gltf = new Gltf(instanceName, Globals.parms.P<int>("IndividualGltfVersion"));
-                                    gltf.persist.baseDirectory = bScene.name;
-                                    // gltf.persist.baseDirectory = PersistRules.JoinFilePieces(bScene.name, instanceName);
-                                    GltfScene gltfScene = new GltfScene(gltf, instanceName);
-                                    gltf.defaultScene = gltfScene;
-
-                                    Displayable rootDisp = instance.Representation;
-                                    GltfNode rootNode = GltfNode.GltfNodeFactory(gltf, gltfScene, rootDisp, assetFetcher);
-                                    rootNode.translation = instance.Position;
-                                    rootNode.rotation = instance.Rotation;
-
-                                    gltf.BuildAccessorsAndBuffers();
-                                    gltf.UpdateGltfv2ReferenceIndexes();
-
-                                    // After the building, get rid of the default scene name as we're not outputting a scene
-                                    gltf.defaultScene = null;
-
-                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
-
-                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
-                                        gltf.ToJSON(outt);
-                                    }
-                                    gltf.WriteBinaryFiles();
-
-                                    if (Globals.parms.P<bool>("ExportTextures")) {
-                                        gltf.WriteImages();
-                                    }
-                                });
-                            }
-
-                            if (Globals.parms.P<bool>("ExportAssimp")) {
                                 using (AssimpInterface assimp = new AssimpInterface()) {
                                     Assimp.Scene aScene = assimp.ConvertBSceneToAssimpScene(bScene, assetFetcher,
                                                     Globals.parms.P<int>("TextureMaxSize"));
@@ -320,10 +240,79 @@ namespace org.herbal3d.convoar {
                                     string exportFormat = Globals.parms.P<string>("ExportFormat");
                                     Globals.log.DebugFormat("{0}: Doing Assimp export to format '{1}'", _logHeader, exportFormat);
                                     string ext = assimp.GetFileExtensionForFormat(exportFormat);
+                                    // Kludge since 'gltf2' standard changed so extension is just 'gltf'
+                                    ext = (ext == "gltf2") ? "gltf" : ext;
                                     assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat, postProcessingFlags);
                                     // assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2");
                                     Globals.log.DebugFormat("{0}: Export completed", _logHeader, exportFormat);
                                 }
+                            }
+                            else {
+                                // Output the transformed scene as Gltf version 2
+                                if (Globals.parms.P<bool>("ExportGltf")) {
+                                    Gltf gltf = new Gltf(bScene.name);
+
+                                    try {
+                                        gltf.LoadScene(bScene, assetFetcher);
+
+                                        Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
+                                        Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
+                                        Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
+                                        Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
+                                        Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
+                                        Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
+                                        Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
+
+                                        PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+
+                                        using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                            gltf.ToJSON(outt);
+                                        }
+                                        gltf.WriteBinaryFiles();
+
+                                        if (Globals.parms.P<bool>("ExportTextures")) {
+                                            gltf.WriteImages();
+                                        }
+                                    }
+                                    catch (Exception e) {
+                                        Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
+                                    }
+                                }
+
+                                // Output all the instances in the scene as individual GLTF files
+                                if (Globals.parms.P<bool>("ExportIndividualGltf")) {
+                                    bScene.instances.ForEach(instance => {
+                                        string instanceName = instance.handle.ToString();
+                                        Gltf gltf = new Gltf(instanceName);
+                                        gltf.persist.baseDirectory = bScene.name;
+                                        // gltf.persist.baseDirectory = PersistRules.JoinFilePieces(bScene.name, instanceName);
+                                        GltfScene gltfScene = new GltfScene(gltf, instanceName);
+                                        gltf.defaultScene = gltfScene;
+
+                                        Displayable rootDisp = instance.Representation;
+                                        GltfNode rootNode = GltfNode.GltfNodeFactory(gltf, gltfScene, rootDisp, assetFetcher);
+                                        rootNode.translation = instance.Position;
+                                        rootNode.rotation = instance.Rotation;
+
+                                        gltf.BuildAccessorsAndBuffers();
+                                        gltf.UpdateGltfv2ReferenceIndexes();
+
+                                        // After the building, get rid of the default scene name as we're not outputting a scene
+                                        gltf.defaultScene = null;
+
+                                        PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+
+                                        using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                            gltf.ToJSON(outt);
+                                        }
+                                        gltf.WriteBinaryFiles();
+
+                                        if (Globals.parms.P<bool>("ExportTextures")) {
+                                            gltf.WriteImages();
+                                        }
+                                    });
+                                }
+
                             }
                         });
                     }

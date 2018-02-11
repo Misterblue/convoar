@@ -1,13 +1,13 @@
 #! /bin/bash
 
-TARGET=Debug
+TARGET=Release
 
 cd ..
 HERE=$(pwd)
 
 # Assimp has been built as $TARGET
-cd "$HERE"
-cd assimp
+cd "${HERE}/.."
+# cd assimp
 # cmake -G "Visual Studio 14 2015 Win64" -DASSIMP_BUILD_TESTS=off
 # Assimp must be built with debug info because AssimpNet uses that info
 # /cygdrive/c/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /p:Configuration=RelWithDebInfo AssimpNet.sln

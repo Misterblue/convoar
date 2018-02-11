@@ -59,7 +59,11 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<string>("OutputDir", "The directory (relative to current dir) to store output files",
                 "./convoar", "d" ),
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
-                "../" ),
+                "" ),
+            new ParameterDefn<string>("ExportFormat", "Format to export the region as",
+                "gltf2", "f"),
+            new ParameterDefn<bool>("ListExportFormats", "List the possible export formats",
+                false),
 
             // OAR reading parameters
             new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",
@@ -82,14 +86,12 @@ namespace org.herbal3d.convoar {
             // Export to files
             new ParameterDefn<bool>("ExportGltf", "Output files in GLTF format",
                 false ),
+            new ParameterDefn<string>("GltfCopyright", "Copyright notice embedded into generated GLTF files",
+                "Copyright 2017. All rights reserved" ),
             new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
                 50000 ),
-            new ParameterDefn<bool>("ExportGltf2", "Output files in GLTFv2 format",
-                false ),
             new ParameterDefn<bool>("ExportIndividualGltf", "Export scene objects as individual GLTF files",
                 false ),
-            new ParameterDefn<int>("IndividualGltfVersion", "GLTF version to export individual instances",
-                1 ),
             new ParameterDefn<bool>("AddUniqueCodes", "Add an extras.unique value to some GLTF objects as a unique hash",
                 true ),
 
@@ -110,11 +112,7 @@ namespace org.herbal3d.convoar {
                 true),
 
             // AssimpNet
-            new ParameterDefn<bool>("ExportAssimp", "use AssimpNet to convert and output files",
-                true),
-            new ParameterDefn<string>("ExportFormat", "Format to export the region as",
-                "gltf2"),
-            new ParameterDefn<bool>("ListExportFormats", "List the possible export formats",
+            new ParameterDefn<bool>("UseAssimp", "use AssimpNet to convert and output files",
                 false),
 
             new ParameterDefn<bool>("FlipUVs", "Flips all UV coordinates along the y-axis and adjusts material settings/bitangents accordingly",
@@ -225,10 +223,10 @@ namespace org.herbal3d.convoar {
                         // System.Console.WriteLine("SetValue: setting value on {0} to {1}", this.name, setValue);
                         // Store the parsed value
                         value = setValue;
-                        // m_log.DebugFormat("{0} Parameter {1} = {2}", LogHeader, name, setValue);
+                        ConvOAR.Globals.log.DebugFormat("{0} SetValue. {1} = {2}", _logHeader, name, setValue);
                     }
-                    catch {
-                        // m_log.ErrorFormat("{0} Failed parsing parameter value '{1}' as type '{2}'", LogHeader, valAsString, genericType);
+                    catch (Exception e) {
+                        ConvOAR.Globals.log.ErrorFormat("{0} Failed parsing parameter value '{1}': '{2}'", _logHeader, valAsString, e);
                     }
                 }
                 else {
@@ -236,9 +234,10 @@ namespace org.herbal3d.convoar {
                     try {
                         T setValue = (T)Convert.ChangeType(valAsString, GetValueType());
                         value = setValue;
+                        ConvOAR.Globals.log.DebugFormat("{0} SetValue. Converter. {1} = {2}", _logHeader, name, setValue);
                     }
                     catch (Exception e) {
-                        System.Console.WriteLine("{0} Conversion failed for {1}: {2}", _logHeader, this.name, e);
+                        ConvOAR.Globals.log.ErrorFormat("{0} Conversion failed for {1}: {2}", _logHeader, this.name, e);
                     }
                 }
             }
@@ -327,7 +326,7 @@ namespace org.herbal3d.convoar {
                     ret = pdef.Value();
                 }
                 else {
-                    System.Console.WriteLine("{0} Fetched unknown parameter. Param={1}", _logHeader, paramName);
+                    ConvOAR.Globals.log.ErrorFormat("{0} Fetched unknown parameter. Param={1}", _logHeader, paramName);
                 }
             }
             return ret;

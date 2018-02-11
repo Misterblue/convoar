@@ -60,8 +60,7 @@ namespace org.herbal3d.convoar {
             // Read in OAR
             Dictionary<string, object> options = new Dictionary<string, object>();
             // options.Add("merge", false);
-            string optDisplacement = ConvOAR.Globals.parms.P<string>("Displacement");
-            if (optDisplacement != null) options.Add("displacement", OMV.Vector3.Parse(optDisplacement));
+            options.Add("displacement", ConvOAR.Globals.parms.P<OMV.Vector3>("Displacement"));
             string optRotation = ConvOAR.Globals.parms.P<string>("Rotation");
             if (optRotation != null) options.Add("rotation", float.Parse(optRotation, System.Threading.Thread.CurrentThread.CurrentCulture));
             // options.Add("default-user", OMV.UUID.Random());
@@ -101,9 +100,6 @@ namespace org.herbal3d.convoar {
                     return ConvertSogToInstance(sog, assetFetcher, mesher);
                 })
             )
-            .Catch(e => {
-                prom.Reject(new Exception(String.Format("Failed conversion: {0}", e)));
-            })
             .Done(instances => {
                 ConvOAR.Globals.log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
                 BInstanceList instanceList = new BInstanceList();
@@ -137,6 +133,8 @@ namespace org.herbal3d.convoar {
                 bScene.attributes.Add("DefaultLandingPorint", ri.DefaultLandingPoint);
 
                 prom.Resolve(bScene);
+            }, e => {
+                prom.Reject(new Exception(String.Format("Failed conversion: {0}", e)));
             });
 
             return prom;
@@ -236,11 +234,7 @@ namespace org.herbal3d.convoar {
                 return rootDisplayable;
 
             })
-            .Catch(e => {
-                ConvOAR.Globals.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
-                prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
-            })
-            .Done (rootDisplayable => {
+            .Done(rootDisplayable => {
                 // Add the Displayable into the collection of known Displayables for instancing
                 assetFetcher.AddUniqueDisplayable(rootDisplayable);
 
@@ -255,6 +249,9 @@ namespace org.herbal3d.convoar {
                 }
 
                 prom.Resolve(inst);
+            }, e => {
+                 ConvOAR.Globals.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
+                 prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
             });
 
             return prom;
