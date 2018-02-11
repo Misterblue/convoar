@@ -65,6 +65,24 @@ namespace org.herbal3d.convoar {
             }
         }
 
+        // A wrapper for Attributes that let's one start the block with a key name
+        public static void WriteJSONAttributes(StreamWriter outt, int level, ref bool first, string key, GltfAttributes atts) {
+            if (atts != null && atts.Count > 0) {
+                WriteJSONLineEnding(outt, ref first);
+                outt.Write(JSONHelpers.Indent(level) + "\"" + key + "\": ");
+                atts.ToJSON(outt, level + 1);
+            }
+        }
+
+        // A wrapper for Extensions that let's one start the block with a key name
+        public static void WriteJSONExtensions(StreamWriter outt, int level, ref bool first, string key, GltfExtensions exts) {
+            if (exts != null && exts.Count > 0) {
+                WriteJSONLineEnding(outt, ref first);
+                outt.Write(JSONHelpers.Indent(level) + "\"" + key + "\": ");
+                exts.ToJSON(outt, level);
+            }
+        }
+
         // Used to end the last line of output JSON. If there was something before, a comma is needed
         public static void WriteJSONLineEnding(StreamWriter outt, ref bool first) {
             if (first)
