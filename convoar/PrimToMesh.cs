@@ -61,22 +61,20 @@ namespace org.herbal3d.convoar {
                         BConverterOS.LogBProgress("{0}: CreateMeshResource: creating mesh", _logHeader);
                         ConvOAR.Globals.stats.numMeshAssets++;
                         MeshFromPrimMeshData(sog, sop, prim, assetFetcher, lod)
-                            .Catch(e => {
-                                prom.Reject(e);
-                            })
                             .Then(dispable => {
                                 prom.Resolve(new Displayable(dispable, sop));
+                            }, e => {
+                                prom.Reject(e);
                             });
                     }
                     else {
                         BConverterOS.LogBProgress("{0}: CreateMeshResource: creating sculpty", _logHeader);
                         ConvOAR.Globals.stats.numSculpties++;
                         MeshFromPrimSculptData(sog, sop, prim, assetFetcher, lod)
-                            .Catch(e => {
-                                prom.Reject(e);
-                            })
                             .Then(dispable => {
                                 prom.Resolve(new Displayable(dispable, sop));
+                            }, e => {
+                                prom.Reject(e);
                             });
                     }
                 }
@@ -84,12 +82,11 @@ namespace org.herbal3d.convoar {
                     BConverterOS.LogBProgress("{0}: CreateMeshResource: creating primshape", _logHeader);
                     ConvOAR.Globals.stats.numSimplePrims++;
                     MeshFromPrimShapeData(sog, sop, prim, assetFetcher, lod)
-                        .Catch(e => {
-                            prom.Reject(e);
-                        })
                         .Then(dispable => {
                             BConverterOS.LogBProgress("{0} CreateMeshResource: prim created", _logHeader);
                             prom.Resolve(new Displayable(dispable, sop));
+                        }, e => {
+                            prom.Reject(e);
                         });
                 }
             }
@@ -120,10 +117,6 @@ namespace org.herbal3d.convoar {
                 // Get the asset that the sculpty is built on
                 EntityHandleUUID texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
                 assetFetcher.FetchTexture(texHandle)
-                    .Catch((e) => {
-                        ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}: {2}", _logHeader, texHandle, e);
-                        reject(null);
-                    })
                     .Then((bm) => {
                         OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, bm.Image.ExportBitmap(), lod);
                         DisplayableRenderable dr =
@@ -133,6 +126,9 @@ namespace org.herbal3d.convoar {
                         BConverterOS.LogBProgress("{0} MeshFromPrimSculptData. numFaces={1}, numGenedMeshed={2}",
                                 _logHeader, fMesh.Faces.Count, ((RenderableMeshGroup)realDR).meshes.Count);
                         resolve(realDR);
+                    }, (e) => {
+                        ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}: {2}", _logHeader, texHandle, e);
+                        reject(null);
                     });
             });
         }
@@ -143,20 +139,14 @@ namespace org.herbal3d.convoar {
                 EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
                 return new Promise<DisplayableRenderable>((resolve, reject) => {
                     assetFetcher.FetchRawAsset(meshHandle)
-                        .Catch(e => {
-                            ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimMeshData: exception: {1}", _logHeader, e);
-                            reject(e);
-                        })
                         .Then(meshBytes => {
                             // OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
                             // if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
                             OMVR.FacetedMesh fMesh = null;
-                            try
-                            {
+                            try {
                                 fMesh = _mesher.GenerateFacetedMeshMesh(prim, meshBytes);
                             }
-                            catch (Exception e)
-                            {
+                            catch (Exception e) {
                                 ConvOAR.Globals.log.ErrorFormat("{0} Exception in GenerateFacetedMeshMesh: {1}", _logHeader, e);
                             }
                             if (fMesh != null) {
@@ -172,6 +162,9 @@ namespace org.herbal3d.convoar {
                                 reject(new Exception("MeshFromPrimMeshData: could not decode mesh information from asset. ID="
                                                 + prim.ID.ToString()));
                             }
+                        }, e => {
+                            ConvOAR.Globals.log.ErrorFormat("{0} MeshFromPrimMeshData: exception: {1}", _logHeader, e);
+                            reject(e);
                         });
                 });
         }
@@ -232,14 +225,13 @@ namespace org.herbal3d.convoar {
                     // Note that image gets the same UUID as the OpenSim texture
                     ImageInfo imageInfo = new ImageInfo(textureHandle);
                     assetFetcher.FetchTextureAsImage(textureHandle)
-                        .Catch( e => {
+                        .Then(img => {
+                            imageInfo.SetImage(img);
+                        }, e => {
                             // Failure getting the image
                             ConvOAR.Globals.log.ErrorFormat("{0} Failure fetching texture. id={1}. {2}",
                                         _logHeader, matInfo.textureID, e);
                             // In this case, ImageInfo.image remains 'null' and everyone has to check if it's set.
-                        })
-                        .Then( img => {
-                            imageInfo.SetImage(img);
                         });
                     imageInfo.imageIdentifier = (OMV.UUID)matInfo.textureID;
                     BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: create ImageInfo. hash={1}, id={2}",
