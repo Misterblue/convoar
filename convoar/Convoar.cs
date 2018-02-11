@@ -204,6 +204,7 @@ namespace org.herbal3d.convoar {
                                     // format x3d, desc = Extensible 3D, id = x3d
                                     // format 3mf, desc = The 3MF - File - Format, id = 3mf
 
+                                    /*
                                     Assimp.PostProcessSteps postProcessingFlags = Assimp.PostProcessSteps.None;
                                     // Flips all UV coordinates along the y-axis
                                     // and adjusts material settings/bitangents accordingly.
@@ -236,14 +237,15 @@ namespace org.herbal3d.convoar {
                                     // Splits large meshes into smaller submeshes.
                                     if (Globals.parms.P<bool>("SplitLargeMeshes"))
                                         postProcessingFlags |= Assimp.PostProcessSteps.SplitLargeMeshes;
+                                        */
 
                                     string exportFormat = Globals.parms.P<string>("ExportFormat");
                                     Globals.log.DebugFormat("{0}: Doing Assimp export to format '{1}'", _logHeader, exportFormat);
                                     string ext = assimp.GetFileExtensionForFormat(exportFormat);
                                     // Kludge since 'gltf2' standard changed so extension is just 'gltf'
                                     ext = (ext == "gltf2") ? "gltf" : ext;
-                                    assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat, postProcessingFlags);
-                                    // assimp.Export(aScene, aScene.RootNode.Name + ".gltf2", "gltf2");
+                                    // assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat, postProcessingFlags);
+                                    assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat);
                                     Globals.log.DebugFormat("{0}: Export completed", _logHeader, exportFormat);
                                 }
                             }
