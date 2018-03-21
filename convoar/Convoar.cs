@@ -115,6 +115,7 @@ namespace org.herbal3d.convoar {
                 Globals.parms.SetParameterValue("UseAssimp", "true");
             }
             else {
+                // Note that 'UseAssimp' could have been forced to 'true' to use it for GLTF
                 Globals.parms.SetParameterValue("ExportGltf", "true");
             }
 

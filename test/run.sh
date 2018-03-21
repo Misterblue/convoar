@@ -5,16 +5,16 @@ format=gltf
 
 CONVOAR=../../convoar/bin/Debug/convoar.exe
 
-#PARAMS="--RemoveRedundantMaterials --ImproveCacheLocality --JoinIdenticalVertices --OptimizeMeshes --OptimizeGraph"
+# PARAMS="--RemoveRedundantMaterials --ImproveCacheLocality --JoinIdenticalVertices --OptimizeMeshes --OptimizeGraph"
 # --PreTransformVertices
 # PARAMS="--ImproveCacheLocality --OptimizeMeshes"
-# PARAMS=""
+PARAMS=""
 # PARAMS="--UseAssimp"
 # PARAMS="--logGltfBuilding --verbose --LogBuilding --LogConversionStats"
 
 cd convoar
 $CONVOAR --exportFormat $format $PARAMS ../testtest88.oar
-# exit
+exit
 
 $CONVOAR --exportFormat $format $PARAMS ../Atropia_00.oar
 $CONVOAR --exportFormat $format $PARAMS ../Atropia_01.oar
