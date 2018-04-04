@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -172,8 +173,35 @@ namespace org.herbal3d.convoar {
             scene.PhysicsScene = physScene;
 
             scene.LandChannel = new TestLandChannel(scene); // simple land with no parcels
+            Nini.Config.IConfigSource config = new Nini.Config.IniConfigSource();
+            config.AddConfig("Terrain");
+            config.Configs["Terrain"].Set("InitialTerrain", "flat");
             var terrainModule = new TerrainModule();
-            terrainModule.AddRegion(scene);
+            try {
+                terrainModule.Initialise(config);
+                terrainModule.AddRegion(scene);
+            }
+            catch (ReflectionTypeLoadException e) {
+                // The terrain module loads terrain brushes and they might not all have been included
+                StringBuilder sb = new StringBuilder();
+                foreach (Exception exSub in e.LoaderExceptions) {
+                    sb.AppendLine(exSub.Message);
+                    FileNotFoundException exFileNotFound = exSub as FileNotFoundException;
+                    if (exFileNotFound != null) {
+                        if (!string.IsNullOrEmpty(exFileNotFound.FusionLog)) {
+                            sb.AppendLine("Fusion Log:");
+                            sb.AppendLine(exFileNotFound.FusionLog);
+                        }
+                    }
+                    sb.AppendLine();
+                }
+                string errorMessage = sb.ToString();
+                ConvOAR.Globals.log.Log("BConverterOS.CreateScene: exception adding region:");
+                ConvOAR.Globals.log.Log(errorMessage);
+            }
+            catch (Exception e) {
+                ConvOAR.Globals.log.Log("BConverterOS.CreateScene: exception adding region: {0}", e);
+            }
 
             SceneManager.Instance.Add(scene);
 
