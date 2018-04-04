@@ -1,6 +1,7 @@
 #! /bin/bash
 
-TARGET=Release
+# TARGET=Release
+TARGET=Debug
 
 CMAKE="/cygdrive/c/Program Files (x86)/CMake/bin/cmake.exe"
 MSBUILD="/cygdrive/f/Program Files (x86)/Microsoft Visual Studio/2017/Community/MSBuild/15.0/bin/MSBuild.exe"
@@ -16,14 +17,18 @@ cd assimp
 
 cd "${HERE}"
 cp assimp/bin/$TARGET/assimp-*.dll assimp-net/libs/Assimp/Assimp64.dll
+rm -f assimp-net/libs/Assimp/Assimp32.dll
+cp assimp/bin/$TARGET/zlibd.dll assimp-net/libs/Assimp/
 
 # Now build assimp-net
 cd "${HERE}"
 cd "assimp-net"
 "${MSBUILD}" /Restore
-"${MSBUILD}" /p:Configuration=$TARGET AssimpNet.sln
+"${MSBUILD}" /property:Configuration=$TARGET /target:AssimpNet AssimpNet.sln
 
 cd "$HERE"
-cp assimp-net/AssimpNet/bin/$TARGET/netstandard2.0/AssimpNet.dll convoar/libs
-# cp assimp-net/AssimpNet/bin/$TARGET/netstandard2.0/AssimpNet.dll convoar/bin/$TARGET/
-cp assimp-net/libs/Assimp/Assimp64.dll convoar/libs
+for dir in convoar/libs convoar/convoar/bin/Debug convoar/convoar/bin/Release ; do
+    cp assimp-net/bin/$TARGET/AssimpNet/netstandard2.0/AssimpNet.* "${dir}"
+    cp assimp-net/libs/Assimp/Assimp64.dll "${dir}"
+    cp assimp-net/libs/Assimp/zlibd.dll "${dir}"
+done

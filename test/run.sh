@@ -1,15 +1,15 @@
 #! /bin/bash
 mkdir -p convoar
-# format=collada
-format=gltf
+format=collada
+# format=gltf
 
 CONVOAR=../../convoar/bin/Debug/convoar.exe
 
 # PARAMS="--RemoveRedundantMaterials --ImproveCacheLocality --JoinIdenticalVertices --OptimizeMeshes --OptimizeGraph"
 # --PreTransformVertices
 # PARAMS="--ImproveCacheLocality --OptimizeMeshes"
-PARAMS=""
-# PARAMS="--UseAssimp"
+# PARAMS=""
+PARAMS="--UseAssimp"
 # PARAMS="--logGltfBuilding --verbose --LogBuilding --LogConversionStats"
 
 cd convoar
