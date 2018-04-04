@@ -27,7 +27,7 @@ cd "assimp-net"
 "${MSBUILD}" /property:Configuration=$TARGET /target:AssimpNet AssimpNet.sln
 
 cd "$HERE"
-for dir in convoar/libs convoar/convoar/bin/Debug convoar/convoar/bin/Release ; do
+for dir in convoar/libs ; do
     cp assimp-net/bin/$TARGET/AssimpNet/netstandard2.0/AssimpNet.* "${dir}"
     cp assimp-net/libs/Assimp/Assimp64.dll "${dir}"
     cp assimp-net/libs/Assimp/zlibd.dll "${dir}"

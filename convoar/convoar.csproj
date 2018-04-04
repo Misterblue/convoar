@@ -199,10 +199,11 @@
       <DependentUpon>Dockerfile</DependentUpon>
     </None>
     <None Include="App.config" />
+    <None Include="..\libs\Assimp64.dll" CopyToOutputDirectory="Always" Visible="true" />
+    <None Include="..\libs\zlibd.dll" CopyToOutputDirectory="Always" Visible="true" />
     <None Include="..\libs\openjpeg-dotnet.dll" CopyToOutputDirectory="Always" Visible="true" />
     <None Include="..\libs\openjpeg-dotnet-x86_64.dll" CopyToOutputDirectory="Always" Visible="true" />
     <None Include="Dockerfile" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
