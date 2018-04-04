@@ -82,7 +82,8 @@ namespace org.herbal3d.convoar {
             if (ConvOAR.Globals.parms.P<bool>("CreateTerrainSplat")) {
                 // Use the OpenSim maptile generator to create a texture for the terrain
                 var terrainRenderer = new TexturedMapTileRenderer();
-                terrainRenderer.Initialise(scene, null);    // doesn't use config param
+                Nini.Config.IConfigSource config = new Nini.Config.IniConfigSource();
+                terrainRenderer.Initialise(scene, config);
 
                 var mapbmp = new Bitmap(terrainDef.Width, terrainDef.Height,
                                         System.Drawing.Imaging.PixelFormat.Format24bppRgb);
