@@ -43,12 +43,10 @@ namespace org.herbal3d.convoar {
         //
         // A ParameterDefn<T>() takes the following parameters:
         //    -- the text name of the parameter. This is used for console input and ini file.
+        //          Also used as the name of that parameter when getting and setting.
         //    -- a short text description of the parameter. This shows up in the console listing.
         //    -- a default value
-        //    -- a delegate for getting the value
-        //    -- a delegate for setting the value
-        //    -- an optional delegate to update the value in the world. Most often used to
-        //          push the new value to an in-world object.
+        //    -- optional parameter names (like an "i" as an alternate for "input")
         //
         // The single letter parameters for the delegates are:
         //    v = value (appropriate type)
@@ -413,43 +411,65 @@ namespace org.herbal3d.convoar {
         // Store the value for the parameter.
         // If we accept the value as a good value for the parameter, return 1 else 0.
         // A 'good value' is one that does not start with '-' or is not after a boolean parameter.
+        // Return the number of parameters to advance the parameter line. That means, return
+        //    a zero of we didn't used the next parameter and a 1 if the next parameter
+        //    was used as a value so don't consider it the next parameter.
         private int AddCommandLineParameter(string pParm, string val) {
-            int ret = 1;
+            int ret = 1;    // start off assuming the next token is the value we're setting
             string parm = pParm.ToLower();
             // Strip leading hyphens
             while (parm[0] == '-') {
                 parm = parm.Substring(1);
             }
 
-            // if the boolean parameter starts with "no", turn it off rather than on
+            // If the boolean parameter starts with "no", turn it off rather than on.
             string positiveAssertion = "true";
             if (parm.Length > 2 && parm[0] == 'n' && parm[1] == 'o') {
-                parm = parm.Substring(2);
-                positiveAssertion = "false";
+                string maybeParm = parm.Substring(2);
+                ParameterDefnBase parmDefnX;
+                if (TryGetParameter(parm, out parmDefnX)) {
+                    if (parmDefnX.GetValueType() == typeof(Boolean)) {
+                        // The parameter without the 'no' exists and is a boolean
+                        positiveAssertion = "false";
+                        parm = maybeParm;
+                    }
+                }
             }
 
             // If the next token starts with a parameter mark, it's not really a value
             if (val[0] == '-') {
-                val = null;
-                ret = 0;
+                val = null; // don't use the next token as a value
+                ret = 0;    // the next token is not used here to set the value
             }
             ParameterDefnBase parmDefn;
             if (TryGetParameter(parm, out parmDefn)) {
                 // If the parameter is a boolean type and the next value is not a parameter,
                 //      don't try to take up the next value.
+                // This handles boolean flags.
+                // If there is a value next (val != null) and that value is not the
+                //    values 'true' or 'false' or 't' or 'f', then ignore the next value
+                //    as not belonging to this flag. THis allows (and the logic above)
+                //    allows:
+                //        "--flag --otherFlag ...",
+                //        "--flag something ...",
+                //        "--flag true --otherFlag ...",
+                //        "--noflag --otherflag ...",
+                //        etc
                 if (parmDefn.GetValueType() == typeof(Boolean)) {
                     if (val != null) {
                         string valL = val.ToLower();
                         if (valL != "true" && valL != "t" && valL != "false" && valL != "f") {
-                            val = null;
-                            ret = 0;
+                            // The value is not associated with this boolean so ignore it
+                            val = null; // don't use the val token
+                            ret = 0;    // the next token is not used here to set the value
                         }
                     }
                     if (val == null) {
-                        // Boolean types without a value are set to 'true'
-                        val = positiveAssertion;
+                        // If the value is assumed, use the value based on the optional 'no'
+                        val = positiveAssertion;    
                     }
                 }
+                // Set the named parameter to the passed value
                 parmDefn.SetValue(val);
             }
             else {
