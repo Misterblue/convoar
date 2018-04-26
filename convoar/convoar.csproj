@@ -68,7 +68,8 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AssimpNet">
+    <Reference Include="AssimpNet, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\libs\AssimpNet.dll</HintPath>
     </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
@@ -199,8 +200,6 @@
       <DependentUpon>Dockerfile</DependentUpon>
     </None>
     <None Include="App.config" />
-    <None Include="..\libs\Assimp64.dll" CopyToOutputDirectory="Always" Visible="true" />
-    <None Include="..\libs\zlibd.dll" CopyToOutputDirectory="Always" Visible="true" />
     <None Include="..\libs\openjpeg-dotnet.dll" CopyToOutputDirectory="Always" Visible="true" />
     <None Include="..\libs\openjpeg-dotnet-x86_64.dll" CopyToOutputDirectory="Always" Visible="true" />
     <None Include="Dockerfile" />

@@ -139,43 +139,6 @@ namespace org.herbal3d.convoar {
 
                             // Perform any optimizations on the scene and its instances
 
-                            // Create reduced resolution versions of the images
-                            List<int> textureSizes = Globals.parms.P<string>("ReducedTextureSizes").Split(',').Select<string,int>(x => {
-                                return int.Parse(x);
-                            }).ToList();
-                            List<ImageInfo> resizedImages = new List<ImageInfo>();
-                            textureSizes.ForEach(maxTextureSize => {
-                                assetFetcher.Images.ForEach(img => {
-                                    if (img.image != null && (img.image.Width > maxTextureSize || img.image.Height > maxTextureSize)) {
-                                        // See if the image has already been resized and is in the filesystem
-                                        PersistRules pr = img.persist.Clone();
-                                        pr.baseDirectory = PersistRules.JoinFilePieces(img.persist.baseDirectory, maxTextureSize.ToString());
-                                        ImageInfo newImage = new ImageInfo();
-                                        newImage.imageIdentifier = img.imageIdentifier;   // the new one is the same image
-                                        newImage.persist.baseDirectory = pr.baseDirectory;
-                                        if (File.Exists(pr.filename)) {
-                                            // If the file exists, just read it in
-                                            newImage.SetImage(System.Drawing.Image.FromFile(pr.filename));
-                                        }
-                                        else {
-                                            // If it hasn't been cached, create the resized image
-                                            newImage.SetImage(img.image);
-                                            newImage.ConstrainTextureSize(maxTextureSize);
-                                        }
-                                        resizedImages.Add(newImage);
-                                    }
-                                });
-                            });
-                            // The resized versions of the images go back into the list of available images.
-                            // Note: all images have the same UUID handle (since they are the same image. You need to
-                            //     use the asset fetch with image size to get the version needed.
-                            if (resizedImages.Count > 0) {
-                                resizedImages.ForEach(img => {
-                                    assetFetcher.Images.Add(img.GetBHash(), img.handle, img);
-                                    // Globals.log.DebugFormat("{0} resized image: {1} to {2}", _logHeader, img, img.persist.filename);
-                                });
-                            }
-
                             if (Globals.parms.P<bool>("UseAssimp")) {
                                 Globals.log.DebugFormat("{0} initializing Assimp", _logHeader);
 

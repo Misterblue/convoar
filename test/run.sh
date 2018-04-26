@@ -1,7 +1,7 @@
 #! /bin/bash
 mkdir -p convoar
-format=collada
-# format=gltf
+# format=collada
+format=gltf
 
 CONVOAR=../../convoar/bin/Debug/convoar.exe
 
@@ -9,11 +9,13 @@ CONVOAR=../../convoar/bin/Debug/convoar.exe
 # --PreTransformVertices
 # PARAMS="--ImproveCacheLocality --OptimizeMeshes"
 # PARAMS=""
-PARAMS="--UseAssimp"
+PARAMS="--DoubleSided false"
+# PARAMS="--UseAssimp"
 # PARAMS="--logGltfBuilding --verbose --LogBuilding --LogConversionStats"
 
 cd convoar
 $CONVOAR --exportFormat $format $PARAMS ../testtest88.oar
+rsync -r ../convoar basil@nyxx:basil-git/Basiljs/
 exit
 
 $CONVOAR --exportFormat $format $PARAMS ../Atropia_00.oar

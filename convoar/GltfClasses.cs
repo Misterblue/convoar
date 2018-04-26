@@ -1099,7 +1099,7 @@ namespace org.herbal3d.convoar {
             if (topLevelValues != null && topLevelValues.Count > 0) {
                 topLevelValues.ToJSONNoBrackets(outt, level, ref first);
             }
-           JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
+            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
             JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
             outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
@@ -1111,10 +1111,7 @@ namespace org.herbal3d.convoar {
             int maxSize = ConvOAR.Globals.parms.P<int>("TextureMaxSize");
             if (maxSize > 0 && maxSize < 10000) {
                 if (origImage.xSize > maxSize || origImage.ySize > maxSize) {
-                    ImageInfo constraintedImage = assetFetcher.GetImageInfo(origImage.imageIdentifier, maxSize);
-                    if (constraintedImage != null) {
-                        ret = constraintedImage;
-                    }
+                    origImage.ConstrainTextureSize(maxSize);
                 }
             }
             return ret;
