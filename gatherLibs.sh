@@ -2,8 +2,6 @@
 
 OPENSIM=../opensim-ssh/bin
 LIBOMV=../libopenmetaverse/bin
-ASSIMP=../assimp/bin/Release
-ASSIMPNET=../assimp-net/bin/Release/AssimpNet/netstandard2.0
 RSGPROMISE=../C-Sharp-Promise/bin/Release
 
 # Copy the dll file and the PDB file if it exists
@@ -47,8 +45,4 @@ GetLib "$LIBOMV" "OpenMetaverse.Rendering.Meshmerizer.dll"
 GetLib "$LIBOMV" "PrimMesher.dll"
 
 GetLib "$RSGPROMISE" "RSG.Promise.dll"
-
-cp $ASSIMP/assimp-*.dll libs/Assimp64.dll
-
-GetLib "$ASSIMPNET" "AssimpNet.dll"
 

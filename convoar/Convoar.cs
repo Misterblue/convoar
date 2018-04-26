@@ -23,7 +23,6 @@ using System.Threading.Tasks;
 
 using OpenSim.Services.Interfaces;
 
-
 namespace org.herbal3d.convoar {
 
     // Class passed around for global context for this region module instance.
@@ -104,21 +103,6 @@ namespace org.herbal3d.convoar {
                 Globals.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
             }
 
-            // There used to be GLTF version 1 and version 2. Version 1 is no
-            //     more so force version 2.
-            if (Globals.parms.P<string>("ExportFormat") == "gltf") {
-                Globals.parms.SetParameterValue("ExportFormat", "gltf2");
-            }
-
-            // If the format is not gltf, must use Assimp
-            if (Globals.parms.P<string>("ExportFormat") != "gltf2") {
-                Globals.parms.SetParameterValue("UseAssimp", "true");
-            }
-            else {
-                // Note that 'UseAssimp' could have been forced to 'true' to use it for GLTF
-                Globals.parms.SetParameterValue("ExportGltf", "true");
-            }
-
             // Base asset storage system -- 'MemAssetService' is in-memory storage
             using (MemAssetService memAssetService = new MemAssetService()) {
 
@@ -139,145 +123,71 @@ namespace org.herbal3d.convoar {
 
                             // Perform any optimizations on the scene and its instances
 
-                            if (Globals.parms.P<bool>("UseAssimp")) {
-                                Globals.log.DebugFormat("{0} initializing Assimp", _logHeader);
+                            // Output the transformed scene as Gltf version 2
+                            if (Globals.parms.P<bool>("ExportGltf")) {
+                                Gltf gltf = new Gltf(bScene.name);
 
-                                using (AssimpInterface assimp = new AssimpInterface()) {
-                                    Assimp.Scene aScene = assimp.ConvertBSceneToAssimpScene(bScene, assetFetcher,
-                                                    Globals.parms.P<int>("TextureMaxSize"));
+                                try {
+                                    gltf.LoadScene(bScene, assetFetcher);
+
+                                    Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
+                                    Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
+
+                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+
+                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                        gltf.ToJSON(outt);
+                                    }
+                                    gltf.WriteBinaryFiles();
 
                                     if (Globals.parms.P<bool>("ExportTextures")) {
-                                        assimp.WriteImages(aScene);
+                                        gltf.WriteImages();
                                     }
-
-                                    // format dae, desc = COLLADA - Digital Asset Exchange Schema, id = collada
-                                    // format x, desc = X Files, id = x
-                                    // format stp, desc = Step Files, id = stp
-                                    // format obj, desc = Wavefront OBJ format, id = obj
-                                    // format obj, desc = Wavefront OBJ format without material file, id = objnomtl
-                                    // format stl, desc = Stereolithography, id = stl
-                                    // format stl, desc = Stereolithography(binary), id = stlb
-                                    // format ply, desc = Stanford Polygon Library, id = ply
-                                    // format ply, desc = Stanford Polygon Library(binary), id = plyb
-                                    // format 3ds, desc = Autodesk 3DS(legacy), id = 3ds
-                                    // format gltf, desc = GL Transmission Format, id = gltf
-                                    // format glb, desc = GL Transmission Format(binary), id = glb
-                                    // format gltf2, desc = GL Transmission Format v. 2, id = gltf2
-                                    // format assbin, desc = Assimp Binary, id = assbin
-                                    // format assxml, desc = Assxml Document, id = assxml
-                                    // format x3d, desc = Extensible 3D, id = x3d
-                                    // format 3mf, desc = The 3MF - File - Format, id = 3mf
-
-                                    Assimp.PostProcessSteps postProcessingFlags = Assimp.PostProcessSteps.None;
-                                    // Flips all UV coordinates along the y-axis
-                                    // and adjusts material settings/bitangents accordingly.
-                                    if (Globals.parms.P<bool>("FlipUVs"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.FlipUVs;
-                                    // Searches for redundant/unreferenced materials and removes them.
-                                    if (Globals.parms.P<bool>("RemoveRedundantMaterials"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.RemoveRedundantMaterials;
-                                    // Re-orders triangles for better vertex cache locality.
-                                    if (Globals.parms.P<bool>("ImproveCacheLocality"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.ImproveCacheLocality;
-                                    // This step converts non-UV mappings (such as spherical or
-                                    // cylindrical mapping) to proper texture coordinate channels.
-                                    if (Globals.parms.P<bool>("TransformUVCoords"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.TransformUVCoords;
-                                    // Identifies and joins identical vertex data sets within all imported meshes.
-                                    if (Globals.parms.P<bool>("JoinIdenticalVertices"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.JoinIdenticalVertices;
-                                    // Optimizes scene hierarchy. Nodes with no animations, bones,
-                                    // lights, or cameras assigned are collapsed and joined.
-                                    if (Globals.parms.P<bool>("OptimizeGraph"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.OptimizeGraph;
-                                    // Attempts to reduce the number of meshes (and draw calls). 
-                                    if (Globals.parms.P<bool>("OptimizeMeshes"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.OptimizeMeshes;
-                                    // Removes the node graph and "bakes" (pre-transforms) all
-                                    // vertices with the local transformation matrices of their nodes.
-                                    if (Globals.parms.P<bool>("PreTransformVertices"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.PreTransformVertices;
-                                    // Splits large meshes into smaller submeshes.
-                                    if (Globals.parms.P<bool>("SplitLargeMeshes"))
-                                        postProcessingFlags |= Assimp.PostProcessSteps.SplitLargeMeshes;
-
-                                    string exportFormat = Globals.parms.P<string>("ExportFormat");
-                                    Globals.log.DebugFormat("{0}: Doing Assimp export to format '{1}'", _logHeader, exportFormat);
-                                    string ext = assimp.GetFileExtensionForFormat(exportFormat);
-                                    // Kludge since 'gltf2' standard changed so extension is just 'gltf'
-                                    ext = (ext == "gltf2") ? "gltf" : ext;
-                                    assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat, postProcessingFlags);
-                                    // assimp.Export(aScene, aScene.RootNode.Name + "." + ext, exportFormat);
-                                    Globals.log.DebugFormat("{0}: Export completed", _logHeader, exportFormat);
+                                }
+                                catch (Exception e) {
+                                    Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
                                 }
                             }
-                            else {
-                                // Output the transformed scene as Gltf version 2
-                                if (Globals.parms.P<bool>("ExportGltf")) {
-                                    Gltf gltf = new Gltf(bScene.name);
 
-                                    try {
-                                        gltf.LoadScene(bScene, assetFetcher);
+                            // Output all the instances in the scene as individual GLTF files
+                            if (Globals.parms.P<bool>("ExportIndividualGltf")) {
+                                bScene.instances.ForEach(instance => {
+                                    string instanceName = instance.handle.ToString();
+                                    Gltf gltf = new Gltf(instanceName);
+                                    gltf.persist.baseDirectory = bScene.name;
+                                    // gltf.persist.baseDirectory = PersistRules.JoinFilePieces(bScene.name, instanceName);
+                                    GltfScene gltfScene = new GltfScene(gltf, instanceName);
+                                    gltf.defaultScene = gltfScene;
 
-                                        Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
-                                        Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
-                                        Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
-                                        Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
-                                        Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
-                                        Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
-                                        Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
+                                    Displayable rootDisp = instance.Representation;
+                                    GltfNode rootNode = GltfNode.GltfNodeFactory(gltf, gltfScene, rootDisp, assetFetcher);
+                                    rootNode.translation = instance.Position;
+                                    rootNode.rotation = instance.Rotation;
 
-                                        PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+                                    gltf.BuildAccessorsAndBuffers();
+                                    gltf.UpdateGltfv2ReferenceIndexes();
 
-                                        using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
-                                            gltf.ToJSON(outt);
-                                        }
-                                        gltf.WriteBinaryFiles();
+                                    // After the building, get rid of the default scene name as we're not outputting a scene
+                                    gltf.defaultScene = null;
 
-                                        if (Globals.parms.P<bool>("ExportTextures")) {
-                                            gltf.WriteImages();
-                                        }
+                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+
+                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                        gltf.ToJSON(outt);
                                     }
-                                    catch (Exception e) {
-                                        Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
+                                    gltf.WriteBinaryFiles();
+
+                                    if (Globals.parms.P<bool>("ExportTextures")) {
+                                        gltf.WriteImages();
                                     }
-                                }
-
-                                // Output all the instances in the scene as individual GLTF files
-                                if (Globals.parms.P<bool>("ExportIndividualGltf")) {
-                                    bScene.instances.ForEach(instance => {
-                                        string instanceName = instance.handle.ToString();
-                                        Gltf gltf = new Gltf(instanceName);
-                                        gltf.persist.baseDirectory = bScene.name;
-                                        // gltf.persist.baseDirectory = PersistRules.JoinFilePieces(bScene.name, instanceName);
-                                        GltfScene gltfScene = new GltfScene(gltf, instanceName);
-                                        gltf.defaultScene = gltfScene;
-
-                                        Displayable rootDisp = instance.Representation;
-                                        GltfNode rootNode = GltfNode.GltfNodeFactory(gltf, gltfScene, rootDisp, assetFetcher);
-                                        rootNode.translation = instance.Position;
-                                        rootNode.rotation = instance.Rotation;
-
-                                        gltf.BuildAccessorsAndBuffers();
-                                        gltf.UpdateGltfv2ReferenceIndexes();
-
-                                        // After the building, get rid of the default scene name as we're not outputting a scene
-                                        gltf.defaultScene = null;
-
-                                        PersistRules.ResolveAndCreateDir(gltf.persist.filename);
-
-                                        using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
-                                            gltf.ToJSON(outt);
-                                        }
-                                        gltf.WriteBinaryFiles();
-
-                                        if (Globals.parms.P<bool>("ExportTextures")) {
-                                            gltf.WriteImages();
-                                        }
-                                    });
-                                }
-
+                                });
                             }
+
                         });
                     }
                     catch (Exception e) {

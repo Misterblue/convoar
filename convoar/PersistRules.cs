@@ -53,64 +53,8 @@ namespace org.herbal3d.convoar {
             BMP,
             Mesh,
             Buff,
-            DAE,
-            X,
-            Stp,
-            Obj,
-            Stl,
-            Ply,
-            Threeds,
-            Gltf,
-            glb,
-            assbin,
-            assxml,
-            x3d,
-            Threemf,
-            Fbx
+            Gltf
         };
-
-        /*
-        public readonly static Dictionary<string, TargetType> ExportTypeTarget = new Dictionary<string, TargetType>() {
-            Default,
-            PNG,
-            JPEG,
-            GIF,
-            BMP,
-            Mesh,
-            Buff,
-            { "collada", TargetType.DAE },
-            X,
-            Stp,
-            Obj,
-            Stl,
-            Ply,
-            Threeds,
-            Gltf,
-            glb,
-            assbin,
-            assxml,
-            x3d,
-            Threemf,
-            Fbx
-        };
-                                    // format dae, desc = COLLADA - Digital Asset Exchange Schema, id = collada
-                                    // format x, desc = X Files, id = x
-                                    // format stp, desc = Step Files, id = stp
-                                    // format obj, desc = Wavefront OBJ format, id = obj
-                                    // format obj, desc = Wavefront OBJ format without material file, id = objnomtl
-                                    // format stl, desc = Stereolithography, id = stl
-                                    // format stl, desc = Stereolithography(binary), id = stlb
-                                    // format ply, desc = Stanford Polygon Library, id = ply
-                                    // format ply, desc = Stanford Polygon Library(binary), id = plyb
-                                    // format 3ds, desc = Autodesk 3DS(legacy), id = 3ds
-                                    // format gltf, desc = GL Transmission Format, id = gltf
-                                    // format glb, desc = GL Transmission Format(binary), id = glb
-                                    // format gltf2, desc = GL Transmission Format v. 2, id = gltf2
-                                    // format assbin, desc = Assimp Binary, id = assbin
-                                    // format assxml, desc = Assxml Document, id = assxml
-                                    // format x3d, desc = Extensible 3D, id = x3d
-                                    // format 3mf, desc = The 3MF - File - Format, id = 3mf
-                                    */
 
         // Some asset types have their own sub-directory to live in
         public readonly static Dictionary<AssetType, string> AssetTypeToSubDir = new Dictionary<AssetType, string>()
@@ -137,8 +81,6 @@ namespace org.herbal3d.convoar {
               { TargetType.JPEG, "jpg" },
               { TargetType.GIF, "gif" },
               { TargetType.BMP, "bmp" },
-              { TargetType.Obj, "obj" },
-              { TargetType.Fbx, "fbx" },
               { TargetType.Mesh, "mesh" },
               { TargetType.Buff, "buf" },
               { TargetType.Gltf, "gltf" },

@@ -25,8 +25,6 @@ using log4net;
 
 using RSG;
 
-using Assimp;
-
 using OMV = OpenMetaverse;
 using OMVS = OpenMetaverse.StructuredData;
 using OMVA = OpenMetaverse.Assets;

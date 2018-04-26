@@ -58,10 +58,6 @@ namespace org.herbal3d.convoar {
                 "./convoar", "d" ),
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
                 "" ),
-            new ParameterDefn<string>("ExportFormat", "Format to export the region as",
-                "gltf2", "f"),
-            new ParameterDefn<bool>("ListExportFormats", "List the possible export formats",
-                false),
 
             // OAR reading parameters
             new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",
@@ -83,9 +79,9 @@ namespace org.herbal3d.convoar {
 
             // Export to files
             new ParameterDefn<bool>("ExportGltf", "Output files in GLTF format",
-                false ),
+                true ),
             new ParameterDefn<string>("GltfCopyright", "Copyright notice embedded into generated GLTF files",
-                "Copyright 2017. All rights reserved" ),
+                "Copyright 2018. All rights reserved" ),
             new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
                 50000 ),
             new ParameterDefn<bool>("ExportIndividualGltf", "Export scene objects as individual GLTF files",
@@ -104,29 +100,6 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPG, GIF, BMP",
                 "JPG"),
             new ParameterDefn<bool>("DoubleSided", "specify whether double sided mesh rendering",
-                true),
-
-            // AssimpNet
-            new ParameterDefn<bool>("UseAssimp", "use AssimpNet to convert and output files",
-                false),
-
-            new ParameterDefn<bool>("FlipUVs", "Flips all UV coordinates along the y-axis and adjusts material settings/bitangents accordingly",
-                false),
-            new ParameterDefn<bool>("RemoveRedundantMaterials", "Searches for redundant/unreferenced materials and removes them.",
-                false),
-            new ParameterDefn<bool>("ImproveCacheLocality", "Re-orders triangles for better vertex cache locality.",
-                false),
-            new ParameterDefn<bool>("TransformUVCoords", "This step converts non-UV mappings (such as spherical or cylindrical mapping) to proper texture coordinate channels.",
-                false),
-            new ParameterDefn<bool>("JoinIdenticalVertices", "Identifies and joins identical vertex data sets within all imported meshes.",
-                false),
-            new ParameterDefn<bool>("OptimizeGraph", "Optimizes scene hierarchy. Nodes with no animations, bones, lights, or cameras assigned are collapsed and joined.",
-                false),
-            new ParameterDefn<bool>("OptimizeMeshes", "Attempts to reduce the number of meshes (and draw calls). ",
-                false),
-            new ParameterDefn<bool>("PreTransformVertices", "Removes the node graph and 'bakes' (pre-transforms) all vertices with the local transformation matrices of their nodes.",
-                false),
-            new ParameterDefn<bool>("SplitLargeMeshes", "Splits large meshes into smaller submeshes.",
                 false),
 
             // Terrain processing
