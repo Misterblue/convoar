@@ -3,12 +3,12 @@ mkdir -p convoar
 
 CONVOAR=../../convoar/bin/Debug/convoar.exe
 
-# PARAMS=""
-PARAMS="--DoubleSided false"
+PARAMS=""
 # PARAMS="--logGltfBuilding --verbose --LogBuilding --LogConversionStats"
 
 cd convoar
 $CONVOAR  $PARAMS ../testtest88.oar
+# $CONVOAR  $PARAMS --AddTerrainMesh false ../OneCutBoxTest.oar
 rsync -r ../convoar basil@nyxx:basil-git/Basiljs/
 exit
 

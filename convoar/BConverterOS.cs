@@ -58,7 +58,7 @@ namespace org.herbal3d.convoar {
 
             Promise<BScene> prom = new Promise<BScene>();
 
-            // Read in OAR
+            // Assemble all the parameters that loadoar takes and uses
             Dictionary<string, object> options = new Dictionary<string, object>();
             // options.Add("merge", false);
             options.Add("displacement", ConvOAR.Globals.parms.P<OMV.Vector3>("Displacement"));
@@ -75,6 +75,7 @@ namespace org.herbal3d.convoar {
                 options.Add("bounding-size", new OMV.Vector3(bounds[3]-bounds[0], bounds[4]-bounds[1], bounds[5]-bounds[2]));
             }
 
+            // Create an OpenSimulator region and scene to load the OAR into
             string regionName = "convoar";
             if (String.IsNullOrEmpty(ConvOAR.Globals.parms.P<String>("RegionName"))) {
                 // Try to build the region name from the OAR filesname
@@ -143,7 +144,7 @@ namespace org.herbal3d.convoar {
         }
 
         // Create an OpenSimulator Scene and add enough auxillery services and objects
-        //   to it so it will do a asset load;
+        //   to it so it will allow the loading of assets.
         public Scene CreateScene(IAssetService memAssetService, string regionName) {
             RegionInfo regionInfo = new RegionInfo(0, 0, null, regionName);
             regionInfo.RegionName = regionName;

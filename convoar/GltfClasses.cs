@@ -285,16 +285,19 @@ namespace org.herbal3d.convoar {
             // Pass over all the vertices in all the meshes and collect common vertices into 'vertexCollection'
             int numMeshes = 0;
             int numVerts = 0;
-            Dictionary<OMVR.Vertex, ushort> vertexIndex = new Dictionary<OMVR.Vertex, ushort>();
+            Dictionary<BHash, ushort> vertexIndex = new Dictionary<BHash, ushort>();
             List<OMVR.Vertex> vertexCollection = new List<OMVR.Vertex>();
             ushort vertInd = 0;
+            // This generates a collection of unique vertices (vertexCollection) and a dictionary
+            //    that maps a vertex to its index (vertexIndex). The latter is used later to remap
+            //    the existing indices values to new ones for the new unique vertex list.
             somePrimitives.ForEach(prim => {
                 numMeshes++;
-                MeshInfo meshInfo = prim.meshInfo;
-                meshInfo.vertexs.ForEach(vert => {
+                prim.meshInfo.vertexs.ForEach(vert => {
                     numVerts++;
-                    if (!vertexIndex.ContainsKey(vert)) {
-                        vertexIndex.Add(vert, vertInd);
+                    BHash vertHash = MeshInfo.VertexBHash(vert);
+                    if (!vertexIndex.ContainsKey(vertHash)) {
+                        vertexIndex.Add(vertHash, vertInd);
                         vertexCollection.Add(vert);
                         vertInd++;
                     }
@@ -314,7 +317,8 @@ namespace org.herbal3d.convoar {
                 ushort[] newIndices = new ushort[meshInfo.indices.Count];
                 for (int ii = 0; ii < meshInfo.indices.Count; ii++) {
                     OMVR.Vertex aVert = meshInfo.vertexs[(int)meshInfo.indices[ii]];
-                    newIndices[ii] = vertexIndex[aVert];
+                    BHash vertHash = MeshInfo.VertexBHash(aVert);
+                    newIndices[ii] = vertexIndex[vertHash];
                 }
                 prim.newIndices = newIndices;
                 numIndices += newIndices.Length;

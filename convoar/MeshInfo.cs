@@ -75,7 +75,14 @@ namespace org.herbal3d.convoar {
                 BHasher hasher = new BHasherMdjb2();
 
                 vertexs.ForEach(vert => {
-                    hasher.Add(vert.GetHashCode());
+                    hasher.Add(vert.Position.X);
+                    hasher.Add(vert.Position.Y);
+                    hasher.Add(vert.Position.Z);
+                    hasher.Add(vert.Normal.X);
+                    hasher.Add(vert.Normal.Y);
+                    hasher.Add(vert.Normal.Z);
+                    hasher.Add(vert.TexCoord.X);
+                    hasher.Add(vert.TexCoord.Y);
                 });
                 indices.ForEach(ind => {
                     hasher.Add(ind);
@@ -90,5 +97,23 @@ namespace org.herbal3d.convoar {
         public override string ToString() {
             return String.Format("{0}/v={1}/i={2}", handle, vertexs.Count, indices.Count);
         }
+
+        // I had a lot of trouble with problems with equality and GetHashCode of OMVR.Vertex
+        //    so this implementation creates a proper hash for a Vertex so it can be used
+        //    in a dictionary.
+        public static BHash VertexBHash(OMVR.Vertex vert) {
+            BHasher hasher = new BHasherMdjb2();
+            hasher.Add(vert.Position.X);
+            hasher.Add(vert.Position.Y);
+            hasher.Add(vert.Position.Z);
+            hasher.Add(vert.Normal.X);
+            hasher.Add(vert.Normal.Y);
+            hasher.Add(vert.Normal.Z);
+            hasher.Add(vert.TexCoord.X);
+            hasher.Add(vert.TexCoord.Y);
+            hasher.Finish();
+            return hasher.Hash();
+        }
+
     }
 }
