@@ -454,8 +454,15 @@ namespace org.herbal3d.convoar {
             UVAccessor.byteOffset = 0;
             UVAccessor.componentType = WebGLConstants.FLOAT;
             UVAccessor.type = "VEC2";
-            UVAccessor.min = new object[2] { umin.X, umin.Y };
-            UVAccessor.max = new object[2] { umax.X, umax.Y };
+            // The values for TexCoords sometimes get odd
+            if (!Single.IsNaN(umin.X) && umin.X > -1000000 && umin.X < 1000000
+                    && !Single.IsNaN(umin.Y) && umin.Y > -1000000 && umin.Y < 1000000) {
+                UVAccessor.min = new object[2] { umin.X, umin.Y };
+            }
+            if (!Single.IsNaN(umax.X) && umax.X > -1000000 && umax.X < 1000000
+                    && !Single.IsNaN(umax.Y) && umax.Y > -1000000 && umax.Y < 1000000) {
+                UVAccessor.max = new object[2] { umax.X, umax.Y };
+            }
 
             // For each mesh, copy the indices into the binary output buffer and create the accessors
             //    that point from the mesh into the binary info.

@@ -97,7 +97,9 @@ namespace org.herbal3d.convoar {
         public static string CreateJSONValue(Object val) {
             string ret = String.Empty;
             if (val is string) {
-                ret = "\"" + val + "\""; 
+                // escape any double quotes in the string value
+                ret = "\"" + ((string)val).Replace("\"", "\\\"") + "\"";
+                // ret = JsonConvert.SerializeObject(val);
             }
             else if (val is bool) {
                 ret = (bool)val ? "true" : "false";
@@ -109,10 +111,10 @@ namespace org.herbal3d.convoar {
             else if (val is OMV.Matrix4) {
                 OMV.Matrix4 mat = (OMV.Matrix4)val;
                 ret = ParamsToJSONArray(
-                    mat[0,0], mat[0,1], mat[0,2], mat[0,3],
-                    mat[1,0], mat[1,1], mat[1,2], mat[1,3],
-                    mat[2,0], mat[2,1], mat[2,2], mat[2,3],
-                    mat[3,0], mat[3,1], mat[3,2], mat[3,3]
+                    mat[0, 0], mat[0, 1], mat[0, 2], mat[0, 3],
+                    mat[1, 0], mat[1, 1], mat[1, 2], mat[1, 3],
+                    mat[2, 0], mat[2, 1], mat[2, 2], mat[2, 3],
+                    mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3]
                 );
             }
             else if (val is OMV.Vector3) {
@@ -134,7 +136,7 @@ namespace org.herbal3d.convoar {
                 }
                 ret += " ]";
             }
-            else if (val is Dictionary<string,Object>) {
+            else if (val is Dictionary<string, Object>) {
                 Dictionary<string, Object> dict = (Dictionary<string, Object>)val;
                 ret = " { ";
                 bool first = true;
@@ -147,8 +149,19 @@ namespace org.herbal3d.convoar {
                 ret += " }";
 
             }
+            else if (val is float && Single.IsNaN((float)val)) {
+                ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Single.NaN!!");
+                ret = "0";
+            }
+            else if (val is double && Double.IsNaN((double)val)) {
+                ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Double.NaN!!");
+                ret = "0";
+            }
             else {
                 ret = val.ToString();
+                if (ret == "NaN") {
+                    ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is NaN!!");
+                }
             }
             return ret;
         }

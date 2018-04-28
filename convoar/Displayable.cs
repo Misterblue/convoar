@@ -35,7 +35,7 @@ namespace org.herbal3d.convoar {
     //     World Position
     //     Representation => Displayable
     // Displayable                          Root SOP
-    //     offset, coordSystem
+    //     offset
     //     renderable => DisplayableRenderable
     //     children
     //          [Displayable]               linkset SOPs
