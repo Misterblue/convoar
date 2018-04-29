@@ -152,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssetFetcher.cs" />
+    <Compile Include="BSceneManipulation.cs" />
     <Compile Include="PersistRules.cs" />
     <Compile Include="BAttributes.cs" />
     <Compile Include="BCoordinates.cs" />

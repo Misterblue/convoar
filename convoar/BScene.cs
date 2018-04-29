@@ -26,13 +26,15 @@ namespace org.herbal3d.convoar {
     public class BScene {
 
         public string name;
-        public BInstanceList instances;
-        public BAttributes attributes;
+        public List<BInstance> instances = new List<BInstance>();
+        public BAttributes attributes = new BAttributes();
 
         public BScene() {
             name = "no name";
-            instances = new BInstanceList();
-            attributes = new BAttributes();
+        }
+
+        public BScene(string pName) {
+            name = pName;
         }
     }
 }

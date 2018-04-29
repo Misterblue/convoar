@@ -33,7 +33,4 @@ namespace org.herbal3d.convoar {
         public BInstance() {
         }
     }
-
-    public class BInstanceList : List<BInstance> {
-    }
 }

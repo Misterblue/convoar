@@ -72,10 +72,14 @@ namespace org.herbal3d.convoar {
                 null ),
 
             // Optimizations
-            new ParameterDefn<bool>("MergeStaticMeshes", "whether to merge meshes with similar materials",
+            new ParameterDefn<bool>("MergeSharedMaterialMeshes", "whether to merge meshes with similar materials",
                 true ),
-            new ParameterDefn<bool>("MergeNonStaticMeshes", "whether to merge meshes within non-static entities ",
-                true ),
+            new ParameterDefn<int>("MeshShareThreshold", "meshes used more than this many times are not material combined",
+                5 ),
+            new ParameterDefn<bool>("CreateStaticLayer", "whether to merge meshes with similar materials in static objects",
+                false ),
+            new ParameterDefn<bool>("CreateDynamicLayer", "whether to merge meshes within non-static entities ",
+                false ),
 
             // Export to files
             new ParameterDefn<bool>("ExportGltf", "Output files in GLTF format",

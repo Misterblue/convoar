@@ -104,7 +104,7 @@ namespace org.herbal3d.convoar {
             )
             .Done(instances => {
                 ConvOAR.Globals.log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
-                BInstanceList instanceList = new BInstanceList();
+                List<BInstance> instanceList = new List<BInstance>();
                 instanceList.AddRange(instances);
 
                 // Add the terrain mesh to the scene
@@ -300,10 +300,13 @@ namespace org.herbal3d.convoar {
             string spacer = spaces.Substring(0, level * 2);
             LogBProgress("{0}{1}  displayable: name={2}, pos={3}, rot={4}",
                 _logHeader, spacer, disp.name, disp.offsetPosition, disp.offsetRotation);
-            (disp.renderable as RenderableMeshGroup).meshes.ForEach(mesh => {
-                LogBProgress("{0}{1}    mesh: mesh={2}. material={3}",
-                    _logHeader, spacer, mesh.mesh, mesh.material);
-            });
+            RenderableMeshGroup rmg = disp.renderable as RenderableMeshGroup;
+            if (rmg != null) {
+                rmg.meshes.ForEach(mesh => {
+                    LogBProgress("{0}{1}    mesh: mesh={2}. material={3}",
+                        _logHeader, spacer, mesh.mesh, mesh.material);
+                });
+            }
             disp.children.ForEach(child => {
                 DumpDisplayable(child, "Child", level + 1);
             });

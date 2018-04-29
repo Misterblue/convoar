@@ -243,6 +243,7 @@ namespace org.herbal3d.convoar {
             // Adding the nodes creates all the GltfMesh's, etc.
             scene.instances.ForEach(pInstance => {
                 Displayable rootDisp = pInstance.Representation;
+                // ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: Loading node {0}", rootDisp.name);    // DEBUG DEBUG
                 GltfNode rootNode = GltfNode.GltfNodeFactory(gltfRoot, gltfScene, rootDisp, assetFetcher);
                 rootNode.translation = pInstance.Position;
                 rootNode.rotation = pInstance.Rotation;
@@ -252,7 +253,9 @@ namespace org.herbal3d.convoar {
 
             // Meshes, etc  have been added to the scene. Pass over all
             //   the meshes and create the Buffers, BufferViews, and Accessors.
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: starting building buffers and accessors ");    // DEBUG DEBUG
             BuildAccessorsAndBuffers();
+            ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: updating reference indexes");    // DEBUG DEBUG
             UpdateGltfv2ReferenceIndexes();
             ConvOAR.Globals.log.DebugFormat("Gltf.LoadScene: done loading");
         }
@@ -316,7 +319,7 @@ namespace org.herbal3d.convoar {
                 MeshInfo meshInfo = prim.meshInfo;
                 ushort[] newIndices = new ushort[meshInfo.indices.Count];
                 for (int ii = 0; ii < meshInfo.indices.Count; ii++) {
-                    OMVR.Vertex aVert = meshInfo.vertexs[(int)meshInfo.indices[ii]];
+                    OMVR.Vertex aVert = meshInfo.vertexs[meshInfo.indices[ii]];
                     BHash vertHash = MeshInfo.VertexBHash(aVert);
                     newIndices[ii] = vertexIndex[vertHash];
                 }
@@ -883,6 +886,8 @@ namespace org.herbal3d.convoar {
             if (pDR is RenderableMeshGroup rmg) {
                 // Add the meshes in the RenderableMeshGroup as primitives in this mesh
                 rmg.meshes.ForEach(oneMesh => {
+                    // ConvOAR.Globals.log.DebugFormat("GltfMesh. create primitive: numVerts={0}, numInd={1}", // DEBUG DEBUG
+                    //         oneMesh.mesh.vertexs.Count, oneMesh.mesh.indices.Count);  // DEBUG DEBUG
                     GltfPrimitive prim = GltfPrimitive.GltfPrimitiveFactory(pRoot, oneMesh, assetFetcher);
                     primitives.Add(new BHashULong(primitives.Count), prim);
                 });
