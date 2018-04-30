@@ -72,11 +72,17 @@ namespace org.herbal3d.convoar {
                 null ),
 
             // Optimizations
+            new ParameterDefn<bool>("DoMeshSimplification", "pass over all the meshes and simplify if needed",
+                true ),
+            new ParameterDefn<bool>("DoSceneOptimizations", "optimize the instances in the scene",
+                true ),
+            new ParameterDefn<bool>("SeparateInstancedMeshes", "whether to find instanced meshes and not do shared meshes with them",
+                true ),
             new ParameterDefn<bool>("MergeSharedMaterialMeshes", "whether to merge meshes with similar materials",
                 true ),
             new ParameterDefn<int>("MeshShareThreshold", "meshes used more than this many times are not material combined",
                 5 ),
-            new ParameterDefn<bool>("CreateStaticLayer", "whether to merge meshes with similar materials in static objects",
+            new ParameterDefn<bool>("CreateStaticLayer", "whether to merge meshes with similar materials indstatic objects",
                 false ),
             new ParameterDefn<bool>("CreateDynamicLayer", "whether to merge meshes within non-static entities ",
                 false ),

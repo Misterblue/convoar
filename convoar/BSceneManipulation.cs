@@ -26,10 +26,31 @@ using OMVR = OpenMetaverse.Rendering;
 namespace org.herbal3d.convoar {
 
     // Representation of instances and whole scene information
-    public class BSceneManipulation {
+    public class BSceneManipulation : IDisposable {
         private static string _logHeader = "[BSceneManipulation]";
 
         public BSceneManipulation() {
+        }
+
+        public void Dispose() {
+        }
+
+        public BScene OptimizeScene(BScene bScene) {
+            List<BInstance> newInstances = new List<BInstance>();
+
+            // Create collections of meshes with similar materials
+            SceneAnalysis analysis = new SceneAnalysis(bScene);
+
+            if (ConvOAR.Globals.parms.P<bool>("MergeSharedMaterialMeshes")) {
+                newInstances.AddRange(MergeSharedMaterialMeshes(bScene));
+            }
+            if (ConvOAR.Globals.parms.P<bool>("SeparateInstancedMeshes")) {
+            }
+
+            // Replace the scene's instances with the new instances
+            bScene.instances = newInstances;
+
+            return bScene;
         }
 
         private class InvertedMesh {
@@ -48,19 +69,73 @@ namespace org.herbal3d.convoar {
             }
         }
 
-        public static BScene MergeSharedMaterialMeshes(BScene bScene) {
-            BScene ret = new BScene(bScene.name);
+        private class SceneAnalysis {
+            // meshes organized by the material they use
+            Dictionary<BHash, List<InvertedMesh>> meshByMaterial = new Dictionary<BHash, List<InvertedMesh>>();
+            // meshes organized by the mesh they share (for finding instances of identical mesh
+            Dictionary<BHash, List<InvertedMesh>> sharedMeshes = new Dictionary<BHash, List<InvertedMesh>>();
+
+            public SceneAnalysis() {
+            }
+            public SceneAnalysis(BScene bScene) {
+                BuildAnalysis(bScene);
+            }
+
+            public void BuildAnalysis(BScene bScene) {
+                foreach (BInstance inst in bScene.instances) {
+                    MapMaterialsAndMeshes(bScene, inst, inst.Representation);
+                }
+            }
+
+            // Given a list of meshes, remove them from the collection of meshes arranged by used materials.
+            // This is used by other optimizations to remove meshes that have been optimized elsewhere.
+            public void RemoveMeshesFromMaterials(List<InvertedMesh> meshList,
+                                Dictionary<BHash, List<InvertedMesh>> meshByMaterial) {
+                // Remove these meshes from the ones that are shared by material
+                foreach (InvertedMesh imesh in meshList) {
+                    BHash materialHash = imesh.renderableMesh.material.GetBHash();
+                    if (!meshByMaterial[materialHash].Remove(imesh)) {
+                        ConvOAR.Globals.log.DebugFormat("{0} CreateInstancesForSharedMeshes: couldn't remove imesh. matHash={1}",
+                                _logHeader, materialHash);
+                    }
+                }
+            }
+
+            // Find all the meshes in passed Displayable and add them to the lists indexed by their material hashes
+            // TODO: this only works for one level childing. For multi-level, must computer and pass the relative
+            //      pos/rot as the layers of offsets are used. Change InvertedMesh to hold pos/rot.
+            private void MapMaterialsAndMeshes(BScene pBs, BInstance pInst, Displayable disp) {
+                RenderableMeshGroup rmg = disp.renderable as RenderableMeshGroup;
+                if (rmg != null) {
+                    foreach (RenderableMesh rMesh in rmg.meshes) {
+                        InvertedMesh imesh = new InvertedMesh(pBs, pInst, disp, rmg, rMesh);
+
+                        BHash meshHash = rMesh.mesh.GetBHash();
+                        if (!sharedMeshes.ContainsKey(meshHash)) {
+                            sharedMeshes.Add(meshHash, new List<InvertedMesh>());
+                        }
+                        sharedMeshes[meshHash].Add(imesh);
+
+                        BHash materialHash = rMesh.material.GetBHash();
+                        if (!meshByMaterial.ContainsKey(materialHash)) {
+                            meshByMaterial.Add(materialHash, new List<InvertedMesh>());
+                        }
+                        meshByMaterial[materialHash].Add(imesh);
+                    }
+                }
+                foreach (Displayable child in disp.children) {
+                    MapMaterialsAndMeshes(pBs, pInst, child);
+                }
+            }
+        }
+
+        public List<BInstance> MergeSharedMaterialMeshes(BScene bScene) {
+
+            List<BInstance> ret = new List<BInstance>();
 
             try {
-                // Create collections of meshes with similar materials
-                Dictionary<BHash, List<InvertedMesh>> meshByMaterial = new Dictionary<BHash, List<InvertedMesh>>();
-                Dictionary<BHash, List<InvertedMesh>> sharedMeshes = new Dictionary<BHash, List<InvertedMesh>>();
-                foreach (BInstance inst in bScene.instances) {
-                    MapMaterialsAndMeshes(meshByMaterial, sharedMeshes, bScene, inst, inst.Representation);
-                }
-
-                // 'meshByMaterial' has all meshes/instances grouped by material used
-                // 'sharedMeshes' has all meshes grouped by the mesh
+                // 'analysis.meshByMaterial' has all meshes/instances grouped by material used
+                // 'analysis.sharedMeshes' has all meshes grouped by the mesh
                 // If there are lots of instances of the same mesh, it is better to have multiple instances
                 //    that point to the same mesh. If a mesh is not shared, consolidating the meshes
                 //    into a single instance is best. It's a balance of transferring vertices vs fewer draws.
@@ -73,29 +148,27 @@ namespace org.herbal3d.convoar {
                 //    in one instance.
                 // Note: the 'SelectMany' is used to flatten the list of lists
                 int meshShareThreshold = ConvOAR.Globals.parms.P<int>("MeshShareThreshold");
-                ret.instances.AddRange(sharedMeshes.Values.Where(val => val.Count > meshShareThreshold).SelectMany(meshList => {
-                    // Creates Instances for the shared messes in this list and also takes the meshes out of 'meshByMaterial'
-                    ConvOAR.Globals.log.DebugFormat("{0}: MergeSharedMaterialMeshes: shared mesh hash: {1}/{2}, cnt={3}",
-                            _logHeader, meshList.First().renderableMesh.mesh.GetBHash(), 
-                            meshList.First().renderableMesh.material.GetBHash(),
-                            meshList.Count);
-                    return CreateInstancesForSharedMeshes(meshList, meshByMaterial);
-                }).ToList() );
+                if (ConvOAR.Globals.parms.P<bool>("SeparateInstancedMeshes")) {
+                    ret.AddRange(sharedMeshes.Values.Where(val => val.Count > meshShareThreshold).SelectMany(meshList => {
+                        // Creates Instances for the shared messes in this list and also takes the meshes out of 'meshByMaterial'
+                        ConvOAR.Globals.log.DebugFormat("{0}: MergeSharedMaterialMeshes: shared mesh hash: {1}/{2}, cnt={3}",
+                                _logHeader, meshList.First().renderableMesh.mesh.GetBHash(),
+                                meshList.First().renderableMesh.material.GetBHash(),
+                                meshList.Count);
+                        RemoveMeshesFromMaterials(meshList, meshByMaterial);
+                        return CreateInstancesForSharedMeshes(meshList);
+                    }).ToList() );
+                }
 
                 ConvOAR.Globals.log.DebugFormat("{0} MergeShareMaterialHashes: number of materials = {1}",
                                     _logHeader, meshByMaterial.Count);
 
                 // Merge the meshes and create an Instance containing the new mesh set
-                ret.instances.AddRange(meshByMaterial.Keys.SelectMany(materialHash => {
+                ret.AddRange(meshByMaterial.Keys.SelectMany(materialHash => {
                     ConvOAR.Globals.log.DebugFormat("{0} MergeShareMaterialHashes: material hash {1} . meshes={2}",
                                 _logHeader, materialHash, meshByMaterial[materialHash].Count);
                     return CreateInstancesFromSharedMaterialMeshes(materialHash, meshByMaterial[materialHash]);
                 }).ToList() );
-
-                // The output scene has the same attributes as the input scene
-                foreach (string key in bScene.attributes.Keys) {
-                    ret.attributes.Add(key, bScene.attributes[key]);
-                }
             }
             catch (Exception e) {
                 ConvOAR.Globals.log.DebugFormat("{0} MergeShareMaterialHashes: exception: {1}", _logHeader, e);
@@ -104,39 +177,10 @@ namespace org.herbal3d.convoar {
             return ret;
         }
 
-        // Find all the meshes in passed Displayable and add them to the lists indexed by their material hashes
-        // TODO: this only works for one level childing. For multi-level, must computer and pass the relative
-        //      pos/rot as the layers of offsets are used. Change InvertedMesh to hold pos/rot.
-        private static void MapMaterialsAndMeshes(Dictionary<BHash, List<InvertedMesh>> sharedMaterials, 
-                                    Dictionary<BHash, List<InvertedMesh>> sharedMeshes,
-                                    BScene pBs, BInstance pInst, Displayable disp) {
-            RenderableMeshGroup rmg = disp.renderable as RenderableMeshGroup;
-            if (rmg != null) {
-                foreach (RenderableMesh rMesh in rmg.meshes) {
-                    InvertedMesh imesh = new InvertedMesh(pBs, pInst, disp, rmg, rMesh);
-
-                    BHash meshHash = rMesh.mesh.GetBHash();
-                    if (!sharedMeshes.ContainsKey(meshHash)) {
-                        sharedMeshes.Add(meshHash, new List<InvertedMesh>());
-                    }
-                    sharedMeshes[meshHash].Add(imesh);
-
-                    BHash materialHash = rMesh.material.GetBHash();
-                    if (!sharedMaterials.ContainsKey(materialHash)) {
-                        sharedMaterials.Add(materialHash, new List<InvertedMesh>());
-                    }
-                    sharedMaterials[materialHash].Add(imesh);
-                }
-            }
-            foreach (Displayable child in disp.children) {
-                MapMaterialsAndMeshes(sharedMaterials, sharedMeshes, pBs, pInst, child);
-            }
-        }
-
         // Create one or more Instances from this list of meshes.
         // There might be more than 2^15 vertices so, to keep the indices a ushort, might need
         //    to break of the meshes.
-        private static List<BInstance> CreateInstancesFromSharedMaterialMeshes(BHash materialHash, List<InvertedMesh> meshes) {
+        private List<BInstance> CreateInstancesFromSharedMaterialMeshes(BHash materialHash, List<InvertedMesh> meshes) {
             List<BInstance> ret = new List<BInstance>();
 
             List<InvertedMesh> partial = new List<InvertedMesh>();
@@ -159,7 +203,7 @@ namespace org.herbal3d.convoar {
         }
 
         // Given a list of meshes, combine them into one mesh and return a containing BInstance.
-        private static BInstance CreateOneInstanceFromMeshes(BHash materialHash, List<InvertedMesh> meshes) {
+        private BInstance CreateOneInstanceFromMeshes(BHash materialHash, List<InvertedMesh> meshes) {
             // Pick one of the meshes to be the 'root' mesh.
             // Someday may need to find the most center mesh to work from.
             InvertedMesh rootIMesh = meshes.First();
@@ -218,8 +262,7 @@ namespace org.herbal3d.convoar {
         // Current algorithm: create one instance and add all shared meshes as children.
         // When the instances are created (or copied over), the meshes must be removed from the
         //     'meshByMaterial' structure so they are not combined with other material sharing meshes.
-        private static List<BInstance> CreateInstancesForSharedMeshes(List<InvertedMesh> meshList,
-                            Dictionary<BHash, List<InvertedMesh>> meshByMaterial) {
+        private List<BInstance> CreateInstancesForSharedMeshes(List<InvertedMesh> meshList) {
             List<BInstance> ret = new List<BInstance>();
 
             // Create an instance for each identical mesh (so we can keep the pos and rot.
@@ -236,6 +279,7 @@ namespace org.herbal3d.convoar {
                 mesh.meshes.Add(imesh.renderableMesh);
 
                 Displayable disp = new Displayable(mesh);
+                disp.name = "sharedMesh-" + imesh.renderableMesh.mesh.GetBHash().ToString() + "-" + imesh.renderableMesh.GetBHash().ToString();
                 disp.offsetPosition = imesh.containingDisplayable.offsetPosition;
                 disp.offsetRotation = imesh.containingDisplayable.offsetRotation;
 
@@ -246,16 +290,8 @@ namespace org.herbal3d.convoar {
                 return inst;
             }) );
 
-            // Remove these meshes from the ones that are shared by material
-            foreach (InvertedMesh imesh in meshList) {
-                BHash materialHash = imesh.renderableMesh.material.GetBHash();
-                if (!meshByMaterial[materialHash].Remove(imesh)) {
-                    ConvOAR.Globals.log.DebugFormat("{0} CreateInstancesForSharedMeshes: couldn't remove imesh. matHash={1}",
-                            _logHeader, materialHash);
-                }
-            }
-
             return ret;
         }
+
     }
 }

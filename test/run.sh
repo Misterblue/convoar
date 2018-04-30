@@ -3,9 +3,9 @@
 HERE=$(PWD)
 CONVOAR=$HERE/../convoar/bin/Debug/convoar.exe
 
-# PARAMS=""
+PARAMS=""
 # PARAMS="--MeshShareThreshold 1000 --MergeSharedMaterialMeshes false"
-PARAMS="--MeshShareThreshold 1000"
+# PARAMS="--MeshShareThreshold 1000"
 # PARAMS="--logGltfBuilding --verbose --LogBuilding --LogConversionStats"
 
 OARS=""

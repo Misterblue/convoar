@@ -75,19 +75,17 @@ namespace org.herbal3d.convoar {
                 BHasher hasher = new BHasherMdjb2();
 
                 vertexs.ForEach(vert => {
-                    hasher.Add(vert.Position.X);
-                    hasher.Add(vert.Position.Y);
-                    hasher.Add(vert.Position.Z);
-                    hasher.Add(vert.Normal.X);
-                    hasher.Add(vert.Normal.Y);
-                    hasher.Add(vert.Normal.Z);
-                    hasher.Add(vert.TexCoord.X);
-                    hasher.Add(vert.TexCoord.Y);
+                    MeshInfo.VertexBHash(vert, hasher);
                 });
                 indices.ForEach(ind => {
                     hasher.Add(ind);
                 });
-                hasher.Add(faceCenter.GetHashCode());
+                hasher.Add(faceCenter.X);
+                hasher.Add(faceCenter.Y);
+                hasher.Add(faceCenter.Z);
+                hasher.Add(scale.X);
+                hasher.Add(scale.Y);
+                hasher.Add(scale.Z);
 
                 _hash = hasher.Finish();
             }
@@ -103,6 +101,11 @@ namespace org.herbal3d.convoar {
         //    in a dictionary.
         public static BHash VertexBHash(OMVR.Vertex vert) {
             BHasher hasher = new BHasherMdjb2();
+            MeshInfo.VertexBHash(vert, hasher);
+            return hasher.Finish();
+        }
+
+        private static void VertexBHash(OMVR.Vertex vert, BHasher hasher) {
             hasher.Add(vert.Position.X);
             hasher.Add(vert.Position.Y);
             hasher.Add(vert.Position.Z);
@@ -111,8 +114,6 @@ namespace org.herbal3d.convoar {
             hasher.Add(vert.Normal.Z);
             hasher.Add(vert.TexCoord.X);
             hasher.Add(vert.TexCoord.Y);
-            hasher.Finish();
-            return hasher.Hash();
         }
 
     }

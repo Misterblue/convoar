@@ -122,9 +122,14 @@ namespace org.herbal3d.convoar {
                             Globals.log.DebugFormat("{0}    num assetFetcher.renderables={1}", _logHeader, assetFetcher.Renderables.Count);
 
                             // Perform any optimizations on the scene and its instances
-                            if (Globals.parms.P<bool>("MergeSharedMaterialMeshes")) {
-                                bScene = BSceneManipulation.MergeSharedMaterialMeshes(bScene);
-                                Globals.log.DebugFormat("{0} merged BScene. numInstances={1}", _logHeader, bScene.instances.Count);
+                            if (Globals.parms.P<bool>("DoMeshSimplification")) {
+                                // TODO:
+                            }
+                            if (Globals.parms.P<bool>("DoSceneOptimizations")) {
+                                using (BSceneManipulation optimizer = new BSceneManipulation()) {
+                                    bScene = optimizer.OptimizeScene(bScene);
+                                    Globals.log.DebugFormat("{0} merged BScene. numInstances={1}", _logHeader, bScene.instances.Count);
+                                }
                             }
 
                             // Output the transformed scene as Gltf version 2
