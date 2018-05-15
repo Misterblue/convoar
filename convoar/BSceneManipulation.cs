@@ -54,14 +54,6 @@ namespace org.herbal3d.convoar {
                 }
                 instancesAdded = newInstances.Count - lastInstanceCount;
                 ConvOAR.Globals.log.DebugFormat("{0} OptimizeScene: BInstances added by material sharing = {1}", _logHeader, instancesAdded);
-
-                // Rebuild instances with any leftover meshes
-                lastInstanceCount = newInstances.Count;
-                if (analysis.allMeshes.Count > 0) {
-                    newInstances.AddRange(CreateInstancesForSharedMeshes(analysis.allMeshes));
-                }
-                instancesAdded = newInstances.Count - lastInstanceCount;
-                ConvOAR.Globals.log.DebugFormat("{0} OptimizeScene: BInstances added from left over = {1}", _logHeader, instancesAdded);
             }
 
 
@@ -101,12 +93,11 @@ namespace org.herbal3d.convoar {
         }
 
         private class SceneAnalysis : IDisposable {
-            // all the meshes organized by the instances
-            public List<InvertedMesh> allMeshes = new List<InvertedMesh>();
             // meshes organized by the material they use
             public Dictionary<BHash, List<InvertedMesh>> meshByMaterial = new Dictionary<BHash, List<InvertedMesh>>();
             // meshes organized by the mesh they share (for finding instances of identical mesh
             public Dictionary<BHash, List<InvertedMesh>> sharedMeshes = new Dictionary<BHash, List<InvertedMesh>>();
+            public BScene scene;
 
             public SceneAnalysis() {
             }
@@ -125,9 +116,18 @@ namespace org.herbal3d.convoar {
             }
 
             public void BuildAnalysis(BScene bScene) {
+                scene = bScene;
                 foreach (BInstance inst in bScene.instances) {
                     MapMaterialsAndMeshes(bScene, inst, inst.Representation);
                 }
+            }
+
+            // Mesh is used in some optimization (it will go out to the renderer) so remove it
+            // from the enclosing scene and the optimization structures.
+            public void MeshUsed(List<InvertedMesh> iMeshList) {
+                RemoveMeshesFromMaterials(iMeshList);
+                RemoveMeshesFromShared(iMeshList);
+                RemoveMeshesFromScene(iMeshList);
             }
 
             // Given a list of meshes, remove them from the collection of meshes arranged by used materials.
@@ -137,15 +137,44 @@ namespace org.herbal3d.convoar {
                 foreach (InvertedMesh imesh in meshList) {
                     BHash materialHash = imesh.renderableMesh.material.GetBHash();
                     if (!meshByMaterial[materialHash].Remove(imesh)) {
-                        ConvOAR.Globals.log.DebugFormat("{0} CreateInstancesForSharedMeshes: couldn't remove imesh. matHash={1}",
+                        ConvOAR.Globals.log.DebugFormat("{0} RemoveMeshesFromMaterials: couldn't remove imesh. matHash={1}",
                                 _logHeader, materialHash);
                     }
                 }
             }
 
-            public void RemoveMeshesFromCollection(List<InvertedMesh> meshList) {
+            public void RemoveMeshesFromShared(List<InvertedMesh> meshList) {
+                // Remove these meshes from the ones that are shared by material
                 foreach (InvertedMesh imesh in meshList) {
-                    allMeshes.Remove(imesh);
+                    BHash shapeHash = imesh.renderableMesh.mesh.GetBHash();
+                    if (!sharedMeshes[shapeHash].Remove(imesh)) {
+                        ConvOAR.Globals.log.DebugFormat("{0} RemoveMeshesFromShared: couldn't remove imesh. shapeHash={1}",
+                                _logHeader, shapeHash);
+                    }
+                }
+            }
+
+            public void RemoveMeshesFromScene(List<InvertedMesh> meshList) {
+                // Remove these meshes from the ones that are shared by material
+                foreach (InvertedMesh imesh in meshList) {
+                    RenderableMeshGroup renderableMeshGroup = imesh.containingDisplayableRenderable as RenderableMeshGroup;
+                    if (renderableMeshGroup != null) {
+                        if (!renderableMeshGroup.meshes.Remove(imesh.renderableMesh)) {
+                            ConvOAR.Globals.log.DebugFormat("{0} RemoveMeshesFromScene: couldn't remove imesh.",
+                                    _logHeader);
+                            return;
+                        }
+                        // If Displayable has no more meshes, remove it too
+                        if (renderableMeshGroup.meshes.Count == 0) {
+                            if (imesh.containingDisplayable.renderable == renderableMeshGroup) {
+                                imesh.containingDisplayable.renderable = null;
+                            }
+                            else {
+                                imesh.containingDisplayable.children.Remove(imesh.containingDisplayable);
+                            }
+                            if (
+                        }
+                    }
                 }
             }
 
@@ -155,8 +184,6 @@ namespace org.herbal3d.convoar {
                 if (rmg != null) {
                     foreach (RenderableMesh rMesh in rmg.meshes) {
                         InvertedMesh imesh = new InvertedMesh(pBs, pInst, disp, rmg, rMesh);
-
-                        allMeshes.Add(imesh);
 
                         BHash meshHash = rMesh.mesh.GetBHash();
                         if (!sharedMeshes.ContainsKey(meshHash)) {
@@ -209,8 +236,7 @@ namespace org.herbal3d.convoar {
                             meshList.First().renderableMesh.material.GetBHash(),
                             meshList.Count);
                     // Since mesh will be in this group, remove it from the meshes with shared materials
-                    analysis.RemoveMeshesFromMaterials(meshList);
-                    analysis.RemoveMeshesFromCollection(meshList);
+                    analysis.MeshUsed(meshList);
                     return CreateInstancesForSharedMeshes(meshList);
                 }).ToList() );
             }
@@ -235,7 +261,6 @@ namespace org.herbal3d.convoar {
                 ret.AddRange(analysis.meshByMaterial.Keys.SelectMany(materialHash => {
                     ConvOAR.Globals.log.DebugFormat("{0} MergeShareMaterialHashes: material hash {1} . meshes={2}",
                                 _logHeader, materialHash, analysis.meshByMaterial[materialHash].Count);
-                    analysis.RemoveMeshesFromCollection(analysis.meshByMaterial[materialHash]);
                     return CreateInstancesFromSharedMaterialMeshes(materialHash, analysis.meshByMaterial[materialHash]);
                 }).ToList() );
             }
