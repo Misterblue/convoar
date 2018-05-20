@@ -1109,15 +1109,20 @@ namespace org.herbal3d.convoar {
         }
 
         public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
             bool first = true;
+            ToJSON(outt, level, false, ref first);
+        }
+
+        // ToJSON version that doesn't wrap output in curly brackets if 'included' == true
+        public void ToJSON(StreamWriter outt, int level, bool included, ref bool first) {
+            if (!included) outt.Write(" { ");
             JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
             if (topLevelValues != null && topLevelValues.Count > 0) {
                 topLevelValues.ToJSONNoBrackets(outt, level, ref first);
             }
             JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
             JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+            if (!included) outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
         }
 
         // For Gltf (and the web browser) we can use reduced size images.
@@ -1137,7 +1142,8 @@ namespace org.herbal3d.convoar {
             GltfMaterial mat = null;
             if (!pRoot.materials.TryGetValue(matInfo.GetBHash(), out mat)) {
                 // mat = new GltfMaterialCommon2(pRoot, matInfo, assetFetcher);
-                mat = new GltfMaterialPbrSpecularGlossiness(pRoot, matInfo, assetFetcher);
+                mat = new GltfMaterialPbrMetallicRoughness(pRoot, matInfo, assetFetcher);
+                // mat = new GltfMaterialPbrSpecularGlossiness(pRoot, matInfo, assetFetcher);
             }
             return mat;
         }
@@ -1195,6 +1201,7 @@ namespace org.herbal3d.convoar {
 
         public override void ToJSON(StreamWriter outt, int level) {
             materialCommonExt = new GltfExtension(gltfRoot, "KHR_materials_common");
+            bool first = true;
             // Pack the material set values into the extension
             materialCommonExt.values.Add("type", "commonBlinn");
             materialCommonExt.values.Add("diffuseFactor", diffuse.Value);
@@ -1220,7 +1227,52 @@ namespace org.herbal3d.convoar {
                 extensions.Add(new BHashULong(extensions.Count), materialCommonExt);
             }
 
-            base.ToJSON(outt, level);
+            base.ToJSON(outt, level, true /*included*/, ref first);
+        }
+    }
+
+    // Material as a pbrMetallicRoughness
+    public class GltfMaterialPbrMetallicRoughness : GltfMaterial {
+
+        public GltfMaterialPbrMetallicRoughness(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
+            MaterialInit(pRoot, matInfo, assetFetcher);
+        }
+
+        public override void ToJSON(StreamWriter outt, int level) {
+            outt.Write("{ ");
+            bool first = true;
+            outt.Write(JSONHelpers.Indent(level) + "\"pbrMetallicRoughness\": {\n");
+            if (diffuse.HasValue) {
+                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first, "baseColorFactor", diffuse.Value);
+            }
+            if (diffuseTexture != null) {
+                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first, "baseColorTexture", diffuseTexture.TextureInfo());
+            }
+            if (specular.HasValue) {
+                // 0..1: 1 means 'rough', 0 means 'smooth', linear scale
+                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first, "roughnessFactor", shininess.Value);
+            }
+            if (shininess.HasValue) {
+                // 0..1: 1 means 'metal', 0 means dieletic, linear scale
+                JSONHelpers.WriteJSONValueLine(outt, level + 1, ref first, "metallicFactor", shininess.Value);
+            }
+            else {
+                // if no shineess is specified, this is not a metal
+                JSONHelpers.WriteJSONValueLine(outt, level + 1, ref first, "metallicFactor", 0f);
+            }
+            outt.Write("\n" + JSONHelpers.Indent(level) + "}");
+
+            if (transparent.HasValue) {
+                // OPAQUE, MASK, or BLEND
+                this.topLevelValues.Add("alphaMode", "BLEND");
+                // this.values.Add("alphaCutoff", 0.5f);
+            }
+            if (doubleSided.HasValue) {
+                this.topLevelValues.Add("doubleSided", doubleSided.Value);
+            }
+            base.ToJSON(outt, level, true /*included*/, ref first);
+
+            outt.Write("\n" + JSONHelpers.Indent(level) + " }");
         }
     }
 

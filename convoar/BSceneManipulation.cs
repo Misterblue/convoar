@@ -56,7 +56,6 @@ namespace org.herbal3d.convoar {
                 ConvOAR.Globals.log.DebugFormat("{0} OptimizeScene: BInstances added by material sharing = {1}", _logHeader, instancesAdded);
             }
 
-
             return bScene;
         }
 
@@ -172,7 +171,6 @@ namespace org.herbal3d.convoar {
                             else {
                                 imesh.containingDisplayable.children.Remove(imesh.containingDisplayable);
                             }
-                            if (
                         }
                     }
                 }
