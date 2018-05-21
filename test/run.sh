@@ -3,13 +3,17 @@
 HERE=$(PWD)
 CONVOAR=$HERE/../convoar/bin/Debug/convoar.exe
 
-REMOTEACCT=${MB_REMOTEACCT:-mb}
-REMOTEHOST=${MB_REMOTEHOST:-someplace.misterblue.com}
-
 DOBUILD=no
 DOCOPY=yes
 
 PROCESSING=UNOPTIMIZED
+
+if [[ -z "$MB_REMOTEACCT" -o -z "$MB_REMOTEHOST" ]] ; then
+    echo "Cannot run script without MB_REMOTEACCT and MB_REMOTEHOST environment variables set"
+    exit
+fi
+REMOTEACCT=${MB_REMOTEACCT:-mb}
+REMOTEHOST=${MB_REMOTEHOST:-someplace.misterblue.com}
 
 if [[ "$PROCESSING" == "UNOPTIMIZED" ]] ; then
     PARAMS="--DoSceneOptimizations false --SeparateInstancedMeshes false --MergeSharedMaterialMeshes false"
@@ -49,9 +53,9 @@ for OAR in $OARS ; do
     if [[ "$DOCOPY" == "yes" ]] ; then
         echo "======= copying $DIR to nyxx"
         ssh basil@nyxx "mkdir -p basil-git/Basiljs/$DIR"
-        rsync -r --delete "${DIR}/" "basil@nyxx:basil-git/Basiljs/$DIR"
+        rsync -r --delete-after "${DIR}/" "basil@nyxx:basil-git/Basiljs/$DIR"
         echo "======= copying $DIR to misterblue"
         ssh ${REMOTEACCT}@${REMOTEHOST} "mkdir -p $REMOTEBASE/$DIR"
-        rsync -r --delete "${DIR}/" "${REMOTEACCT}@${REMOTEHOST}:$REMOTEBASE/$DIR"
+        rsync -r --delete-after "${DIR}/" "${REMOTEACCT}@${REMOTEHOST}:$REMOTEBASE/$DIR"
     fi
 done
