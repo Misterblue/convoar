@@ -19,8 +19,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 
-using log4net;
-
 // I hoped to keep the Gltf classes separate from the OMV requirement but
 //    it doesn't make sense to copy all the mesh info into new structures.
 using OMV = OpenMetaverse;
@@ -33,7 +31,7 @@ namespace org.herbal3d.convoar {
         public Gltf gltfRoot;
         public string ID;
         public int referenceID;
-        public abstract void ToJSON(StreamWriter outt, int level);
+        public abstract object AsJSON();    // return object that's serializable as JSON
 
         public GltfClass() { }
         public GltfClass(Gltf pRoot, string pID) {
@@ -57,8 +55,6 @@ namespace org.herbal3d.convoar {
     // Base class of a list of a type.
     public abstract class GltfListClass<T> : Dictionary<BHash, T> {
         public Gltf gltfRoot;
-        public abstract void ToJSON(StreamWriter outt, int level);
-        public abstract void ToJSONIDArray(StreamWriter outt, int level);
         public GltfListClass(Gltf pRoot) {
             gltfRoot = pRoot;
         }
@@ -76,55 +72,26 @@ namespace org.herbal3d.convoar {
             }
         }
 
-        public void ToJSONArrayOfIDs(StreamWriter outt, int level) {
-            // An array of references.
-            outt.Write("[ ");
-            if (this.Count != 0)
-                outt.Write("\n");
-            bool first = true;
-            foreach (var xx in this.Values) {
-                if (!first) {
-                    outt.Write(",\n");
-                }
-                GltfClass gl = xx as GltfClass;
-                outt.Write(JSONHelpers.Indent(level) + JSONHelpers.CreateJSONValue(gl.referenceID));
-                first = false;
-            };
-            outt.Write(" ]");
+        // Return an array of the referenceIDs of the values in this collection
+        public Array AsArrayOfIDs() {
+            return this.Values.OfType<GltfClass>()
+            .Select(val => {
+                return val.referenceID;
+            }).ToArray();
         }
 
-        public void ToJSONReferencedObjects(StreamWriter outt, int level) {
-            outt.Write("[ ");
-            // GLTFv2 keeps referenced objects as an array indexed by number
-            if (this.Count != 0)
-                outt.Write("\n");
-            bool first = true;
-            foreach (var xx in this.Values) {
-                if (!first) {
-                    outt.Write(",\n");
-                }
-                GltfClass gl = xx as GltfClass;
-                gl.ToJSON(outt, level + 1);
-                first = false;
-            };
-            outt.Write(" ]");
+        public Array AsArrayOfValues() {
+            // return this.Values.OfType<GltfClass>().ToArray();
+            return this.Values.OfType<GltfClass>()
+            .Select( val => {
+                return val.AsJSON();
+            }).ToArray();
         }
 
-        public void ToJSONMapOfNames(StreamWriter outt, int level) {
-            outt.Write("{ ");
-            if (this.Count != 0)
-                outt.Write("\n");
-            bool first = true;
-            foreach (var xx in this.Values) {
-                if (!first) {
-                    outt.Write(",\n");
-                }
-                GltfClass gl = xx as GltfClass;
-                outt.Write(JSONHelpers.Indent(level) + "\"" + gl.ID + "\": ");
-                gl.ToJSON(outt, level + 1);
-                first = false;
-            };
-            outt.Write(" }");
+        // Return a dictionary map of value.Id => value.AsJSON
+        public Dictionary<string, object> ToJSONMapOfNames() {
+            return this.Values.OfType<GltfClass>()
+            .ToDictionary(t => t.ID, t => t.AsJSON());
         }
     }
 
@@ -133,13 +100,8 @@ namespace org.herbal3d.convoar {
         public GltfVector16() : base() {
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" [ ");
-            for (int ii = 0; ii < vector.Length; ii++) {
-                if (ii > 0) outt.Write(",");
-                outt.Write(vector[ii].ToString());
-            }
-            outt.Write(" ] ");
+        public override object AsJSON() {
+            return vector;
         }
     }
 
@@ -502,114 +464,80 @@ namespace org.herbal3d.convoar {
 
         public void ToJSON(StreamWriter outt) {
             UpdateGltfv2ReferenceIndexes();
-            this.ToJSON(outt, 0);
+            SimpleJsonOutput(this.AsJSON(), outt);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" {\n");
-            bool first = true;
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
             if (defaultScene != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "scene", defaultScene.referenceID );
+                ret.Add("scene", defaultScene.referenceID);
             }
 
             if (asset.values.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"asset\": ");
-                asset.ToJSON(outt, level + 1);
+                ret.Add("asset", asset.AsJSON());
             }
 
             if (scenes.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"scenes\": ");
-                scenes.ToJSON(outt, level + 1);
+                ret.Add("scenes", scenes.AsArrayOfValues());
             }
 
             if (nodes.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"nodes\": ");
-                nodes.ToJSON(outt, level + 1);
+                ret.Add("nodes", nodes.AsArrayOfValues());
             }
 
             if (meshes.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"meshes\": ");
-                meshes.ToJSON(outt, level + 1);
+                ret.Add("meshes", meshes.AsArrayOfValues());
             }
 
             if (accessors.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"accessors\": ");
-                accessors.ToJSON(outt, level + 1);
+                ret.Add("accessors", accessors.AsArrayOfValues());
             }
 
             if (bufferViews.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"bufferViews\": ");
-                bufferViews.ToJSON(outt, level + 1);
+                ret.Add("bufferViews", bufferViews.AsArrayOfValues());
             }
 
             if (materials.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"materials\": ");
-                materials.ToJSON(outt, level+1);
+                ret.Add("materials", materials.AsArrayOfValues());
             }
 
             if (techniques.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"techniques\": ");
-                techniques.ToJSON(outt, level+1);
+                ret.Add("techniques", techniques.AsArrayOfValues());
             }
 
             if (textures.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"textures\": ");
-                textures.ToJSON(outt, level+1);
+                ret.Add("textures", textures.AsArrayOfValues());
             }
 
             if (images.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"images\": ");
-                images.ToJSON(outt, level+1);
+                ret.Add("images", images.AsArrayOfValues());
             }
 
             if (samplers.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"samplers\": ");
-                samplers.ToJSON(outt, level+1);
+                ret.Add("samplers", samplers.AsArrayOfValues());
             }
 
             if (programs.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"programs\": ");
-                programs.ToJSON(outt, level+1);
+                ret.Add("programs", programs.AsArrayOfValues());
             }
 
             if (shaders.Count > 0) {
-                outt.Write(JSONHelpers.Indent(level) + "\"shaders\": ");
-                shaders.ToJSON(outt, level+1);
+                ret.Add("shaders", shaders.AsArrayOfValues());
             }
 
             if (buffers.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"buffers\": ");
-                buffers.ToJSON(outt, level+1);
+                ret.Add("buffers", buffers.AsArrayOfValues());
             }
 
             if (extensionsUsed.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"extensionsUsed\": ");
-                // the extensions are listed here as an array of names
-                extensionsUsed.ToJSONIDArray(outt, level+1);
+                ret.Add("extensionsUsed", extensionsUsed.AsJSON());
             }
 
             if (extensionsUsed.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"extensionsRequired\": ");
-                // the extensions are listed here as an array of names
-                extensionsUsed.ToJSONIDArray(outt, level+1);
+                ret.Add("extensionsRequired", extensionsUsed.AsJSON());
             }
 
-            outt.Write("\n }\n");
+            return ret;
         } 
 
         // Write the binary files into the specified target directory
@@ -631,40 +559,14 @@ namespace org.herbal3d.convoar {
 
     // =============================================================
     // A simple collection to keep name/value strings
-    // The value is an Object so it can hold strings, numbers, or arrays and have the
+    // The value is an object so it can hold strings, numbers, or arrays and have the
     //     values serialized properly in the output JSON.
-    public class GltfAttributes : Dictionary<string, Object> {
-
-        // Output a JSON map of the key/value pairs.
-        // The value Objects are inspected and output properly as JSON strings, arrays, or numbers.
-        // Note: to add an array, do: GltfAttribute.Add(key, new Object[] { 1, 2, 3, 4 } );
-        public void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" {\n");
-            bool first = true;
-            this.ToJSONNoBrackets(outt, level, ref first);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+    public class GltfAttributes : Dictionary<string, object> {
+        public GltfAttributes() : base() {
         }
 
-        public void ToJSONNoBrackets(StreamWriter outt, int level, ref bool first) {
-            foreach (KeyValuePair<string, Object> kvp in this) {
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, kvp.Key, kvp.Value);
-            }
-        }
-
-        // Output an array of the keys. 
-        public void ToJSONIDArray(StreamWriter outt, int level) {
-            outt.Write("[ ");
-            if (this.Count != 0)
-                outt.Write("\n");
-            bool first = true;
-            foreach (string key in this.Keys) {
-                if (!first) {
-                    outt.Write(",\n");
-                }
-                outt.Write(JSONHelpers.Indent(level) + "\"" + key +"\"");
-                first = false;
-            }
-            outt.Write(" ]");
+        public object AsJSON() {
+            return this;
         }
     }
 
@@ -679,20 +581,14 @@ namespace org.herbal3d.convoar {
             values.Add("copyright", ConvOAR.Globals.parms.P<string>("GltfCopyright"));
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            values.ToJSON(outt, level);
+        public override object AsJSON() {
+            return values.AsJSON();
         }
     }
 
     // =============================================================
     public class GltfScenes : GltfListClass<GltfScene> {
         public GltfScenes(Gltf pRoot) : base(pRoot) {
-        }
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -710,30 +606,19 @@ namespace org.herbal3d.convoar {
             gltfRoot.scenes.Add(new BHashULong(gltfRoot.scenes.Count), this);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
-            JSONHelpers.WriteJSONLineEnding(outt, ref first);
-            outt.Write(JSONHelpers.Indent(level) + "\"nodes\": ");
-            nodes.ToJSONArrayOfIDs(outt, level+1);
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
+            if (nodes != null && nodes.Count > 0) ret.Add("nodes", nodes.AsArrayOfIDs());
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfNodes : GltfListClass<GltfNode> {
         public GltfNodes(Gltf pRoot) : base(pRoot) {
-        }
-            
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            outt.Write(JSONHelpers.Indent(level) + "\"nodes\": ");
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -806,43 +691,31 @@ namespace org.herbal3d.convoar {
             return node;
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (matrix != OMV.Matrix4.Zero) {
-                // If a matrix is specified, output the matrix rather than the translation, scale, ...
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "matrix", matrix);
+                ret.Add("matrix", matrix);
             }
             else {
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "translation", translation);
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "scale", scale);
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "rotation", OMV.Quaternion.Normalize(rotation));
+                ret.Add("translation", translation);
+                ret.Add("scale", scale);
+                ret.Add("rotation", rotation);
             }
             if (children.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"children\": ");
-                children.ToJSONArrayOfIDs(outt, level+1);
+                ret.Add("children", children.AsArrayOfIDs());
             }
+            ret.Add("mesh", mesh.referenceID);
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
 
-            // JSONHelpers.WriteJSONValueLine(outt, level, ref first, "mesh", mesh.ID);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "mesh", mesh.referenceID );
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfMeshes : GltfListClass<GltfMesh> {
         public GltfMeshes(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
 
         public bool GetByUUID(OMV.UUID pUUID, out GltfMesh theMesh) {
@@ -914,42 +787,19 @@ namespace org.herbal3d.convoar {
             return mesh;
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(JSONHelpers.Indent(level) + "{\n");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
-            if (primitives != null && primitives.Count > 0) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"primitives\": ");
-                primitives.ToJSONArray(outt, level + 1);
-            }
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object)();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
+            if (primitives != null && primitives.Count > 0) ret.Add("primitives", primitives.AsArrayOfIDs());
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfPrimitives : GltfListClass<GltfPrimitive> {
         public GltfPrimitives(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
-        }
-
-        // primitives don't have names and are output as an array
-        public void ToJSONArray(StreamWriter outt, int level) {
-            outt.Write("[");
-            bool first = true;
-            foreach (var xx in this.Values) {
-                JSONHelpers.WriteJSONLineEnding(outt, ref first);
-                xx.ToJSON(outt, level+1);
-            }
-            outt.Write("]");
         }
     }
 
@@ -998,49 +848,28 @@ namespace org.herbal3d.convoar {
             return prim;
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write("{ ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "mode", mode);
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            ret.Add("mode", mode);
+            if (indices != null) ret.Add("indices", indices.referenceID);
+            if (material != null) ret.Add("material", material.referenceID);
 
-            if (indices != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "indices", indices.referenceID);
-            }
-            if (material != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "material", material.referenceID);
-            }
-            JSONHelpers.WriteJSONLineEnding(outt, ref first);
+            var attribs = new Dictionary<string, object>();
+            if (normals != null) attribs.Add("NORMAL", normals.referenceID);
+            if (position != null) attribs.Add("POSITION", position.referenceID);
+            if (texcoord != null) attribs.Add("TEXCOORD_0", texcoord.referenceID);
+            ret.Add("attributes", attribs);
 
-            bool first2 = true;
-            outt.Write(JSONHelpers.Indent(level) + "\"attributes\": {\n");
-            if (normals != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "NORMAL", normals.referenceID);
-            }
-            if (position != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "POSITION", position.referenceID);
-            }
-            if (texcoord != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first2, "TEXCOORD_0", texcoord.referenceID);
-            }
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}");
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
 
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
-                
-            outt.Write("\n" + JSONHelpers.Indent(level) + " }");
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfMaterials : GltfListClass<GltfMaterial> {
         public GltfMaterials(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -1108,21 +937,19 @@ namespace org.herbal3d.convoar {
                         "Gltf", ID, name, extensions.Count);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            bool first = true;
-            ToJSON(outt, level, false, ref first);
-        }
-
-        // ToJSON version that doesn't wrap output in curly brackets if 'included' == true
-        public void ToJSON(StreamWriter outt, int level, bool included, ref bool first) {
-            if (!included) outt.Write(" { ");
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
+        // NOTE: needed version that didn't have enclosing {} for some reason
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (topLevelValues != null && topLevelValues.Count > 0) {
-                topLevelValues.ToJSONNoBrackets(outt, level, ref first);
+                foreach (var key in topLevelValues.Keys) {
+                    ret.Add(key, topLevelValues[key]);
+                }
             }
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
-            if (!included) outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
+
         }
 
         // For Gltf (and the web browser) we can use reduced size images.
@@ -1149,48 +976,6 @@ namespace org.herbal3d.convoar {
         }
     }
 
-    /*
-    // Material as a KHR_Common_Material for GLTF version 1
-    public class GltfMaterialCommon : GltfMaterial {
-        GltfExtension materialCommonExt;
-
-        public GltfMaterialCommon(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
-            MaterialInit(pRoot, matInfo, assetFetcher);
-            materialCommonExt= new GltfExtension(gltfRoot, "KHR_materials_common");
-            extensions.Add(new BHashULong(extensions.Count), materialCommonExt);
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            // Version 1 common material had values in separate 'values' attribute list.
-            // Copy the values set on the material into the extension instance.
-            GltfAttributes vals = new GltfAttributes();
-            materialCommonExt.values.Add("technique", "BLINN");
-            materialCommonExt.values.Add("values", vals);
-
-            vals.Add(GltfExtension.valDiffuse, diffuse.Value);
-            if (doubleSided.HasValue && doubleSided.Value) {
-                vals.Add(GltfExtension.valDoubleSided, doubleSided.Value);
-            }
-            // values.Add(GltfExtension.valEmission, aColor);
-            if (shininess.HasValue) {
-                vals.Add(GltfExtension.valShininess, shininess.Value);
-            }
-            if (diffuse.HasValue && diffuse.Value.A != 1.0f) {
-                vals.Add(GltfExtension.valTransparency, diffuse.Value.A);
-            }
-            if (transparent.HasValue) {
-                vals.Add(GltfExtension.valTransparent, transparent.Value);
-            }
-            if (diffuseTexture != null) {
-                vals.Remove(GltfExtension.valDiffuse);
-                vals.Add(GltfExtension.valDiffuse, diffuseTexture.ID);
-            }
-
-            base.ToJSON(outt, level);
-        }
-    }
-    */
-
     // Material as a HDR_Common_Material for GLTF version 2
     public class GltfMaterialCommon2 : GltfMaterial {
         GltfExtension materialCommonExt;
@@ -1199,9 +984,8 @@ namespace org.herbal3d.convoar {
             MaterialInit(pRoot, matInfo, assetFetcher);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
+        public override object AsJSON() {
             materialCommonExt = new GltfExtension(gltfRoot, "KHR_materials_common");
-            bool first = true;
             // Pack the material set values into the extension
             materialCommonExt.values.Add("type", "commonBlinn");
             materialCommonExt.values.Add("diffuseFactor", diffuse.Value);
@@ -1224,10 +1008,10 @@ namespace org.herbal3d.convoar {
             }
 
             if (materialCommonExt.Count() > 0) {
-                extensions.Add(new BHashULong(extensions.Count), materialCommonExt);
+                extensions.Add(materialCommonExt.ID, materialCommonExt);
             }
 
-            base.ToJSON(outt, level, true /*included*/, ref first);
+            return base.AsJSON();
         }
     }
 
@@ -1238,29 +1022,28 @@ namespace org.herbal3d.convoar {
             MaterialInit(pRoot, matInfo, assetFetcher);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write("{ ");
-            bool first = true;
-            outt.Write(JSONHelpers.Indent(level) + "\"pbrMetallicRoughness\": {\n");
+        public override object AsJSON() {
+            var pbr = new Dictionary<string, object>();
             if (diffuse.HasValue) {
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first, "baseColorFactor", diffuse.Value);
+                pbr.Add("baseColorFactor", diffuse.Value);
             }
             if (diffuseTexture != null) {
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first, "baseColorTexture", diffuseTexture.TextureInfo());
+                pbr.Add("baseColorTexture", diffuseTexture.TextureInfo());
             }
             if (specular.HasValue) {
                 // 0..1: 1 means 'rough', 0 means 'smooth', linear scale
-                JSONHelpers.WriteJSONValueLine(outt, level+1, ref first, "roughnessFactor", shininess.Value);
+                pbr.Add("roughnessFactor", specular.Value);
             }
             if (shininess.HasValue) {
                 // 0..1: 1 means 'metal', 0 means dieletic, linear scale
-                JSONHelpers.WriteJSONValueLine(outt, level + 1, ref first, "metallicFactor", shininess.Value);
+                pbr.Add("metallicFactor", shininess.Value);
             }
             else {
                 // if no shineess is specified, this is not a metal
-                JSONHelpers.WriteJSONValueLine(outt, level + 1, ref first, "metallicFactor", 0f);
+                pbr.Add("metallicFactor", 0f);
             }
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}");
+            if (pbr.Count > 0)
+                topLevelValues.Add("pbrMetallicRoughness", pbr);
 
             if (transparent.HasValue) {
                 // OPAQUE, MASK, or BLEND
@@ -1270,70 +1053,15 @@ namespace org.herbal3d.convoar {
             if (doubleSided.HasValue) {
                 this.topLevelValues.Add("doubleSided", doubleSided.Value);
             }
-            base.ToJSON(outt, level, true /*included*/, ref first);
-
-            outt.Write("\n" + JSONHelpers.Indent(level) + " }");
+            return base.AsJSON();
         }
     }
 
     // Material as a HDR_pbr_specularGlossiness
-    public class GltfMaterialPbrSpecularGlossiness : GltfMaterial {
-        GltfExtension materialPbrExt;
-
-        // public OMV.Vector4? diffuseFactor;   // (as 'diffuse' in parent class)
-        // public GltfImage diffuseTexture; // (inited in parent class)
-        // public OMV.Vector3? specularFactor;  // (as 'specular' in parent class)
-        // public float? glossinessFactor;      // (as 'shininess' in parent class)
-        public GltfImage specularGlossinessTexture;
-
-        public GltfMaterialPbrSpecularGlossiness(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
-            MaterialInit(pRoot, matInfo, assetFetcher);
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            materialPbrExt = new GltfExtension(gltfRoot, "KHR_materials_pbrSpecularGlossiness");
-
-            // Add current material values to the extension parameters
-            if (diffuse.HasValue) {
-                materialPbrExt.values.Add("diffuseFactor", diffuse.Value);
-            }
-            if (diffuseTexture != null) {
-                materialPbrExt.values.Add("diffuseTexture", diffuseTexture.TextureInfo());
-            }
-            if (specular.HasValue) {
-                materialPbrExt.values.Add("specularFactor", specular.Value);
-            }
-            if (shininess.HasValue) {
-                materialPbrExt.values.Add("glossinessFactor", shininess.Value);
-            }
-            if (transparent.HasValue) {
-                // OPAQUE, MASK, or BLEND
-                this.topLevelValues.Add("alphaMode", "BLEND");
-                // this.values.Add("alphaCutoff", 0.5f);
-            }
-            if (doubleSided.HasValue) {
-                this.topLevelValues.Add("doubleSided", doubleSided.Value);
-            }
-
-            // If any values were added to the extension, add the extension to the material
-            if (materialPbrExt.Count() > 0) {
-                extensions.Add(new BHashULong(extensions.Count), materialPbrExt);
-            }
-
-            base.ToJSON(outt, level);
-        }
-    }
 
     // =============================================================
     public class GltfAccessors : GltfListClass<GltfAccessor> {
         public GltfAccessors(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -1351,32 +1079,24 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfAccessor: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "bufferView", bufferView.referenceID);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "byteOffset", byteOffset);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "componentType", componentType);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "count", count);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "type", type);
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            ret.Add("bufferView", bufferView.referenceID);
+            ret.Add("byteOffset", byteOffset);
+            ret.Add("componentType", componentType);
+            ret.Add("count", count);
+            ret.Add("type", type);
             if (min != null && min.Length > 0)
-                JSONHelpers.WriteJSONValueLine(outt, level, ref first, "min", min);
+                ret.Add("min", min);
             if (max != null && max.Length > 0)
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "max", max);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+            ret.Add("max", max);
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfBuffers : GltfListClass<GltfBuffer> {
         public GltfBuffers(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -1397,28 +1117,20 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfBuffer: created. ID={1}", "Gltf", ID);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "byteLength", bufferBytes.Length);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", persist.uri);
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
+            ret.Add("byteLength", bufferBytes.Length);
+            ret.Add("uri", persist.uri);
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfBufferViews : GltfListClass<GltfBufferView> {
         public GltfBufferViews(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -1440,31 +1152,24 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfBufferView: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "buffer", buffer.referenceID);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "byteOffset", byteOffset);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "byteLength", byteLength);
-            // JSONHelpers.WriteJSONValueLine(outt, level, ref first, "byteStride", byteStride);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "target", target);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level, ref first, "extras", extras);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            if (!String.IsNullOrEmpty(name))
+                ret.Add("name", name);
+            ret.Add("buffer", buffer.referenceID);
+            ret.Add("byteOffset", byteOffset);
+            ret.Add("byteLength", byteLength);
+            // ret.Add("byteStride", byteStride);
+            ret.Add("target", target);
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfTechniques : GltfListClass<GltfTechnique> {
         public GltfTechniques(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -1474,31 +1179,16 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfTechnique: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-        /*
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
-            JSONHelpers.WriteJSONLineEnding(outt, ref first);
-            outt.Write(JSONHelpers.Indent(level) + "\"nodes\": ");
-            nodes.ToJSONArrayOfIDs(outt, level+1);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
-            */
-            outt.Write("{\n");
-            outt.Write(" }");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            // TODO:
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfPrograms : GltfListClass<GltfProgram> {
         public GltfPrograms(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -1508,22 +1198,16 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfTechnique: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write("{\n");
-            outt.Write(" }");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            // TODO:
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfShaders : GltfListClass<GltfShader> {
         public GltfShaders(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -1533,22 +1217,16 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfShader: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write("{\n");
-            outt.Write(" }");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            // TODO:
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfTextures : GltfListClass<GltfTexture> {
         public GltfTextures(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
 
         public bool GetByUUID(OMV.UUID aUUID, out GltfTexture theTexture) {
@@ -1605,20 +1283,14 @@ namespace org.herbal3d.convoar {
             return tex;
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            // JSONHelpers.WriteJSONValueLine(outt, level, ref first, "target", target);
-            // JSONHelpers.WriteJSONValueLine(outt, level, ref first, "type", type);
-            // JSONHelpers.WriteJSONValueLine(outt, level, ref first, "format", format);
-            // if (internalFormat != 0)
-            //     JSONHelpers.WriteJSONValueLine(outt, level, ref first, "internalFormat", internalFormat);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "source", source.referenceID);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "sampler", sampler.referenceID);
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level, ref first, "extras", extras);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+        public override object AsJSON() {
+            GltfAttributes ret = new GltfAttributes();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
+            if (source != null) ret.Add("source", source.referenceID);
+            if (sampler != null) ret.Add("sampler", sampler.referenceID);
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
         }
 
         public GltfAttributes TextureInfo() {
@@ -1631,13 +1303,6 @@ namespace org.herbal3d.convoar {
     // =============================================================
     public class GltfImages : GltfListClass<GltfImage> {
         public GltfImages(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
 
         public bool GetByUUID(OMV.UUID aUUID, out GltfImage theImage) {
@@ -1679,24 +1344,16 @@ namespace org.herbal3d.convoar {
             return img;
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "uri", imageInfo.persist.uri);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            ret.Add("url", imageInfo.persist.uri);
+            return ret;
         }
     }
 
     // =============================================================
     public class GltfSamplers : GltfListClass<GltfSampler> {
         public GltfSamplers(Gltf pRoot) : base(pRoot) {
-        }
-
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONReferencedObjects(outt, level);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
         }
     }
 
@@ -1714,30 +1371,26 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfSampler: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            outt.Write(" { ");
-            bool first = true;
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "name", name);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "magFilter", magFilter);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "minFilter", minFilter);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "wrapS", wrapS);
-            JSONHelpers.WriteJSONValueLine(outt, level, ref first, "wrapT", wrapT);
-            JSONHelpers.WriteJSONExtensions(outt, level, ref first, "extensions", extensions);
-            JSONHelpers.WriteJSONAttributes(outt, level+1, ref first, "extras", extras);
-            outt.Write("\n" + JSONHelpers.Indent(level) + "}\n");
+        public override object AsJSON() {
+            var ret = new Dictionary<string, object>();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
+            if (magFilter != null) ret.Add("magFilter", magFilter);
+            if (magFilter != null) ret.Add("minFilter", minFilter);
+            if (magFilter != null) ret.Add("wrapS", wrapS);
+            if (magFilter != null) ret.Add("wrapT", wrapT);
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
         }
     }
 
     // =============================================================
-    public class GltfExtensions : GltfListClass<GltfExtension> {
-        public GltfExtensions(Gltf pRoot) : base(pRoot) {
+    public class GltfExtensions : Dictionary<string, GltfExtension> {
+        public GltfExtensions(Gltf pRoot) : base() {
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            this.ToJSONMapOfNames(outt, level+1);
-        }
-        public override void ToJSONIDArray(StreamWriter outt, int level) {
-            this.ToJSONArrayOfIDs(outt, level+1);
+        public object AsJSON() {
+            return this;
         }
     }
 
@@ -1753,14 +1406,14 @@ namespace org.herbal3d.convoar {
         public static string valTransparency = "transparency";  // transparency of surface (float)
         public static string valTransparent = "transparent";  // whether the surface has transparency ('true' or 'false;)
 
-        public GltfExtension(Gltf pRoot, string pID) : base(pRoot, pID) {
-            pRoot.UsingExtension(pID);
+        public GltfExtension(Gltf pRoot, string extensionName) : base(pRoot, extensionName) {
+            pRoot.UsingExtension(extensionName);
             values = new GltfAttributes();
             LogGltf("{0} GltfExtension: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override void ToJSON(StreamWriter outt, int level) {
-            values.ToJSON(outt, level+1);
+        public override object AsJSON() {
+            return values;
         }
 
         public int Count() {
