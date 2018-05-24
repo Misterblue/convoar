@@ -26,7 +26,84 @@ using OMV = OpenMetaverse;
 namespace org.herbal3d.convoar {
     // Some static routines for creating JSON output
     public class JSONHelpers {
-        //====================================================================
+
+        // Simple JSON serializer. Recognizes most object types and recursivily writes
+        //    pretty formatted JSON to the output stream.
+        public static void SimpleJSONOutput(StreamWriter outt, object val) {
+            SimpleOutputValue(outt, val, 0);
+        }
+
+        public static void SimpleOutputValue(StreamWriter outt, object val, int level) {
+            if (val is string) {
+                // escape any double quotes in the string value
+                outt.Write("\"" + ((string)val).Replace("\"", "\\\"") + "\"");
+            }
+            else if (val is bool) {
+                outt.Write((bool)val ? "true" : "false");
+            }
+            else if (val is OMV.Color4) {
+                OMV.Color4 col = (OMV.Color4)val;
+                outt.Write(ParamsToJSONArray(col.R, col.G, col.B, col.A));
+            }
+            else if (val is OMV.Matrix4) {
+                OMV.Matrix4 mat = (OMV.Matrix4)val;
+                outt.Write(ParamsToJSONArray(
+                    mat[0, 0], mat[0, 1], mat[0, 2], mat[0, 3],
+                    mat[1, 0], mat[1, 1], mat[1, 2], mat[1, 3],
+                    mat[2, 0], mat[2, 1], mat[2, 2], mat[2, 3],
+                    mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3]
+                ) );
+            }
+            else if (val is OMV.Vector3) {
+                OMV.Vector3 vect = (OMV.Vector3)val;
+                outt.Write(ParamsToJSONArray(vect.X, vect.Y, vect.Z));
+            }
+            else if (val is OMV.Quaternion) {
+                OMV.Quaternion quan = (OMV.Quaternion)val;
+                outt.Write(ParamsToJSONArray(quan.X, quan.Y, quan.Z, quan.W));
+            }
+            else if (val.GetType().IsArray) {
+                outt.Write(" [ ");
+                object[] values = (object[])val;
+                bool first = true;
+                for (int ii = 0; ii < values.Length; ii++) {
+                    if (!first) outt.Write(",");
+                    first = false;
+                    SimpleOutputValue(outt, values[ii], level+1);
+                }
+                outt.Write(" ]");
+            }
+            else if (val is Dictionary<string, Object>) {
+                Dictionary<string, Object> dict = (Dictionary<string, Object>)val;
+                outt.Write(" { ");
+                bool first = true;
+                foreach (var key in dict.Keys) {
+                    if (!first) outt.Write(",");
+                    first = false;
+                    outt.Write("\"" + key + "\": ");
+                    SimpleOutputValue(outt, dict[key], level + 1);
+                }
+                outt.Write(" }");
+            }
+            else if (val is float && Single.IsNaN((float)val)) {
+                ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Single.NaN!!");
+                outt.Write("0");
+            }
+            else if (val is double && Double.IsNaN((double)val)) {
+                ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Double.NaN!!");
+                outt.Write("0");
+            }
+            else {
+                var ret = val.ToString();
+                if (ret == "NaN") {
+                    ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is NaN!!");
+                }
+                else {
+                    outt.Write(val);
+                }
+            }
+        }
+
         // Useful routines for creating the JSON output
         public static string ParamsToJSONArray(params Object[] vals) {
             StringBuilder buff = new StringBuilder();
@@ -47,49 +124,6 @@ namespace org.herbal3d.convoar {
 
         public static string Indent(int level) {
             return "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t".Substring(0, level);
-        }
-
-        // Used to output lines of JSON values. Used in the pattern:
-        //    public void ToJSON(StreamWriter outt, int level) {
-        //        outt.Write(" { ");
-        //        bool first = true;
-        //        foreach (KeyValuePair<string, Object> kvp in this) {
-        //            first = WriteJSONValueLine(outt, level, first, kvp.Key, kvp.Value);
-        //        }
-        //        outt.Write("\n" + GltfClass.Indent(level) + "}\n");
-        //    }
-        public static void WriteJSONValueLine(StreamWriter outt, int level, ref bool first, string key, Object val) {
-            if (val != null) {
-                WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"" + key + "\": " + CreateJSONValue(val));
-            }
-        }
-
-        // A wrapper for Attributes that let's one start the block with a key name
-        public static void WriteJSONAttributes(StreamWriter outt, int level, ref bool first, string key, GltfAttributes atts) {
-            if (atts != null && atts.Count > 0) {
-                WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"" + key + "\": ");
-                atts.ToJSON(outt, level + 1);
-            }
-        }
-
-        // A wrapper for Extensions that let's one start the block with a key name
-        public static void WriteJSONExtensions(StreamWriter outt, int level, ref bool first, string key, GltfExtensions exts) {
-            if (exts != null && exts.Count > 0) {
-                WriteJSONLineEnding(outt, ref first);
-                outt.Write(JSONHelpers.Indent(level) + "\"" + key + "\": ");
-                exts.ToJSON(outt, level);
-            }
-        }
-
-        // Used to end the last line of output JSON. If there was something before, a comma is needed
-        public static void WriteJSONLineEnding(StreamWriter outt, ref bool first) {
-            if (first)
-                outt.Write("\n");
-            else
-                outt.Write(",\n");
-            first = false;
         }
 
         // Examines passed object and creates the correct form of a JSON value.

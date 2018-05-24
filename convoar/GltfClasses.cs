@@ -464,7 +464,7 @@ namespace org.herbal3d.convoar {
 
         public void ToJSON(StreamWriter outt) {
             UpdateGltfv2ReferenceIndexes();
-            SimpleJsonOutput(this.AsJSON(), outt);
+            JSONHelpers.SimpleJSONOutput(outt, this.AsJSON());
         }
 
         public override object AsJSON() {
@@ -788,7 +788,7 @@ namespace org.herbal3d.convoar {
         }
 
         public override object AsJSON() {
-            var ret = new Dictionary<string, object)();
+            var ret = new Dictionary<string, object>();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (primitives != null && primitives.Count > 0) ret.Add("primitives", primitives.AsArrayOfIDs());
             if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
