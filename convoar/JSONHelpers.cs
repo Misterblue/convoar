@@ -29,11 +29,15 @@ namespace org.herbal3d.convoar {
 
         // Simple JSON serializer. Recognizes most object types and recursivily writes
         //    pretty formatted JSON to the output stream.
-        public static void SimpleJSONOutput(StreamWriter outt, object val) {
+        public static void SimpleJSONOutput(StreamWriter outt, Object val) {
             SimpleOutputValue(outt, val, 0);
         }
 
-        public static void SimpleOutputValue(StreamWriter outt, object val, int level) {
+        public static void SimpleOutputValue(StreamWriter outt, Object val, int level) {
+            if (val == null) {
+                ConvOAR.Globals.log.ErrorFormat("SimpleJSONOutput: called with NULL value");
+                val = "null";
+            }
             if (val is string) {
                 // escape any double quotes in the string value
                 outt.Write("\"" + ((string)val).Replace("\"", "\\\"") + "\"");
@@ -62,14 +66,16 @@ namespace org.herbal3d.convoar {
                 OMV.Quaternion quan = (OMV.Quaternion)val;
                 outt.Write(ParamsToJSONArray(quan.X, quan.Y, quan.Z, quan.W));
             }
-            else if (val.GetType().IsArray) {
+            // else if (val.GetType().IsArray) {
+            else if (val is Array) {
                 outt.Write(" [ ");
-                object[] values = (object[])val;
+                // Object[] values = (Object[])val;
+                Array values = val as Array;
                 bool first = true;
                 for (int ii = 0; ii < values.Length; ii++) {
                     if (!first) outt.Write(",");
                     first = false;
-                    SimpleOutputValue(outt, values[ii], level+1);
+                    SimpleOutputValue(outt, values.GetValue(ii), level+1);
                 }
                 outt.Write(" ]");
             }
@@ -80,10 +86,10 @@ namespace org.herbal3d.convoar {
                 foreach (var key in dict.Keys) {
                     if (!first) outt.Write(",");
                     first = false;
-                    outt.Write("\"" + key + "\": ");
+                    outt.Write("\n" + Indent(level) + "\"" + key + "\": ");
                     SimpleOutputValue(outt, dict[key], level + 1);
                 }
-                outt.Write(" }");
+                outt.Write("\n" + Indent(level) + " }");
             }
             else if (val is float && Single.IsNaN((float)val)) {
                 ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Single.NaN!!");
@@ -104,26 +110,28 @@ namespace org.herbal3d.convoar {
             }
         }
 
-        // Useful routines for creating the JSON output
+        public static string Indent(int level) {
+            return "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t".Substring(0, level);
+        }
+
+        // Create a short array from a list of numbers. Used for vector items.
+        // The values passed MUST be numbers or things that ToString() can expand.
         public static string ParamsToJSONArray(params Object[] vals) {
             StringBuilder buff = new StringBuilder();
             buff.Append(" [ ");
             bool first = true;
-            foreach (object obj in vals) {
+            foreach (Object obj in vals) {
                 if (!first) buff.Append(", ");
-                buff.Append(CreateJSONValue(obj));
+                buff.Append(obj.ToString());
                 first = false;
             }
             buff.Append(" ] ");
             return buff.ToString();
         }
 
+        /*
         public static string ArrayToJSONArray(float[] vals) {
             return ParamsToJSONArray(vals);
-        }
-
-        public static string Indent(int level) {
-            return "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t".Substring(0, level);
         }
 
         // Examines passed object and creates the correct form of a JSON value.
@@ -161,7 +169,7 @@ namespace org.herbal3d.convoar {
             }
             else if (val.GetType().IsArray) {
                 ret = " [ ";
-                object[] values = (object[])val;
+                Object[] values = (Object[])val;
                 bool first = true;
                 for (int ii = 0; ii < values.Length; ii++) {
                     if (!first) ret += ",";
@@ -199,5 +207,6 @@ namespace org.herbal3d.convoar {
             }
             return ret;
         }
+        */
     }
 }

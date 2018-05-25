@@ -3,12 +3,12 @@
 HERE=$(PWD)
 CONVOAR=$HERE/../convoar/bin/Debug/convoar.exe
 
-DOBUILD=no
+DOBUILD=yes
 DOCOPY=yes
 
 PROCESSING=UNOPTIMIZED
 
-if [[ -z "$MB_REMOTEACCT" -o -z "$MB_REMOTEHOST" ]] ; then
+if [[ -z "$MB_REMOTEACCT" || -z "$MB_REMOTEHOST" ]] ; then
     echo "Cannot run script without MB_REMOTEACCT and MB_REMOTEHOST environment variables set"
     exit
 fi

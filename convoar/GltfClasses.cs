@@ -31,7 +31,7 @@ namespace org.herbal3d.convoar {
         public Gltf gltfRoot;
         public string ID;
         public int referenceID;
-        public abstract object AsJSON();    // return object that's serializable as JSON
+        public abstract Object AsJSON();    // return object that's serializable as JSON
 
         public GltfClass() { }
         public GltfClass(Gltf pRoot, string pID) {
@@ -45,7 +45,7 @@ namespace org.herbal3d.convoar {
         }
 
         // Output messge of --LogGltfBuilding was specified
-        protected void LogGltf(string msg, params object[] args) {
+        protected void LogGltf(string msg, params Object[] args) {
             if (ConvOAR.Globals.parms.P<bool>("LogGltfBuilding")) {
                 ConvOAR.Globals.log.Log(msg, args);
             }
@@ -89,7 +89,7 @@ namespace org.herbal3d.convoar {
         }
 
         // Return a dictionary map of value.Id => value.AsJSON
-        public Dictionary<string, object> ToJSONMapOfNames() {
+        public Dictionary<string, Object> ToJSONMapOfNames() {
             return this.Values.OfType<GltfClass>()
             .ToDictionary(t => t.ID, t => t.AsJSON());
         }
@@ -100,7 +100,7 @@ namespace org.herbal3d.convoar {
         public GltfVector16() : base() {
         }
 
-        public override object AsJSON() {
+        public override Object AsJSON() {
             return vector;
         }
     }
@@ -401,8 +401,8 @@ namespace org.herbal3d.convoar {
             vertexAccessor.byteOffset = 0;
             vertexAccessor.componentType = WebGLConstants.FLOAT;
             vertexAccessor.type = "VEC3";
-            vertexAccessor.min = new object[3] { vmin.X, vmin.Y, vmin.Z };
-            vertexAccessor.max = new object[3] { vmax.X, vmax.Y, vmax.Z };
+            vertexAccessor.min = new Object[3] { vmin.X, vmin.Y, vmin.Z };
+            vertexAccessor.max = new Object[3] { vmax.X, vmax.Y, vmax.Z };
 
             GltfAccessor normalsAccessor = new GltfAccessor(gltfRoot, buffName + "_accNor");
             normalsAccessor.bufferView = binNormalsView;
@@ -410,8 +410,8 @@ namespace org.herbal3d.convoar {
             normalsAccessor.byteOffset = 0;
             normalsAccessor.componentType = WebGLConstants.FLOAT;
             normalsAccessor.type = "VEC3";
-            normalsAccessor.min = new object[3] { nmin.X, nmin.Y, nmin.Z };
-            normalsAccessor.max = new object[3] { nmax.X, nmax.Y, nmax.Z };
+            normalsAccessor.min = new Object[3] { nmin.X, nmin.Y, nmin.Z };
+            normalsAccessor.max = new Object[3] { nmax.X, nmax.Y, nmax.Z };
 
             GltfAccessor UVAccessor = new GltfAccessor(gltfRoot, buffName + "_accUV");
             UVAccessor.bufferView = binTexCoordView;
@@ -422,11 +422,11 @@ namespace org.herbal3d.convoar {
             // The values for TexCoords sometimes get odd
             if (!Single.IsNaN(umin.X) && umin.X > -1000000 && umin.X < 1000000
                     && !Single.IsNaN(umin.Y) && umin.Y > -1000000 && umin.Y < 1000000) {
-                UVAccessor.min = new object[2] { umin.X, umin.Y };
+                UVAccessor.min = new Object[2] { umin.X, umin.Y };
             }
             if (!Single.IsNaN(umax.X) && umax.X > -1000000 && umax.X < 1000000
                     && !Single.IsNaN(umax.Y) && umax.Y > -1000000 && umax.Y < 1000000) {
-                UVAccessor.max = new object[2] { umax.X, umax.Y };
+                UVAccessor.max = new Object[2] { umax.X, umax.Y };
             }
 
             // For each mesh, copy the indices into the binary output buffer and create the accessors
@@ -447,8 +447,8 @@ namespace org.herbal3d.convoar {
                     imin = Math.Min(imin, prim.newIndices[ii]);
                     imax = Math.Max(imax, prim.newIndices[ii]);
                 }
-                indicesAccessor.min = new object[1] { imin };
-                indicesAccessor.max = new object[1] { imax };
+                indicesAccessor.min = new Object[1] { imin };
+                indicesAccessor.max = new Object[1] { imax };
 
                 // ConvOAR.Globals.log.DebugFormat("{0} indices: meshIndSize={1}, cnt={2}, offset={3}", LogHeader,
                 //                 meshIndicesSize, indicesAccessor.count, indicesOffset);
@@ -467,8 +467,8 @@ namespace org.herbal3d.convoar {
             JSONHelpers.SimpleJSONOutput(outt, this.AsJSON());
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             if (defaultScene != null) {
                 ret.Add("scene", defaultScene.referenceID);
             }
@@ -561,11 +561,11 @@ namespace org.herbal3d.convoar {
     // A simple collection to keep name/value strings
     // The value is an object so it can hold strings, numbers, or arrays and have the
     //     values serialized properly in the output JSON.
-    public class GltfAttributes : Dictionary<string, object> {
+    public class GltfAttributes : Dictionary<string, Object> {
         public GltfAttributes() : base() {
         }
 
-        public object AsJSON() {
+        public Object AsJSON() {
             return this;
         }
     }
@@ -581,7 +581,7 @@ namespace org.herbal3d.convoar {
             values.Add("copyright", ConvOAR.Globals.parms.P<string>("GltfCopyright"));
         }
 
-        public override object AsJSON() {
+        public override Object AsJSON() {
             return values.AsJSON();
         }
     }
@@ -606,8 +606,8 @@ namespace org.herbal3d.convoar {
             gltfRoot.scenes.Add(new BHashULong(gltfRoot.scenes.Count), this);
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (nodes != null && nodes.Count > 0) ret.Add("nodes", nodes.AsArrayOfIDs());
             if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
@@ -691,8 +691,8 @@ namespace org.herbal3d.convoar {
             return node;
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (matrix != OMV.Matrix4.Zero) {
                 ret.Add("matrix", matrix);
@@ -787,10 +787,10 @@ namespace org.herbal3d.convoar {
             return mesh;
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
-            if (primitives != null && primitives.Count > 0) ret.Add("primitives", primitives.AsArrayOfIDs());
+            if (primitives != null && primitives.Count > 0) ret.Add("primitives", primitives.AsArrayOfValues());
             if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
             if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
             return ret;
@@ -848,13 +848,13 @@ namespace org.herbal3d.convoar {
             return prim;
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             ret.Add("mode", mode);
             if (indices != null) ret.Add("indices", indices.referenceID);
             if (material != null) ret.Add("material", material.referenceID);
 
-            var attribs = new Dictionary<string, object>();
+            var attribs = new Dictionary<string, Object>();
             if (normals != null) attribs.Add("NORMAL", normals.referenceID);
             if (position != null) attribs.Add("POSITION", position.referenceID);
             if (texcoord != null) attribs.Add("TEXCOORD_0", texcoord.referenceID);
@@ -938,8 +938,8 @@ namespace org.herbal3d.convoar {
         }
 
         // NOTE: needed version that didn't have enclosing {} for some reason
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (topLevelValues != null && topLevelValues.Count > 0) {
                 foreach (var key in topLevelValues.Keys) {
@@ -984,7 +984,7 @@ namespace org.herbal3d.convoar {
             MaterialInit(pRoot, matInfo, assetFetcher);
         }
 
-        public override object AsJSON() {
+        public override Object AsJSON() {
             materialCommonExt = new GltfExtension(gltfRoot, "KHR_materials_common");
             // Pack the material set values into the extension
             materialCommonExt.values.Add("type", "commonBlinn");
@@ -1022,8 +1022,8 @@ namespace org.herbal3d.convoar {
             MaterialInit(pRoot, matInfo, assetFetcher);
         }
 
-        public override object AsJSON() {
-            var pbr = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var pbr = new Dictionary<string, Object>();
             if (diffuse.HasValue) {
                 pbr.Add("baseColorFactor", diffuse.Value);
             }
@@ -1071,25 +1071,23 @@ namespace org.herbal3d.convoar {
         public uint componentType;
         public int count;
         public string type;
-        public object[] min;
-        public object[] max;
+        public Object[] min;
+        public Object[] max;
 
         public GltfAccessor(Gltf pRoot, string pID) : base(pRoot, pID) {
             gltfRoot.accessors.Add(new BHashULong(gltfRoot.accessors.Count), this);
             LogGltf("{0} GltfAccessor: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             ret.Add("bufferView", bufferView.referenceID);
             ret.Add("byteOffset", byteOffset);
             ret.Add("componentType", componentType);
             ret.Add("count", count);
-            ret.Add("type", type);
-            if (min != null && min.Length > 0)
-                ret.Add("min", min);
-            if (max != null && max.Length > 0)
-            ret.Add("max", max);
+            if (!String.IsNullOrEmpty(type)) ret.Add("type", type);
+            if (min != null && min.Length > 0) ret.Add("min", min);
+            if (max != null && max.Length > 0) ret.Add("max", max);
             return ret;
         }
     }
@@ -1117,8 +1115,8 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfBuffer: created. ID={1}", "Gltf", ID);
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             ret.Add("byteLength", bufferBytes.Length);
             ret.Add("uri", persist.uri);
@@ -1152,15 +1150,14 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfBufferView: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
-            if (!String.IsNullOrEmpty(name))
-                ret.Add("name", name);
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             ret.Add("buffer", buffer.referenceID);
             ret.Add("byteOffset", byteOffset);
             ret.Add("byteLength", byteLength);
             // ret.Add("byteStride", byteStride);
-            ret.Add("target", target);
+            if (target.HasValue) ret.Add("target", target.Value);
             if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
             if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
             return ret;
@@ -1179,8 +1176,8 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfTechnique: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             // TODO:
             return ret;
         }
@@ -1198,8 +1195,8 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfTechnique: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             // TODO:
             return ret;
         }
@@ -1217,8 +1214,8 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfShader: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             // TODO:
             return ret;
         }
@@ -1283,7 +1280,7 @@ namespace org.herbal3d.convoar {
             return tex;
         }
 
-        public override object AsJSON() {
+        public override Object AsJSON() {
             GltfAttributes ret = new GltfAttributes();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (source != null) ret.Add("source", source.referenceID);
@@ -1344,9 +1341,9 @@ namespace org.herbal3d.convoar {
             return img;
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
-            ret.Add("url", imageInfo.persist.uri);
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
+            ret.Add("uri", imageInfo.persist.uri);
             return ret;
         }
     }
@@ -1371,8 +1368,8 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfSampler: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override object AsJSON() {
-            var ret = new Dictionary<string, object>();
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (magFilter != null) ret.Add("magFilter", magFilter);
             if (magFilter != null) ret.Add("minFilter", minFilter);
@@ -1389,7 +1386,7 @@ namespace org.herbal3d.convoar {
         public GltfExtensions(Gltf pRoot) : base() {
         }
 
-        public object AsJSON() {
+        public Object AsJSON() {
             return this;
         }
     }
@@ -1412,7 +1409,7 @@ namespace org.herbal3d.convoar {
             LogGltf("{0} GltfExtension: created empty. ID={1}", "Gltf", ID);
         }
 
-        public override object AsJSON() {
+        public override Object AsJSON() {
             return values;
         }
 
