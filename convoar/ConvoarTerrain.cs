@@ -93,6 +93,7 @@ namespace org.herbal3d.convoar {
                 ImageInfo terrainImageInfo = new ImageInfo();
                 terrainImageInfo.handle = terrainTextureHandle;
                 terrainImageInfo.image = mapbmp;
+                terrainImageInfo.resizable = false; // terrain image resolution is not reduced
                 assetFetcher.Images.Add(new BHashULong(terrainTextureHandle.GetHashCode()), terrainTextureHandle, terrainImageInfo);
                 // Store the new image into the asset system so it can be read later.
                 assetFetcher.StoreTextureImage(terrainTextureHandle, scene.Name + " Terrain", convoarID, mapbmp);

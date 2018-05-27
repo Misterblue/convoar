@@ -957,7 +957,7 @@ namespace org.herbal3d.convoar {
         private ImageInfo CheckForResizedImage(ImageInfo origImage, IAssetFetcher assetFetcher) {
             ImageInfo ret = origImage;
             int maxSize = ConvOAR.Globals.parms.P<int>("TextureMaxSize");
-            if (maxSize > 0 && maxSize < 10000) {
+            if (origImage.resizable && maxSize > 0 && maxSize < 10000) {
                 if (origImage.xSize > maxSize || origImage.ySize > maxSize) {
                     origImage.ConstrainTextureSize(maxSize);
                 }

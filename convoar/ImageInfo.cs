@@ -29,11 +29,12 @@ namespace org.herbal3d.convoar {
     public class ImageInfo {
         public EntityHandle handle;
         public OMV.UUID imageIdentifier;
-        public bool hasTransprency;
+        public bool hasTransprency = false;
+        public bool resizable = true;   // true if image can be reduced in size
         public PersistRules persist;    // information in filesystem storage of the image
-        public Image image;
-        public int xSize;
-        public int ySize;
+        public Image image = null;
+        public int xSize = 0;
+        public int ySize = 0;
 
 #pragma warning disable 414
         private string _logHeader = "[ImageInfo]";
@@ -45,16 +46,12 @@ namespace org.herbal3d.convoar {
         public ImageInfo(EntityHandle pHandle) {
             handle = pHandle;
             imageIdentifier = handle.GetUUID(); // image is unique unless underlying set
-            hasTransprency = false;
-            image = null;
             persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString());
-            xSize = ySize = 0;
         }
 
         public ImageInfo(Image pImage) {
             handle = new EntityHandleUUID();
             imageIdentifier = handle.GetUUID(); // image is unique unless underlying set
-            hasTransprency = false;
             this.SetImage(pImage);
         }
 
