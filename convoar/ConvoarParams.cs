@@ -52,6 +52,11 @@ namespace org.herbal3d.convoar {
         //    v = value (appropriate type)
         public ParameterDefnBase[] ParameterDefinitions =
         {
+            new ParameterDefn<string>("==========", "Overall function specifications (sets all parameters to do this function)", null),
+            new ParameterDefn<bool>("TerrainOnly", "Only create and output the terrain and terrain texture",
+                false),
+
+            new ParameterDefn<string>("==========", "General Input and Output Parameters", null),
             new ParameterDefn<string>("InputOAR", "The input OAR file",
                 null, "i"),
             new ParameterDefn<string>("OutputDir", "The directory (relative to current dir) to store output files",
@@ -59,10 +64,10 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
                 "" ),
 
-            // OAR reading parameters
+            new ParameterDefn<string>("==========", "OAR Reading Specific Parameters", null),
             new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",
                 "e67a2ff8-597d-4f03-b559-930aeaf4836b"),
-            new ParameterDefn<string>("RegionName", "Name to use for the region (since it's not in the OAR)",
+            new ParameterDefn<string>("RegionName", "Name to use for the region (default generated from OAR filename)",
                 String.Empty ),
             new ParameterDefn<OMV.Vector3>("Displacement", "Optional displacement to add to OAR entites",
                 OMV.Vector3.Zero ),
@@ -72,6 +77,7 @@ namespace org.herbal3d.convoar {
                 null ),
 
             // Optimizations
+            new ParameterDefn<string>("==========", "Optimizations", null),
             new ParameterDefn<bool>("DoMeshSimplification", "pass over all the meshes and simplify if needed",
                 true ),
             new ParameterDefn<bool>("DoSceneOptimizations", "optimize the instances in the scene",
@@ -82,12 +88,13 @@ namespace org.herbal3d.convoar {
                 true ),
             new ParameterDefn<int>("MeshShareThreshold", "meshes used more than this many times are not material combined",
                 5 ),
-            new ParameterDefn<bool>("CreateStaticLayer", "whether to merge meshes with similar materials indstatic objects",
+            new ParameterDefn<bool>("CreateStaticLayer", "whether to merge meshes with similar materials in static objects",
                 false ),
             new ParameterDefn<bool>("CreateDynamicLayer", "whether to merge meshes within non-static entities ",
                 false ),
 
             // Export to files
+            new ParameterDefn<string>("==========", "Export Parameters", null),
             new ParameterDefn<bool>("ExportGltf", "Output files in GLTF format",
                 true ),
             new ParameterDefn<string>("GltfCopyright", "Copyright notice embedded into generated GLTF files",
@@ -113,6 +120,7 @@ namespace org.herbal3d.convoar {
                 false),
 
             // Terrain processing
+            new ParameterDefn<string>("==========", "Terrain Generation Parameters", null),
             new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
                 true ),
             new ParameterDefn<bool>("HalfRezTerrain", "Whether to reduce the terrain resolution by 2",
@@ -124,6 +132,7 @@ namespace org.herbal3d.convoar {
                 false ),
 
             // Debugging and logging
+            new ParameterDefn<string>("==========", "Debugging", null),
             new ParameterDefn<bool>("Verbose", "if set, force DEBUG logging",
                 false, "v" ),
             new ParameterDefn<bool>("LogBuilding", "if set, log detailed BScene/BInstance object building",
@@ -219,9 +228,14 @@ namespace org.herbal3d.convoar {
                     }
                 }
             }
+            // Create a description for this parameter that can be used in a list of parameters.
+            // For better listings, there is a special 'separator' parameter that is just for the description.
+            //      These separator parameters start with an equal sign ('=').
             const int leader = 20;
             public override string ToString() {
                 StringBuilder buff = new StringBuilder();
+                bool hasValue = true;
+                // Start with the parameter name. If multiple, first is "--" type and later are "-" type.
                 if (symbols.Length > 0) {
                     buff.Append("[ ");
                     buff.Append("--");
@@ -234,28 +248,39 @@ namespace org.herbal3d.convoar {
                     buff.Append(" ]: ");
                 }
                 else {
-                    buff.Append("--");
-                    buff.Append(name);
-                    buff.Append(": ");
+                    if (name.StartsWith("=")) {
+                        hasValue = false;
+                        buff.Append(name.Substring(1);
+                    }
+                    else {
+                        buff.Append("--");
+                        buff.Append(name);
+                        buff.Append(": ");
+                    }
                 }
+                // Provide tab like padding between the name and the description
                 if (buff.Length < leader) {
                     buff.Append("                                        ".Substring(0, leader - buff.Length));
                 }
                 buff.Append(desc);
-                buff.Append("(");
-                buff.Append("Type=");
-                switch (GetValueType().ToString()) {
-                    case "System.Boolean": buff.Append("bool"); break;
-                    case "System.Int32": buff.Append("int"); break;
-                    case "System.Float": buff.Append("float"); break;
-                    case "System.Double": buff.Append("double"); break;
-                    case "System.String": buff.Append("string"); break;
-                    case "OpenMetaverse.Vector3": buff.Append("vector3"); break;
-                    default: buff.Append(GetValueType().ToString()); break;
+                // Add the type and the default value of the parameter
+                if (hasValue) {
+                    buff.Append(" (");
+                    buff.Append("Type=");
+                    switch (GetValueType().ToString()) {
+                        case "System.Boolean": buff.Append("bool"); break;
+                        case "System.Int32": buff.Append("int"); break;
+                        case "System.Float": buff.Append("float"); break;
+                        case "System.Double": buff.Append("double"); break;
+                        case "System.String": buff.Append("string"); break;
+                        case "OpenMetaverse.Vector3": buff.Append("vector3"); break;
+                        case "OpenMetaverse.Quaterion": buff.Append("quaterion"); break;
+                        default: buff.Append(GetValueType().ToString()); break;
+                    }
+                    buff.Append(",Default=");
+                    buff.Append(GetValue());
+                    buff.Append(")");
                 }
-                buff.Append(",Default=");
-                buff.Append(GetValue());
-                buff.Append(")");
 
                 return buff.ToString();
             }

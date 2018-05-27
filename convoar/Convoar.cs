@@ -80,6 +80,7 @@ namespace org.herbal3d.convoar {
             // 'ConvoarParams' initializes to default values.
             // Over ride default values with command line parameters.
             try {
+                // Note that trailing parameters will be put into "InputOAR" parameter
                 Globals.parms.MergeCommandLine(args, null, "InputOAR");
             }
             catch (Exception e) {
