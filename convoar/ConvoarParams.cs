@@ -250,7 +250,7 @@ namespace org.herbal3d.convoar {
                 else {
                     if (name.StartsWith("=")) {
                         hasValue = false;
-                        buff.Append(name.Substring(1);
+                        buff.Append(name.Substring(1));
                     }
                     else {
                         buff.Append("--");
@@ -420,6 +420,7 @@ namespace org.herbal3d.convoar {
         //    a zero of we didn't used the next parameter and a 1 if the next parameter
         //    was used as a value so don't consider it the next parameter.
         private int AddCommandLineParameter(string pParm, string val) {
+            // System.Console.WriteLine(String.Format("AddCommandLineParameter: parm={0}, val={1}", pParm, val));
             int ret = 1;    // start off assuming the next token is the value we're setting
             string parm = pParm.ToLower();
             // Strip leading hyphens
@@ -442,10 +443,16 @@ namespace org.herbal3d.convoar {
             }
 
             // If the next token starts with a parameter mark, it's not really a value
-            if (val[0] == '-') {
-                val = null; // don't use the next token as a value
+            if (val == null) {
                 ret = 0;    // the next token is not used here to set the value
             }
+            else {
+                if (val[0] == '-') {
+                    val = null; // don't use the next token as a value
+                    ret = 0;    // the next token is not used here to set the value
+                }
+            }
+
             ParameterDefnBase parmDefn;
             if (TryGetParameter(parm, out parmDefn)) {
                 // If the parameter is a boolean type and the next value is not a parameter,

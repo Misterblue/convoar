@@ -52,8 +52,8 @@ namespace org.herbal3d.convoar {
 
         private string Invocation() {
             StringBuilder buff = new StringBuilder();
-            buff.AppendLine(" Invocation: convoar <parameters> inputOARfile");
-            buff.AppendLine("where possible parameters are (negate bool parameters by prepending 'no'):");
+            buff.AppendLine("Invocation: convoar <parameters> inputOARfile");
+            buff.AppendLine("   Possible parameters are (negate bool parameters by prepending 'no'):");
             string[] paramDescs = Globals.parms.ParameterDefinitions.Select(pp => { return pp.ToString(); }).ToArray();
             buff.AppendLine(String.Join(Environment.NewLine, paramDescs));
             return buff.ToString();
@@ -72,7 +72,7 @@ namespace org.herbal3d.convoar {
             Globals.stats = new ConvoarStats();
 
             // A single parameter of '--help' outputs the invocation parameters
-            if (args.Length == 2 && args[1] == "--help") {
+            if (args.Length > 0 && args[0] == "--help") {
                 System.Console.Write(Invocation());
                 return;
             }
@@ -90,6 +90,7 @@ namespace org.herbal3d.convoar {
             }
 
             if (Globals.parms.P<bool>("Verbose")) {
+                System.Console.WriteLine("***** Setting Verbose");
                 Globals.log.SetVerbose(Globals.parms.P<bool>("Verbose"));
             }
 

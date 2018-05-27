@@ -66,7 +66,10 @@ namespace org.herbal3d.convoar {
             if (_verbose && !alreadyDebug) {
                 // turning Verbose on
                 _log.InfoFormat("{0} SetVerbose: Setting logging threshold to DEBUG", _logHeader);
-                LogManager.GetRepository().Threshold = log4net.Core.Level.Debug;
+                // LogManager.GetRepository().Threshold = log4net.Core.Level.Debug;
+                var logHeir = (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
+                logHeir.Root.Level = log4net.Core.Level.Debug;
+                logHeir.RaiseConfigurationChanged(EventArgs.Empty);
             }
         }
 
