@@ -73,18 +73,19 @@ namespace org.herbal3d.convoar {
                 OMV.Vector3.Zero ),
             new ParameterDefn<string>("Rotation", "Optional rotation to add to OAR entites",
                 null ),
-            new ParameterDefn<string>("SubRegion", "Bounds of subregion to export (X,Y,Z,X,Y,Z). Whole region if empty or null",
+            new ParameterDefn<string>("SubRegion", "Bounds of subregion to export. upper-right to lower-left as (X,Y,Z,X,Y,Z). Whole region if empty or null",
                 null ),
 
             // Optimizations
             new ParameterDefn<string>("==========", "Optimizations", null),
+            new ParameterDefn<bool>("MergeSharedMaterialMeshes", "whether to merge meshes with similar materials",
+                false ),
+            /*
             new ParameterDefn<bool>("DoMeshSimplification", "pass over all the meshes and simplify if needed",
                 true ),
             new ParameterDefn<bool>("DoSceneOptimizations", "optimize the instances in the scene",
                 true ),
             new ParameterDefn<bool>("SeparateInstancedMeshes", "whether to find instanced meshes and not do shared meshes with them",
-                true ),
-            new ParameterDefn<bool>("MergeSharedMaterialMeshes", "whether to merge meshes with similar materials",
                 true ),
             new ParameterDefn<int>("MeshShareThreshold", "meshes used more than this many times are not material combined",
                 5 ),
@@ -92,20 +93,12 @@ namespace org.herbal3d.convoar {
                 false ),
             new ParameterDefn<bool>("CreateDynamicLayer", "whether to merge meshes within non-static entities ",
                 false ),
+            */
 
             // Export to files
             new ParameterDefn<string>("==========", "Export Parameters", null),
-            new ParameterDefn<bool>("ExportGltf", "Output files in GLTF format",
-                true ),
             new ParameterDefn<string>("GltfCopyright", "Copyright notice embedded into generated GLTF files",
                 "Copyright 2018. All rights reserved" ),
-            new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
-                50000 ),
-            new ParameterDefn<bool>("ExportIndividualGltf", "Export scene objects as individual GLTF files",
-                false ),
-            new ParameterDefn<bool>("AddUniqueCodes", "Add an extras.unique value to some GLTF objects as a unique hash",
-                true ),
-
             new ParameterDefn<bool>("ExportTextures", "Convert textures to PNGs and export to target dir",
                 true ),
             new ParameterDefn<string>("TexturesDir", "sub-directory for all the image files",
@@ -116,8 +109,18 @@ namespace org.herbal3d.convoar {
                 "PNG"),
             new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPG, GIF, BMP",
                 "JPG"),
+            new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
+                50000 ),
+            new ParameterDefn<bool>("DisplayTimeScaling", "If to delay mesh scaling to display/GPU time",
+                false ),
             new ParameterDefn<bool>("DoubleSided", "specify whether double sided mesh rendering",
                 false),
+            new ParameterDefn<bool>("AddUniqueCodes", "Add an extras.unique value to some GLTF objects as a unique hash",
+                true ),
+            /*
+            new ParameterDefn<bool>("ExportIndividualGltf", "Export scene objects as individual GLTF files",
+                false ),
+            */
 
             // Terrain processing
             new ParameterDefn<string>("==========", "Terrain Generation Parameters", null),
@@ -128,22 +131,13 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<bool>("CreateTerrainSplat", "whether to generate a terrain mesh splat texture",
                 true ),
 
-            new ParameterDefn<bool>("DisplayTimeScaling", "If to delay mesh scaling to display/GPU time",
-                false ),
-
             // Debugging and logging
             new ParameterDefn<string>("==========", "Debugging", null),
-            new ParameterDefn<bool>("Verbose", "if set, force DEBUG logging",
+            new ParameterDefn<bool>("Verbose", "enable DEBUG information logging",
                 false, "v" ),
-            new ParameterDefn<bool>("LogBuilding", "if set, log detailed BScene/BInstance object building",
+            new ParameterDefn<bool>("LogBuilding", "log detailed BScene/BInstance object building",
                 false ),
-            new ParameterDefn<bool>("LogGltfBuilding", "if set, log detailed Gltf object building",
-                false ),
-            new ParameterDefn<bool>("LogConversionStats", "output numbers about number of entities converted",
-                true ),
-            new ParameterDefn<bool>("LogDetailedSharedFaceStats", "output numbers about face mesh sharing",
-                true ),
-            new ParameterDefn<bool>("LogDetailedEntityInfo", "output detailed information about each entity",
+            new ParameterDefn<bool>("LogGltfBuilding", "log detailed Gltf object building",
                 false ),
         };
 

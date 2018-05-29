@@ -123,6 +123,12 @@ namespace org.herbal3d.convoar {
                             Globals.log.DebugFormat("{0}    num assetFetcher.meshes={1}", _logHeader, assetFetcher.Meshes.Count);
                             Globals.log.DebugFormat("{0}    num assetFetcher.renderables={1}", _logHeader, assetFetcher.Renderables.Count);
 
+                            if (ConvOAR.Globals.parms.P<bool>("AddTerrainMesh")) {
+                                ConvOAR.Globals.log.DebugFormat("{0} Adding terrain to scene", _logHeader);
+                                bScene.instances.Add(bScene.terrainInstance);
+                            }
+
+                            /*
                             // Perform any optimizations on the scene and its instances
                             if (Globals.parms.P<bool>("DoMeshSimplification")) {
                                 // TODO:
@@ -133,38 +139,44 @@ namespace org.herbal3d.convoar {
                                     Globals.log.DebugFormat("{0} merged BScene. numInstances={1}", _logHeader, bScene.instances.Count);
                                 }
                             }
-
-                            // Output the transformed scene as Gltf version 2
-                            if (Globals.parms.P<bool>("ExportGltf")) {
-                                Gltf gltf = new Gltf(bScene.name);
-
-                                try {
-                                    gltf.LoadScene(bScene, assetFetcher);
-
-                                    Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
-                                    Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
-
-                                    PersistRules.ResolveAndCreateDir(gltf.persist.filename);
-
-                                    using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
-                                        gltf.ToJSON(outt);
-                                    }
-                                    gltf.WriteBinaryFiles();
-
-                                    if (Globals.parms.P<bool>("ExportTextures")) {
-                                        gltf.WriteImages();
-                                    }
-                                }
-                                catch (Exception e) {
-                                    Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
+                            */
+                            if (Globals.parms.P<bool>("MergeSharedMaterialMeshes")) {
+                                using (BSceneManipulation optimizer = new BSceneManipulation()) {
+                                    bScene = optimizer.RebuildSceneBasedOnSharedMeshes(bScene);
+                                    Globals.log.DebugFormat("{0} merged meshes in scene. numInstances={1}", _logHeader, bScene.instances.Count);
                                 }
                             }
 
+                            // Output the transformed scene as Gltf version 2
+                            Gltf gltf = new Gltf(bScene.name);
+
+                            try {
+                                gltf.LoadScene(bScene, assetFetcher);
+
+                                Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
+                                Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
+
+                                PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+
+                                using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                    gltf.ToJSON(outt);
+                                }
+                                gltf.WriteBinaryFiles();
+
+                                if (Globals.parms.P<bool>("ExportTextures")) {
+                                    gltf.WriteImages();
+                                }
+                            }
+                            catch (Exception e) {
+                                Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
+                            }
+
+                            /*
                             // Output all the instances in the scene as individual GLTF files
                             if (Globals.parms.P<bool>("ExportIndividualGltf")) {
                                 bScene.instances.ForEach(instance => {
@@ -198,6 +210,7 @@ namespace org.herbal3d.convoar {
                                     }
                                 });
                             }
+                            */
 
                         });
                     }

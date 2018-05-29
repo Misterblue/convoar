@@ -45,6 +45,8 @@ namespace org.herbal3d.convoar {
                 if (ConvOAR.Globals.parms.P<bool>("SeparateInstancedMeshes")) {
                     newInstances.AddRange(SeparateMeshInstances(bScene, analysis));
                 }
+                // Any shared meshes have been gathered into instances in 'newInstances'
+                //     and the meshes have been removed from the shared materials in the analysis.
                 int instancesAdded = newInstances.Count - lastInstanceCount;
                 ConvOAR.Globals.log.DebugFormat("{0} OptimizeScene: BInstances added by mesh instances = {1}", _logHeader, instancesAdded);
 
@@ -57,6 +59,22 @@ namespace org.herbal3d.convoar {
             }
 
             return bScene;
+        }
+
+        // Return a new scene whos instances have been created by combining meshes that share
+        //    materials.
+        public BScene RebuildSceneBasedOnSharedMeshes(BScene bScene) {
+            List<BInstance> newInstances = new List<BInstance>();
+
+            // Create collections of meshes with similar materials
+            using (SceneAnalysis analysis = new SceneAnalysis(bScene)) {
+                newInstances.AddRange(MergeSharedMaterialMeshes(bScene, analysis));
+            }
+
+            BScene newScene = new BScene(bScene);
+            newScene.instances = newInstances;
+
+            return newScene;
         }
 
         private class InvertedMesh {
@@ -101,6 +119,7 @@ namespace org.herbal3d.convoar {
             public SceneAnalysis() {
             }
             public SceneAnalysis(BScene bScene) {
+                this.scene = bScene;
                 BuildAnalysis(bScene);
             }
             public void Dispose() {
@@ -115,7 +134,6 @@ namespace org.herbal3d.convoar {
             }
 
             public void BuildAnalysis(BScene bScene) {
-                scene = bScene;
                 foreach (BInstance inst in bScene.instances) {
                     MapMaterialsAndMeshes(bScene, inst, inst.Representation);
                 }
@@ -176,7 +194,8 @@ namespace org.herbal3d.convoar {
                 }
             }
 
-            // Find all the meshes in passed Displayable and add them to the lists indexed by their material hashes
+            // Find all the meshes in passed Displayable and add them to the lists indexed by their material
+            //     mesh hashes.
             private void MapMaterialsAndMeshes(BScene pBs, BInstance pInst, Displayable disp) {
                 RenderableMeshGroup rmg = disp.renderable as RenderableMeshGroup;
                 if (rmg != null) {

@@ -66,7 +66,6 @@ namespace org.herbal3d.convoar.tests {
                 "--preferredTextureFormat", "GIF",
                 "--mergeStaticMeshes",
                 "--verticesmaxForBuffer", "1234",
-                "--logConversionStats",
                 inputOARFile
             };
             parms.SetParameterValue("ExportTextures", "false");
@@ -89,7 +88,6 @@ namespace org.herbal3d.convoar.tests {
                 Assert.AreEqual("GIF", parms.P<string>("PreferredTextureFormat"), "Preferred texture format was not set");
                 Assert.AreEqual(true, parms.P<bool>("MergeStaticMeshes"), "MergeStaticMeshes was not set");
                 Assert.AreEqual(1234, parms.P<int>("VerticesMaxForBuffer"), "VerticesMaxForBuffer was not set");
-                Assert.AreEqual(true, parms.P<bool>("LogConversionStats"), "LogConversionStats was not set");
                 Assert.AreEqual(inputOARFile, parms.P<string>("InputOAR"), "The trailing filename was not set");
             }
         }

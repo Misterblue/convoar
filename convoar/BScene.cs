@@ -28,6 +28,7 @@ namespace org.herbal3d.convoar {
         public string name;
         public List<BInstance> instances = new List<BInstance>();
         public BAttributes attributes = new BAttributes();
+        public BInstance terrainInstance;
 
         public BScene() {
             name = "no name";
@@ -35,6 +36,15 @@ namespace org.herbal3d.convoar {
 
         public BScene(string pName) {
             name = pName;
+        }
+
+        // Create a new scene based on an existing scene.
+        // NOTE: this is NOT a clone. Instances are not copied and other things just
+        //    have their pointers moved so the items are shared.
+        public BScene(BScene bScene) {
+            name = bScene.name;
+            attributes = bScene.attributes;
+            terrainInstance = bScene.terrainInstance;
         }
     }
 }

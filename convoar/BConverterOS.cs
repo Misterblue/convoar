@@ -108,9 +108,11 @@ namespace org.herbal3d.convoar {
                 instanceList.AddRange(instances);
 
                 // Add the terrain mesh to the scene
+                BInstance terrainInstance = null;
                 if (ConvOAR.Globals.parms.P<bool>("AddTerrainMesh")) {
-                    ConvOAR.Globals.log.DebugFormat("{0} Adding terrain to scene", _logHeader);
-                    instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher));
+                    ConvOAR.Globals.log.DebugFormat("{0} Creating terrain for scene", _logHeader);
+                    // instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher));
+                    terrainInstance = ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher);
                 }
 
                 // Twist the OpenSimulator Z-up coordinate system to the OpenGL Y-up
@@ -123,6 +125,7 @@ namespace org.herbal3d.convoar {
                 bScene.instances = instanceList;
                 RegionInfo ri = scene.RegionInfo;
                 bScene.name = ri.RegionName;
+                bScene.terrainInstance = terrainInstance;
                 bScene.attributes.Add("RegionName", ri.RegionName);
                 bScene.attributes.Add("RegionSizeX", ri.RegionSizeX);
                 bScene.attributes.Add("RegionSizeY", ri.RegionSizeY);
@@ -287,12 +290,10 @@ namespace org.herbal3d.convoar {
         }
 
         private void DumpInstance(BInstance inst) {
-            if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
-                Displayable instDisplayable = inst.Representation;
-                LogBProgress("{0} created instance. handle={1}, pos={2}, rot={3}",
-                    _logHeader, inst.handle, inst.Position, inst.Rotation);
-                DumpDisplayable(inst.Representation, "Representation", 0);
-            }
+            Displayable instDisplayable = inst.Representation;
+            LogBProgress("{0} created instance. handle={1}, pos={2}, rot={3}",
+                _logHeader, inst.handle, inst.Position, inst.Rotation);
+            DumpDisplayable(inst.Representation, "Representation", 0);
         }
 
         private void DumpDisplayable(Displayable disp, string header, int level) {
