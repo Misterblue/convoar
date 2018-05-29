@@ -42,12 +42,12 @@ Convor is a command line application with the form:
 An extensive list of parameters is on the [parameter wiki page]
 but a short list is:
 
-Parameter | Meaning
---------------------
---help | list all available parameters with descriptions and default values
---outputdir | directory for generated GLTF and image files
--d      | equivilent to `--outputdir`
---mergeSharedMaterialMeshes | reduce number of meshes to number of common materials
+Parameter  | Meaning
+---------- | ----------
+ `--help` | list all available parameters with descriptions and default values
+ `--outputdir` | directory for generated GLTF and image files
+ `-d`      | equivilent to `--outputdir`
+ `--mergeSharedMaterialMeshes` | reduce number of meshes to number of common materials
 
 # Building
 
@@ -80,13 +80,14 @@ msbuild
 
 # Releases and Roadmap
 
-[ ] Release 1.0
+- [ ] Release 1.0
     * basic OAR to GLTF conversion
-[ ] Release 1.1
+- [ ] Release 1.1
     * option to include all prim information in `extras` (scripts, notes, etc.)
     * pipeline tools in Docker image for binary/DRACO packing of GLTF file
     * invocation options to select sub-regions of OAR region
-[ ] Release 1.2
+- [ ] Release 1.2
+    * pipeline tools for scene optimizations (small mesh elimination, mesh decimation/simplification, etc.)
 
 [OpenSimulator]: http://opensimulator.org
 [Mono]: http://www.mono-project.com/
