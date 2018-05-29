@@ -1,6 +1,5 @@
 # Dockerfile for building a runnable version of convoar
 
-# FROM alpine
 FROM mono:latest
 
 ENV TARGET=Release
@@ -14,7 +13,7 @@ ENV CONVOAR_PASSWORD=convoarconvoar
 # Optout of the .NET Core Telemetry (https://aka.ms/dotnet-cli-telemetry)
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
 
-LABEL Version="1.0"
+LABEL Version="0.9"
 LABEL Description="Docker container convoar"
 
 # add the development environment and base tools
@@ -38,6 +37,8 @@ USER ${USER}:${USER}
 # Get the 'convoar' sources
 RUN cd /home/${USER} \
     && git clone https://github.com/Misterblue/convoar.git \
-    && cd convoar \
-    && msbuild /p:Configuration=Release
+    && cd ${USER} \
+    && msbuild /p:Configuration=${TARGET}
+
+ENTRYPOINT [ "mono", "/home/convoar/convoar/convoar/bin/Release/convoar.exe" ]
 
