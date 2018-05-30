@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 using OpenSim.Services.Interfaces;
 
@@ -33,6 +31,9 @@ namespace org.herbal3d.convoar {
         public ConvoarStats stats;
         public Logger log;
         public string contextName;  // a unique identifier for this context -- used in filenames, ...
+        public string version;
+        public string buildDate;
+        public string gitCommit;
 
         public GlobalContext(ConvoarParams pParms, Logger pLog)
         {
@@ -40,6 +41,13 @@ namespace org.herbal3d.convoar {
             log = pLog;
             stats = null;
             contextName = String.Empty;
+            version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            // A command is added to the pre-build events that generates BuildDate resource:
+            //        echo %date% %time% > "$(ProjectDir)\Resources\BuildDate.txt"
+            buildDate = Properties.Resources.BuildDate.Substring(4).Trim();
+            // A command is added to the pre-build events that generates last commit resource:
+            //        git rev-parse HEAD > "$(ProjectDir)\Resources\GitCommit.txt"
+            gitCommit = Properties.Resources.GitCommit.Trim();
         }
     }
 
@@ -90,8 +98,14 @@ namespace org.herbal3d.convoar {
             }
 
             if (Globals.parms.P<bool>("Verbose")) {
-                System.Console.WriteLine("***** Setting Verbose");
                 Globals.log.SetVerbose(Globals.parms.P<bool>("Verbose"));
+            }
+
+            if (!Globals.parms.P<bool>("Quiet")) {
+                System.Console.WriteLine("Convoar v" + Globals.version
+                            + " built " + Globals.buildDate
+                            + " commit " + Globals.gitCommit
+                            );
             }
 
             // Validate parameters

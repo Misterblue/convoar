@@ -18,8 +18,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 
 using OMV = OpenMetaverse;
@@ -133,6 +131,8 @@ namespace org.herbal3d.convoar {
 
             // Debugging and logging
             new ParameterDefn<string>("==========", "Debugging", null),
+            new ParameterDefn<bool>("Quiet", "supress as much informational output as possible",
+                false, "q" ),
             new ParameterDefn<bool>("Verbose", "enable DEBUG information logging",
                 false, "v" ),
             new ParameterDefn<bool>("LogBuilding", "log detailed BScene/BInstance object building",

@@ -16,19 +16,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Drawing;
-using System.Text;
-
-using log4net;
 
 using OpenSim.Region.CoreModules.World.LegacyMap;
 
 using OMV = OpenMetaverse;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
-using OMVS = OpenMetaverse.StructuredData;
-using OMVA = OpenMetaverse.Assets;
 using OMVR = OpenMetaverse.Rendering;
 
 namespace org.herbal3d.convoar {
