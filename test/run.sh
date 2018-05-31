@@ -37,8 +37,9 @@ REMOTEBASE=files.misterblue.com/BasilTest
 OARS=""
 OARS="$OARS testtest88.oar"
 # OARS="$OARS PalmyraTemple.oar"
-# OARS="$OARS Atropia_00.oar Atropia_01.oar Atropia_02.oar Atropia_10.oar"
-# OARS="$OARS Atropia_11.oar Atropia_12.oar Atropia_20.oar Atropia_21.oar Atropia_22.oar"
+# OARS="$OARS Atropia_00.oar Atropia_01.oar Atropia_02.oar"
+# OARS="$OARS Atropia_10.oar Atropia_11.oar Atropia_12.oar"
+# OARS="$OARS Atropia_20.oar Atropia_21.oar Atropia_22.oar"
 # OARS="$OARS IMAOutpostAlphaForest.oar IMAOutpostAlphaTerrain.oar Region-3dworlds-20170604.oar"
 # OARS="$OARS universal_campus_01_0.7.3_03022012.oar"
 
@@ -57,7 +58,7 @@ for OAR in $OARS ; do
         ssh basil@nyxx "mkdir -p basil-git/Basiljs/$DIR"
         rsync -r --delete-after "${DIR}/" "basil@nyxx:basil-git/Basiljs/$DIR"
         echo "======= copying $DIR to misterblue"
-        # ssh ${REMOTEACCT}@${REMOTEHOST} "mkdir -p $REMOTEBASE/$DIR"
-        rsync -r --delete-after "${DIR}/" "${REMOTEACCT}@${REMOTEHOST}:$REMOTEBASE/$DIR"
+        ssh ${REMOTEACCT}@${REMOTEHOST} "mkdir -p $REMOTEBASE/$DIR"
+        rsync -e "/usr/bin/ssh" -r --delete-after "${DIR}/" "${REMOTEACCT}@${REMOTEHOST}:$REMOTEBASE/$DIR"
     fi
 done

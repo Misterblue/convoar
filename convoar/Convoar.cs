@@ -44,7 +44,7 @@ namespace org.herbal3d.convoar {
             version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             // A command is added to the pre-build events that generates BuildDate resource:
             //        echo %date% %time% > "$(ProjectDir)\Resources\BuildDate.txt"
-            buildDate = Properties.Resources.BuildDate.Substring(4).Trim();
+            buildDate = Properties.Resources.BuildDate.Trim();
             // A command is added to the pre-build events that generates last commit resource:
             //        git rev-parse HEAD > "$(ProjectDir)\Resources\GitCommit.txt"
             gitCommit = Properties.Resources.GitCommit.Trim();
@@ -52,7 +52,7 @@ namespace org.herbal3d.convoar {
     }
 
     class ConvOAR {
-        private static string _logHeader = "[ConvOAR]";
+        private static readonly string _logHeader = "[ConvOAR]";
 
         public static GlobalContext Globals;
 
@@ -76,8 +76,9 @@ namespace org.herbal3d.convoar {
         // If run from the command line, create instance and call 'Start' with args.
         // If run programmatically, create instance and call 'Start' with parameters.
         public void Start(string[] args) {
-            Globals = new GlobalContext(new ConvoarParams(), new LoggerLog4Net());
-            Globals.stats = new ConvoarStats();
+            Globals = new GlobalContext(new ConvoarParams(), new LoggerLog4Net()) {
+                stats = new ConvoarStats()
+            };
 
             // A single parameter of '--help' outputs the invocation parameters
             if (args.Length > 0 && args[0] == "--help") {
@@ -231,8 +232,7 @@ namespace org.herbal3d.convoar {
                     catch (Exception e) {
                         Globals.log.ErrorFormat("{0} Global exception converting scene: {1}", _logHeader, e);
                         // A common error is not having all the DLLs for OpenSimulator. Print out what's missing.
-                        ReflectionTypeLoadException refE = e as ReflectionTypeLoadException;
-                        if (refE != null) {
+                        if (e is ReflectionTypeLoadException refE) {
                             foreach (var ee in refE.LoaderExceptions) {
                                 Globals.log.ErrorFormat("{0} reference exception: {1}", _logHeader, ee);
                             }
@@ -244,8 +244,9 @@ namespace org.herbal3d.convoar {
 
         // Initialization if using ConvOAR programmatically.
         public void Start(ConvoarParams pParameters, Logger pLogger) {
-            Globals = new GlobalContext(pParameters, pLogger);
-            Globals.stats = new ConvoarStats();
+            Globals = new GlobalContext(pParameters, pLogger) {
+                stats = new ConvoarStats()
+            };
         }
 
         // Load the OARfile specified in Globals.params.InputOAR.
