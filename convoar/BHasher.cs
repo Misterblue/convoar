@@ -110,8 +110,7 @@ namespace org.herbal3d.convoar {
         public override int CompareTo(BHash other) {
             int ret = 1;
             if (other != null) {
-                BHashULong bh = other as BHashULong;
-                if (bh != null) {
+                if (other is BHashULong bh) {
                     ret = _hash.CompareTo(bh.ToULong());
                 }
             }

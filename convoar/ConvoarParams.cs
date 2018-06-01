@@ -24,7 +24,7 @@ using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
     public class ConvoarParams {
-        private static string _logHeader = "[CONVOAR PARAMS]";
+        private static readonly string _logHeader = "[CONVOAR PARAMS]";
 
         public ConvoarParams() {
             SetParameterDefaultValues();
@@ -316,8 +316,7 @@ namespace org.herbal3d.convoar {
         //     used the wrong string name.
         public T P<T>(string paramName) {
             T ret = default(T);
-            ParameterDefnBase pbase = null;
-            if (TryGetParameter(paramName, out pbase)) {
+            if (TryGetParameter(paramName, out ParameterDefnBase pbase)) {
                 ParameterDefn<T> pdef = pbase as ParameterDefn<T>;
                 if (pdef != null) {
                     ret = pdef.Value();
@@ -333,8 +332,7 @@ namespace org.herbal3d.convoar {
         // Returns 'false' if the parameter could not be found.
         public bool SetParameterValue(string paramName, string valueAsString) {
             bool ret = false;
-            ParameterDefnBase parm;
-            if (TryGetParameter(paramName, out parm)) {
+            if (TryGetParameter(paramName, out ParameterDefnBase parm)) {
                 parm.SetValue(valueAsString);
                 ret = true;
             }
@@ -426,8 +424,7 @@ namespace org.herbal3d.convoar {
             string positiveAssertion = "true";
             if (parm.Length > 2 && parm[0] == 'n' && parm[1] == 'o') {
                 string maybeParm = parm.Substring(2);
-                ParameterDefnBase parmDefnX;
-                if (TryGetParameter(parm, out parmDefnX)) {
+                if (TryGetParameter(parm, out ParameterDefnBase parmDefnX)) {
                     if (parmDefnX.GetValueType() == typeof(Boolean)) {
                         // The parameter without the 'no' exists and is a boolean
                         positiveAssertion = "false";
@@ -447,8 +444,7 @@ namespace org.herbal3d.convoar {
                 }
             }
 
-            ParameterDefnBase parmDefn;
-            if (TryGetParameter(parm, out parmDefn)) {
+            if (TryGetParameter(parm, out ParameterDefnBase parmDefn)) {
                 // If the parameter is a boolean type and the next value is not a parameter,
                 //      don't try to take up the next value.
                 // This handles boolean flags.
@@ -472,7 +468,7 @@ namespace org.herbal3d.convoar {
                     }
                     if (val == null) {
                         // If the value is assumed, use the value based on the optional 'no'
-                        val = positiveAssertion;    
+                        val = positiveAssertion;
                     }
                 }
                 // Set the named parameter to the passed value

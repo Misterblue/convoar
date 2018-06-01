@@ -107,7 +107,7 @@ namespace org.herbal3d.convoar {
     // =============================================================
     public class Gltf : GltfClass {
 #pragma warning disable 414     // disable 'assigned but not used' warning
-        private static string _logHeader = "[Gltf]";
+        private static readonly string _logHeader = "[Gltf]";
 #pragma warning restore 414
 
         public GltfAttributes extensionsUsed;   // list of extensions used herein
@@ -159,12 +159,13 @@ namespace org.herbal3d.convoar {
 
             // 20170201: ThreeJS defaults to GL_CLAMP but GLTF should default to GL_REPEAT/WRAP
             // Create a sampler for all the textures that forces WRAPing
-            defaultSampler = new GltfSampler(gltfRoot, "simpleTextureRepeat");
-            defaultSampler.name = "simpleTextureRepeat";
-            defaultSampler.magFilter = WebGLConstants.LINEAR;
-            defaultSampler.minFilter = WebGLConstants.LINEAR_MIPMAP_LINEAR;
-            defaultSampler.wrapS = WebGLConstants.REPEAT;
-            defaultSampler.wrapT = WebGLConstants.REPEAT;
+            defaultSampler = new GltfSampler(gltfRoot, "simpleTextureRepeat") {
+                name = "simpleTextureRepeat",
+                magFilter = WebGLConstants.LINEAR,
+                minFilter = WebGLConstants.LINEAR_MIPMAP_LINEAR,
+                wrapS = WebGLConstants.REPEAT,
+                wrapT = WebGLConstants.REPEAT
+            };
         }
 
         public void UpdateGltfv2ReferenceIndexes() {
@@ -306,8 +307,9 @@ namespace org.herbal3d.convoar {
             string buffNum =  String.Format("{0:000}", buffers.Count + 1);
             string buffName = this.defaultScene.name + "-buffer" + buffNum;
             byte[] binBuffRaw = new byte[paddedSizeofIndices + sizeofVertices];
-            GltfBuffer binBuff = new GltfBuffer(gltfRoot, buffName);
-            binBuff.bufferBytes = binBuffRaw;
+            GltfBuffer binBuff = new GltfBuffer(gltfRoot, buffName) {
+                bufferBytes = binBuffRaw
+            };
 
             // Copy the vertices into the output binary buffer 
             // Buffer.BlockCopy only moves primitives. Copy the vertices into a float array.
@@ -334,32 +336,36 @@ namespace org.herbal3d.convoar {
             floatVertexRemapped = null;
 
             // Create BufferView's for each of the four sections of the buffer
-            GltfBufferView binIndicesView = new GltfBufferView(gltfRoot, "indices" + buffNum);
-            binIndicesView.buffer = binBuff;
-            binIndicesView.byteOffset = 0;
-            binIndicesView.byteLength = paddedSizeofIndices;
-            binIndicesView.byteStride = sizeofOneIndices;
+            GltfBufferView binIndicesView = new GltfBufferView(gltfRoot, "indices" + buffNum) {
+                buffer = binBuff,
+                byteOffset = 0,
+                byteLength = paddedSizeofIndices,
+                byteStride = sizeofOneIndices
+            };
             // binIndicesView.target = WebGLConstants.ELEMENT_ARRAY_BUFFER;
 
-            GltfBufferView binVerticesView = new GltfBufferView(gltfRoot, "viewVertices" + buffNum);
-            binVerticesView.buffer = binBuff;
-            binVerticesView.byteOffset = paddedSizeofIndices;
-            binVerticesView.byteLength = vertexCollection.Count * 3 * sizeof(float);
-            binVerticesView.byteStride = 3 * sizeof(float);
+            GltfBufferView binVerticesView = new GltfBufferView(gltfRoot, "viewVertices" + buffNum) {
+                buffer = binBuff,
+                byteOffset = paddedSizeofIndices,
+                byteLength = vertexCollection.Count * 3 * sizeof(float),
+                byteStride = 3 * sizeof(float)
+            };
             // binVerticesView.target = WebGLConstants.ARRAY_BUFFER;
 
-            GltfBufferView binNormalsView = new GltfBufferView(gltfRoot, "normals" + buffNum);
-            binNormalsView.buffer = binBuff;
-            binNormalsView.byteOffset = binVerticesView.byteOffset + binVerticesView.byteLength;
-            binNormalsView.byteLength = vertexCollection.Count * 3 * sizeof(float);
-            binNormalsView.byteStride = 3 * sizeof(float);
+            GltfBufferView binNormalsView = new GltfBufferView(gltfRoot, "normals" + buffNum) {
+                buffer = binBuff,
+                byteOffset = binVerticesView.byteOffset + binVerticesView.byteLength,
+                byteLength = vertexCollection.Count * 3 * sizeof(float),
+                byteStride = 3 * sizeof(float)
+            };
             // binNormalsView.target = WebGLConstants.ARRAY_BUFFER;
 
-            GltfBufferView binTexCoordView = new GltfBufferView(gltfRoot, "texCoord" + buffNum);
-            binTexCoordView.buffer = binBuff;
-            binTexCoordView.byteOffset = binNormalsView.byteOffset + binNormalsView.byteLength;
-            binTexCoordView.byteLength = vertexCollection.Count * 2 * sizeof(float);
-            binTexCoordView.byteStride = 2 * sizeof(float);
+            GltfBufferView binTexCoordView = new GltfBufferView(gltfRoot, "texCoord" + buffNum) {
+                buffer = binBuff,
+                byteOffset = binNormalsView.byteOffset + binNormalsView.byteLength,
+                byteLength = vertexCollection.Count * 2 * sizeof(float),
+                byteStride = 2 * sizeof(float)
+            };
             // binTexCoordView.target = WebGLConstants.ARRAY_BUFFER;
 
 
@@ -394,30 +400,33 @@ namespace org.herbal3d.convoar {
 
             // Build one large group of vertices/normals/UVs that the individual mesh
             //     indices will reference. The vertices have been uniquified above.
-            GltfAccessor vertexAccessor = new GltfAccessor(gltfRoot, buffName + "_accCVer");
-            vertexAccessor.bufferView = binVerticesView;
-            vertexAccessor.count = vertexCollection.Count;
-            vertexAccessor.byteOffset = 0;
-            vertexAccessor.componentType = WebGLConstants.FLOAT;
-            vertexAccessor.type = "VEC3";
-            vertexAccessor.min = new Object[3] { vmin.X, vmin.Y, vmin.Z };
-            vertexAccessor.max = new Object[3] { vmax.X, vmax.Y, vmax.Z };
+            GltfAccessor vertexAccessor = new GltfAccessor(gltfRoot, buffName + "_accCVer") {
+                bufferView = binVerticesView,
+                count = vertexCollection.Count,
+                byteOffset = 0,
+                componentType = WebGLConstants.FLOAT,
+                type = "VEC3",
+                min = new Object[3] { vmin.X, vmin.Y, vmin.Z },
+                max = new Object[3] { vmax.X, vmax.Y, vmax.Z }
+            };
 
-            GltfAccessor normalsAccessor = new GltfAccessor(gltfRoot, buffName + "_accNor");
-            normalsAccessor.bufferView = binNormalsView;
-            normalsAccessor.count = vertexCollection.Count;
-            normalsAccessor.byteOffset = 0;
-            normalsAccessor.componentType = WebGLConstants.FLOAT;
-            normalsAccessor.type = "VEC3";
-            normalsAccessor.min = new Object[3] { nmin.X, nmin.Y, nmin.Z };
-            normalsAccessor.max = new Object[3] { nmax.X, nmax.Y, nmax.Z };
+            GltfAccessor normalsAccessor = new GltfAccessor(gltfRoot, buffName + "_accNor") {
+                bufferView = binNormalsView,
+                count = vertexCollection.Count,
+                byteOffset = 0,
+                componentType = WebGLConstants.FLOAT,
+                type = "VEC3",
+                min = new Object[3] { nmin.X, nmin.Y, nmin.Z },
+                max = new Object[3] { nmax.X, nmax.Y, nmax.Z }
+            };
 
-            GltfAccessor UVAccessor = new GltfAccessor(gltfRoot, buffName + "_accUV");
-            UVAccessor.bufferView = binTexCoordView;
-            UVAccessor.count = vertexCollection.Count;
-            UVAccessor.byteOffset = 0;
-            UVAccessor.componentType = WebGLConstants.FLOAT;
-            UVAccessor.type = "VEC2";
+            GltfAccessor UVAccessor = new GltfAccessor(gltfRoot, buffName + "_accUV") {
+                bufferView = binTexCoordView,
+                count = vertexCollection.Count,
+                byteOffset = 0,
+                componentType = WebGLConstants.FLOAT,
+                type = "VEC2"
+            };
             // The values for TexCoords sometimes get odd
             if (!Single.IsNaN(umin.X) && umin.X > -1000000 && umin.X < 1000000
                     && !Single.IsNaN(umin.Y) && umin.Y > -1000000 && umin.Y < 1000000) {
@@ -435,12 +444,13 @@ namespace org.herbal3d.convoar {
                 int meshIndicesSize = prim.newIndices.Length * sizeofOneIndices;
                 Buffer.BlockCopy(prim.newIndices, 0, binBuffRaw, indicesOffset, meshIndicesSize);
 
-                GltfAccessor indicesAccessor = new GltfAccessor(gltfRoot, prim.ID + "_accInd");
-                indicesAccessor.bufferView = binIndicesView;
-                indicesAccessor.count = prim.newIndices.Length;
-                indicesAccessor.byteOffset = indicesOffset;
-                indicesAccessor.componentType = WebGLConstants.UNSIGNED_SHORT;
-                indicesAccessor.type = "SCALAR";
+                GltfAccessor indicesAccessor = new GltfAccessor(gltfRoot, prim.ID + "_accInd") {
+                    bufferView = binIndicesView,
+                    count = prim.newIndices.Length,
+                    byteOffset = indicesOffset,
+                    componentType = WebGLConstants.UNSIGNED_SHORT,
+                    type = "SCALAR"
+                };
                 ushort imin = ushort.MaxValue; ushort imax = 0;
                 for (int ii = 0; ii < prim.newIndices.Length; ii++) {
                     imin = Math.Min(imin, prim.newIndices[ii]);
@@ -574,10 +584,11 @@ namespace org.herbal3d.convoar {
         public GltfAttributes values;
 
         public GltfAsset(Gltf pRoot) : base(pRoot, "") {
-            values = new GltfAttributes();
-            values.Add("generator", "convoar");
-            values.Add("version", "2.0");
-            values.Add("copyright", ConvOAR.Globals.parms.P<string>("GltfCopyright"));
+            values = new GltfAttributes {
+                { "generator", "convoar" },
+                { "version", "2.0" },
+                { "copyright", ConvOAR.Globals.parms.P<string>("GltfCopyright") }
+            };
         }
 
         public override Object AsJSON() {
@@ -678,8 +689,7 @@ namespace org.herbal3d.convoar {
 
         // Get an existing instance of a node or create a new one
         public static GltfNode GltfNodeFactory(Gltf pRoot, GltfScene containingScene, Displayable pDisplayable, IAssetFetcher assetFetcher) {
-            GltfNode node = null;
-            if (!pRoot.nodes.TryGetValue(pDisplayable.GetBHash(), out node)) {
+            if (!pRoot.nodes.TryGetValue(pDisplayable.GetBHash(), out GltfNode node)) {
                 node = new GltfNode(pRoot, containingScene, pDisplayable, assetFetcher);
                 // This is the only place we should be creating nodes
                 pRoot.nodes.Add(pDisplayable.GetBHash(), node);
@@ -779,8 +789,7 @@ namespace org.herbal3d.convoar {
         }
 
         public static GltfMesh GltfMeshFactory(Gltf pRoot, DisplayableRenderable pDR, IAssetFetcher assetFetcher) {
-            GltfMesh mesh = null;
-            if (!pRoot.meshes.TryGetValue(pDR.GetBHash(), out mesh)) {
+            if (!pRoot.meshes.TryGetValue(pDR.GetBHash(), out GltfMesh mesh)) {
                 mesh = new GltfMesh(pRoot, pDR, assetFetcher);
             }
             return mesh;
@@ -840,16 +849,16 @@ namespace org.herbal3d.convoar {
         }
 
         public static GltfPrimitive GltfPrimitiveFactory(Gltf pRoot, RenderableMesh pRenderableMesh, IAssetFetcher assetFetcher) {
-            GltfPrimitive prim = null;
-            if (!pRoot.primitives.TryGetValue(pRenderableMesh.GetBHash(), out prim)) {
+            if (!pRoot.primitives.TryGetValue(pRenderableMesh.GetBHash(), out GltfPrimitive prim)) {
                 prim = new GltfPrimitive(pRoot, pRenderableMesh, assetFetcher);
             }
             return prim;
         }
 
         public override Object AsJSON() {
-            var ret = new Dictionary<string, Object>();
-            ret.Add("mode", mode);
+            var ret = new Dictionary<string, Object> {
+                { "mode", mode }
+            };
             if (indices != null) ret.Add("indices", indices.referenceID);
             if (material != null) ret.Add("material", material.referenceID);
 
@@ -965,8 +974,7 @@ namespace org.herbal3d.convoar {
         }
 
         public static GltfMaterial GltfMaterialFactory(Gltf pRoot, MaterialInfo matInfo, IAssetFetcher assetFetcher) {
-            GltfMaterial mat = null;
-            if (!pRoot.materials.TryGetValue(matInfo.GetBHash(), out mat)) {
+            if (!pRoot.materials.TryGetValue(matInfo.GetBHash(), out GltfMaterial mat)) {
                 // mat = new GltfMaterialCommon2(pRoot, matInfo, assetFetcher);
                 mat = new GltfMaterialPbrMetallicRoughness(pRoot, matInfo, assetFetcher);
                 // mat = new GltfMaterialPbrSpecularGlossiness(pRoot, matInfo, assetFetcher);
@@ -1079,11 +1087,12 @@ namespace org.herbal3d.convoar {
         }
 
         public override Object AsJSON() {
-            var ret = new Dictionary<string, Object>();
-            ret.Add("bufferView", bufferView.referenceID);
-            ret.Add("byteOffset", byteOffset);
-            ret.Add("componentType", componentType);
-            ret.Add("count", count);
+            var ret = new Dictionary<string, Object> {
+                { "bufferView", bufferView.referenceID },
+                { "byteOffset", byteOffset },
+                { "componentType", componentType },
+                { "count", count }
+            };
             if (!String.IsNullOrEmpty(type)) ret.Add("type", type);
             if (min != null && min.Length > 0) ret.Add("min", min);
             if (max != null && max.Length > 0) ret.Add("max", max);
@@ -1272,8 +1281,7 @@ namespace org.herbal3d.convoar {
         }
 
         public static GltfTexture GltfTextureFactory(Gltf pRoot, ImageInfo pImageInfo, GltfImage pImage) {
-            GltfTexture tex = null;
-            if (!pRoot.textures.TryGetValue(pImageInfo.GetBHash(), out tex)) {
+            if (!pRoot.textures.TryGetValue(pImageInfo.GetBHash(), out GltfTexture tex)) {
                 tex = new GltfTexture(pRoot, pImageInfo, pImage);
             }
             return tex;
@@ -1290,8 +1298,9 @@ namespace org.herbal3d.convoar {
         }
 
         public GltfAttributes TextureInfo() {
-            GltfAttributes ret = new GltfAttributes();
-            ret.Add("index", referenceID);
+            GltfAttributes ret = new GltfAttributes {
+                { "index", referenceID }
+            };
             return ret;
         }
     }
@@ -1333,16 +1342,16 @@ namespace org.herbal3d.convoar {
         }
 
         public static GltfImage GltfImageFactory(Gltf pRoot, ImageInfo pImageInfo) {
-            GltfImage img = null;
-            if (!pRoot.images.TryGetValue(pImageInfo.GetBHash(), out img)) {
+            if (!pRoot.images.TryGetValue(pImageInfo.GetBHash(), out GltfImage img)) {
                 img = new GltfImage(pRoot, pImageInfo);
             }
             return img;
         }
 
         public override Object AsJSON() {
-            var ret = new Dictionary<string, Object>();
-            ret.Add("uri", imageInfo.persist.uri);
+            var ret = new Dictionary<string, Object> {
+                { "uri", imageInfo.persist.uri }
+            };
             return ret;
         }
     }
