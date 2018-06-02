@@ -34,6 +34,7 @@ GetLib "$OPENSIM" "Mono.Addins.dll"
 GetLib "$OPENSIM" "SmartThreadPool.dll"
 GetLib "$OPENSIM" "openjpeg-dotnet.dll"
 GetLib "$OPENSIM" "openjpeg-dotnet-x86_64.dll"
+GetLib "$OPENSIM" "libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so"
 
 GetLib "$LIBOMV" "OpenMetaverse.dll"
 GetLib "$LIBOMV" "OpenMetaverse.dll.config"
