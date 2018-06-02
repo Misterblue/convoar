@@ -1,8 +1,7 @@
 # Dockerfile for building a runnable version of convoar
 
-# FROM mono:latest
-# FROM mono:4.2.1
-FROM mono:4.6
+FROM mono:latest
+# FROM mono:4.6
 
 ENV TARGET=Release
 # ENV TARGET=Debug
@@ -37,13 +36,14 @@ WORKDIR /home/${USER}
 USER ${USER}:${USER}
 
 # Get the 'convoar' sources
-# RUN cd /home/${USER} \
-#     && git clone https://github.com/Misterblue/convoar.git \
-#     && cd ${USER} \
-#     && msbuild /p:Configuration=${TARGET}
+RUN cd /home/${USER} \
+    && git clone https://github.com/Misterblue/convoar.git \
+    && cd convoar \
+    && msbuild /p:Configuration=${TARGET}
 
-RUN mkdir -p /home/${USER}/convoar/dist
-COPY dist /home/${USER}/convoar/dist/
+# Alternate Linux method that uses the precompiled binaries in  the repository
+# RUN mkdir -p /home/${USER}/convoar/dist
+# COPY dist /home/${USER}/convoar/dist/
 
 COPY docker/run-convoar.sh /home/convoar
 
