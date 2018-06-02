@@ -162,6 +162,6 @@ destination directory account for this.
 
 [OpenSimulator]: http://opensimulator.org
 [Mono]: http://www.mono-project.com/
-[parameter wiki page]:
+[parameter wiki page]: https://github.com/Misterblue/convoar/wiki/Convoar-Command-Line-Parameters
 [Blender]: https://www.blender.org/
 
