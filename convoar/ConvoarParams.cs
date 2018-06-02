@@ -50,10 +50,6 @@ namespace org.herbal3d.convoar {
         //    v = value (appropriate type)
         public ParameterDefnBase[] ParameterDefinitions =
         {
-            new ParameterDefn<string>("==========", "Overall function specifications (sets all parameters to do this function)", null),
-            new ParameterDefn<bool>("TerrainOnly", "Only create and output the terrain and terrain texture",
-                false),
-
             new ParameterDefn<string>("==========", "General Input and Output Parameters", null),
             new ParameterDefn<string>("InputOAR", "The input OAR file",
                 null, "i"),
@@ -77,7 +73,7 @@ namespace org.herbal3d.convoar {
             // Optimizations
             new ParameterDefn<string>("==========", "Optimizations", null),
             new ParameterDefn<bool>("MergeSharedMaterialMeshes", "whether to merge meshes with similar materials",
-                false ),
+                false, "m"),
             /*
             new ParameterDefn<bool>("DoMeshSimplification", "pass over all the meshes and simplify if needed",
                 true ),
@@ -95,6 +91,8 @@ namespace org.herbal3d.convoar {
 
             // Export to files
             new ParameterDefn<string>("==========", "Export Parameters", null),
+            new ParameterDefn<bool>("TerrainOnly", "Only create and output the terrain and terrain texture",
+                false),
             new ParameterDefn<string>("GltfCopyright", "Copyright notice embedded into generated GLTF files",
                 "Copyright 2018. All rights reserved" ),
             new ParameterDefn<bool>("ExportTextures", "Convert textures to PNGs and export to target dir",

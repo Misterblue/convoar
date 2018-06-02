@@ -1,0 +1,26 @@
+Convoar Release steps
+
+Until we plug into some build and release system, the
+steps to build and release convoar are:
+
+CREATE THE GITHUB PRE-COMPILED BINARIES
+=======================================
+Pull the latest github sources
+Verify AssemblyInfo.cs has correct version number
+Verify DockerFile has the correct version number
+Open project in Visual Studio 2017
+Verify compile target is "Release"
+Rebuild Solution
+Git commit all changed files (should be exe's and date files)
+Push new commit to Github
+
+CREATE  THE DOCKER IMAGE
+========================
+Log into Linux box with Docker installed
+Pull latest github sources
+cd convoar
+docker build --no-cache -t herbal3d/convoar .
+docker login herbal3d
+docker push herbal3d/convoar
+
+

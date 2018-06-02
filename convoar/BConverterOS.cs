@@ -113,6 +113,7 @@ namespace org.herbal3d.convoar {
                     ConvOAR.Globals.log.DebugFormat("{0} Creating terrain for scene", _logHeader);
                     // instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher));
                     terrainInstance = ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher);
+                    CoordAxis.FixCoordinates(terrainInstance, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
                 }
 
                 // Twist the OpenSimulator Z-up coordinate system to the OpenGL Y-up
