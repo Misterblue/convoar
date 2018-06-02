@@ -140,6 +140,9 @@
     <Reference Include="RSG.Promise">
       <HintPath>..\libs\RSG.Promise.dll</HintPath>
     </Reference>
+    <Reference Include="SmartThreadPool">
+      <HintPath>..\libs\SmartThreadPool.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />

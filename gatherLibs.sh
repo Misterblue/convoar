@@ -31,6 +31,7 @@ GetLib "$OPENSIM" "log4net.dll"
 GetLib "$OPENSIM" "Nini.dll"
 GetLib "$OPENSIM" "nunit.framework.dll"
 GetLib "$OPENSIM" "Mono.Addins.dll"
+GetLib "$OPENSIM" "SmartThreadPool.dll"
 GetLib "$OPENSIM" "openjpeg-dotnet.dll"
 GetLib "$OPENSIM" "openjpeg-dotnet-x86_64.dll"
 
