@@ -14,7 +14,7 @@ ENV CONVOAR_PASSWORD=convoarconvoar
 # Optout of the .NET Core Telemetry (https://aka.ms/dotnet-cli-telemetry)
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
 
-LABEL Version="0.9"
+LABEL Version="1.0"
 LABEL Description="Docker container convoar"
 
 # add the development environment and base tools

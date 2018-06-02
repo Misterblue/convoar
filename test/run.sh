@@ -1,7 +1,7 @@
 #! /bin/bash
 
 HERE=$(PWD)
-CONVOAR=$HERE/../convoar/bin/Debug/convoar.exe
+CONVOAR=$HERE/../dist/convoar.exe
 
 DOBUILD=yes
 DOCOPY=no
