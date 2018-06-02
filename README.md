@@ -5,7 +5,7 @@
   * [Simple Build](https://github.com/Misterblue/convoar#simple-build)
   * [Library Updating Build](https://github.com/Misterblue/convoar#update-build)
 * [Docker Image](https://github.com/Misterblue/convoar#docker-image)
-* [Releases and Roadmap] (https://github.com/Misterblue/convoar#releases-and-roadmap)
+* [Releases and Roadmap](https://github.com/Misterblue/convoar#releases-and-roadmap)
 
 Command line application for converting OpenSimulator OAR files into GLTF scene file.
 
@@ -136,7 +136,7 @@ Then, to do the conversion:
 
 ```bash
 docker pull herbal3d/convoar
-docker run -v /tmp/frog:/oar convoar REGION.oar
+docker run -v /tmp/frog:/oar herbal3d/convoar REGION.oar
 ```
 
 This maps the local directory `/tmp/frog` to the `/oar` directory in
