@@ -143,6 +143,12 @@ namespace org.herbal3d.convoar {
                                 bScene.instances.Add(bScene.terrainInstance);
                             }
 
+                            if (ConvOAR.Globals.parms.P<bool>("TerrainOnly")) {
+                                ConvOAR.Globals.log.DebugFormat("{0} Clearing out scene so there's only terrain (TerrainOnly)", _logHeader);
+                                bScene.instances.Clear();
+                                bScene.instances.Add(bScene.terrainInstance);
+                            }
+
                             /*
                             // Perform any optimizations on the scene and its instances
                             if (Globals.parms.P<bool>("DoMeshSimplification")) {
