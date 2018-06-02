@@ -198,9 +198,8 @@
     <None Include="..\libs\openjpeg-dotnet.dll" CopyToOutputDirectory="Always" Visible="true" />
     <None Include="..\libs\openjpeg-dotnet-x86_64.dll" CopyToOutputDirectory="Always" Visible="true" />
     <None Include="Dockerfile" />
-    <None Include="libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="..\libs\libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so"
+        CopyToOutputDirectory="Always" Visible="true" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
