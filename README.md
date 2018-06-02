@@ -1,5 +1,12 @@
 # convoar
 
+* [Invocation](https://github.com/Misterblue/convoar#invocation)
+* [Building](https://github.com/Misterblue/convoar#building)
+  * [Simple Build](https://github.com/Misterblue/convoar#simple-build)
+  * [Library Updating Build](https://github.com/Misterblue/convoar#update-build)
+* [Docker Image](https://github.com/Misterblue/convoar#docker-image)
+* [Releases and Roadmap] (https://github.com/Misterblue/convoar#releases-and-roadmap)
+
 Command line application for converting OpenSimulator OAR files into GLTF scene file.
 
 OAR files save [OpenSimulator] regions.
@@ -100,7 +107,6 @@ everything is included in the Convoar GitHub repository.
 If compiling on Linux, one needs [Mono] version 5 or better and one
 just uses `msbuild`.
 
-
 ## Updating Build
 
 To update the OpenSimulator sources, the script `gatherLibs.sh` fetches the
@@ -121,9 +127,30 @@ cd convoar
 
 Then convoar can be built using either Visual Studio or `msbuild`.
 
+# Docker Image
+
+For those with Docker environments, there is a Docker image of convoar.
+
+Assume the OAR to be converted is at `/tmp/frog/REGION.oar`.
+Then, to do the conversion:
+
+```bash
+docker pull herbal3d/convoar
+docker run -v /tmp/frog:/oar convoar REGION.oar
+```
+
+This maps the local directory `/tmp/frog` to the `/oar` directory in
+the Docker container, runs the container, and writes the converted file
+into the `/tmp/frog` directory.
+
+NOTE: the most common problem is permissions. This docker image attempts
+to write the output files as user 1000,1000 which could conflict with
+the local systems accounts. Make sure the write permissions in the
+destination directory account for this.
+
 # Releases and Roadmap
 
-- [ ] Release 1.0
+- [x] Release 1.0
     * basic OAR to GLTF conversion
     * material-centric optimization
 - [ ] Release 1.1
