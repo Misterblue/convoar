@@ -70,14 +70,19 @@ namespace org.herbal3d.convoar {
 
             if (_hash == null) {
                 BHasher hasher = new BHasherMdjb2();
-                hasher.Add(RGBA.GetHashCode());
-                hasher.Add(bump.GetHashCode());
-                hasher.Add(glow.GetHashCode());
-                hasher.Add(shiny.GetHashCode());
+                hasher.Add(RGBA.R); // Not using RGBA.GetHashCode() as it always returns the same value
+                hasher.Add(RGBA.G);
+                hasher.Add(RGBA.B);
+                hasher.Add(RGBA.A);
+                hasher.Add((int)bump);
+                hasher.Add(glow);
+                hasher.Add((int)shiny);
                 if (textureID.HasValue) {
                     hasher.Add(textureID.Value.GetHashCode());
                 }
                 _hash = hasher.Finish();
+                // ConvOAR.Globals.log.DebugFormat("MaterialInfo.GetBHash: rgba={0},bump={1},glow={2},shiny={3},tex={4},hash={5}",
+                //     RGBA, bump, glow, shiny, textureID.HasValue ? textureID.Value.ToString() : "none", _hash.ToString());
             }
             return _hash;
         }
