@@ -164,5 +164,9 @@ namespace org.herbal3d.convoar {
             hasher.Add(mesh.GetBHash());
             hasher.Add(material.GetBHash());
         }
+
+        public override string ToString() {
+            return "mesh=" + mesh.ToString() + "/mat=" + material.ToString();
+        }
     }
 } 

@@ -140,7 +140,8 @@ namespace org.herbal3d.convoar {
 
                 prom.Resolve(bScene);
             }, e => {
-                prom.Reject(new Exception(String.Format("Failed conversion: {0}", e)));
+                ConvOAR.Globals.log.ErrorFormat("{0} failed SOG conversion: {1}", _logHeader, e);
+                // prom.Reject(new Exception(String.Format("Failed conversion: {0}", e)));
             });
 
             return prom;
@@ -241,9 +242,12 @@ namespace org.herbal3d.convoar {
                 } )
             )
             .Then(renderables => {
-                // 'renderables' are the DisplayRenderables for all the SOPs in the SOG
+                // Remove any failed SOG/SOP conversions.
+                List<Displayable> filteredRenderables = renderables.Where(rend => rend != null).ToList();
+
+                // 'filteredRenderables' are the DisplayRenderables for all the SOPs in the SOG
                 // Get the root prim of the SOG
-                List<Displayable> rootDisplayableList = renderables.Where(disp => {
+                List<Displayable> rootDisplayableList = filteredRenderables.Where(disp => {
                     return disp.baseSOP.IsRoot;
                 }).ToList();
                 if (rootDisplayableList.Count != 1) {
@@ -258,7 +262,7 @@ namespace org.herbal3d.convoar {
                 Displayable rootDisplayable = rootDisplayableList.First();
 
                 // Collect all the children prims and add them to the root Displayable
-                rootDisplayable.children = renderables.Where(disp => {
+                rootDisplayable.children = filteredRenderables.Where(disp => {
                     return !disp.baseSOP.IsRoot;
                 }).Select(disp => {
                     return disp;

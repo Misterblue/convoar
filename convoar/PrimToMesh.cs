@@ -48,6 +48,7 @@ namespace org.herbal3d.convoar {
         /// This just deals the making a mesh from the SOP and getting the material/texture of the meshes
         ///    into the caches.
         /// </summary>
+        // Returns 'null' if the SOG/SOP could not be converted into a displayable
         public IPromise<Displayable> CreateMeshResource(SceneObjectGroup sog, SceneObjectPart sop,
                     OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
 
@@ -62,7 +63,8 @@ namespace org.herbal3d.convoar {
                             .Then(dispable => {
                                 prom.Resolve(new Displayable(dispable, sop));
                             }, e => {
-                                prom.Reject(e);
+                                // prom.Reject(e);
+                                prom.Resolve(null);
                             });
                     }
                     else {
@@ -72,7 +74,8 @@ namespace org.herbal3d.convoar {
                             .Then(dispable => {
                                 prom.Resolve(new Displayable(dispable, sop));
                             }, e => {
-                                prom.Reject(e);
+                                // prom.Reject(e);
+                                prom.Resolve(null);
                             });
                     }
                 }
@@ -84,7 +87,8 @@ namespace org.herbal3d.convoar {
                             BConverterOS.LogBProgress("{0} CreateMeshResource: prim created", _logHeader);
                             prom.Resolve(new Displayable(dispable, sop));
                         }, e => {
-                            prom.Reject(e);
+                            // prom.Reject(e);
+                            prom.Resolve(null);
                         });
                 }
             }
@@ -181,7 +185,7 @@ namespace org.herbal3d.convoar {
         private DisplayableRenderable ConvertFacetedMeshToDisplayable(IAssetFetcher assetFetcher, OMVR.FacetedMesh fmesh,
                         OMV.Primitive.TextureEntryFace defaultTexture, OMV.Vector3 primScale) {
             RenderableMeshGroup ret = new RenderableMeshGroup();
-            ret.meshes.AddRange(fmesh.Faces.Select(face => {
+            ret.meshes.AddRange(fmesh.Faces.Where(face => face.Indices.Count > 0).Select(face => {
                 return ConvertFaceToRenderableMesh(face, assetFetcher, defaultTexture, primScale);
             }));
             // ConvOAR.Globals.log.DebugFormat("{0} ConvertFacetedMeshToDisplayable: complete. numMeshes={1}", _logHeader, ret.meshes.Count);
@@ -194,11 +198,12 @@ namespace org.herbal3d.convoar {
             rmesh.num = face.ID;
 
             // Copy one face's mesh imformation from the FacetedMesh into a MeshInfo
-            MeshInfo meshInfo = new MeshInfo();
-            meshInfo.vertexs = new List<OMVR.Vertex>(face.Vertices);
-            meshInfo.indices = face.Indices.ConvertAll(ii => (int)ii);
-            meshInfo.faceCenter = face.Center;
-            meshInfo.scale = primScale;
+            MeshInfo meshInfo = new MeshInfo {
+                vertexs = new List<OMVR.Vertex>(face.Vertices),
+                indices = face.Indices.ConvertAll(ii => (int)ii),
+                faceCenter = face.Center,
+                scale = primScale
+            };
             BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: faceId={1}, numVert={2}, numInd={3}",
                  _logHeader, face.ID, meshInfo.vertexs.Count, meshInfo.indices.Count);
 
@@ -225,11 +230,18 @@ namespace org.herbal3d.convoar {
                     assetFetcher.FetchTextureAsImage(textureHandle)
                         .Then(img => {
                             imageInfo.SetImage(img);
-                        }, e => {
+                        })
+                        .Catch(e => {
                             // Failure getting the image
                             ConvOAR.Globals.log.ErrorFormat("{0} Failure fetching texture. id={1}. {2}",
                                         _logHeader, matInfo.textureID, e);
-                            // In this case, ImageInfo.image remains 'null' and everyone has to check if it's set.
+                            // Create a simple, single color image to fill in for the missing image
+                            var fillInImage = new Bitmap(32, 32, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                            Color theColor = Color.FromArgb(128, 202, 213, 170);    // 0x80CAB5AA
+                            for (int xx=0; xx<32; xx++)
+                                for (int yy=0; yy<32; yy++)
+                                    fillInImage.SetPixel(xx, yy, theColor);
+                            imageInfo.SetImage(fillInImage);
                         });
                     imageInfo.imageIdentifier = (OMV.UUID)matInfo.textureID;
                     BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: create ImageInfo. hash={1}, id={2}",
@@ -252,6 +264,9 @@ namespace org.herbal3d.convoar {
             // See that the mesh is in the cache
             MeshInfo lookupMeshInfo = assetFetcher.GetMeshInfo(meshInfo.GetBHash(true), () => { return meshInfo; });
             rmesh.mesh = lookupMeshInfo;
+            if (lookupMeshInfo.indices.Count == 0) {    // DEBUG DEBUG
+                ConvOAR.Globals.log.ErrorFormat("{0} indices count of zero. rmesh={1}", _logHeader, rmesh.ToString());
+            }   // DEBUG DEBUG
 
             BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: rmesh.mesh={1}, rmesh.material={2}",
                              _logHeader, rmesh.mesh, rmesh.material);

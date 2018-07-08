@@ -268,6 +268,7 @@ namespace org.herbal3d.convoar {
 
             converter.ConvertOarToScene(assetService, assetFetcher)
                 .Catch(e => {
+                    ConvOAR.Globals.log.ErrorFormat("{0} LoadOAR exception: {1}", _logHeader, e);
                     throw (e);
                 })
                 .Then(bScene => {

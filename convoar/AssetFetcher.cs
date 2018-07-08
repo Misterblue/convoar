@@ -354,7 +354,7 @@ namespace org.herbal3d.convoar {
 
             // Don't bother with async -- this call will hang until the asset is fetched
             AssetBase asset = _assetService.Get(handle.ToString());
-            if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
+            if (asset != null && asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                 OMVA.AssetTexture tex = new OMVA.AssetTexture(((EntityHandleUUID)handle).GetUUID(), asset.Data);
                 try {
                     if (tex.Decode()) {
@@ -391,11 +391,16 @@ namespace org.herbal3d.convoar {
                 Image imageDecoded = null;
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
+                        /* Code for using NuGet CSJ2K. Thought it might be better but noticed no difference.
+                        CSJ2K.Util.BitmapImageCreator.Register();
+                        imageDecoded = CSJ2K.J2kImage.FromBytes(asset.Data).As<Bitmap>();
+                        */
                         ManagedImage mimage;
                         if (OpenJPEG.DecodeToImage(asset.Data, out mimage, out imageDecoded)) {
-                            mimage = null;
+                            mimage = null;  // 'mimage' is unused so release the reference
                         }
                         else {
+                            // Could not decode the image. Odd.
                             imageDecoded = null;
                         }
                         prom.Resolve(imageDecoded);

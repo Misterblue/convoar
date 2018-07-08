@@ -121,7 +121,7 @@ namespace org.herbal3d.convoar {
         public GltfMaterials materials; // materials that make up the meshes
         public GltfAccessors accessors; // access to the mesh bin data
         public GltfBufferViews bufferViews; //
-        public GltfBuffers buffers; //
+        public GltfBuffers buffers;
         public GltfTechniques techniques;
         public GltfPrograms programs;
         public GltfShaders shaders;
@@ -287,6 +287,9 @@ namespace org.herbal3d.convoar {
                 }
                 prim.newIndices = newIndices;
                 numIndices += newIndices.Length;
+                if (newIndices.Length == 0) {
+                    ConvOAR.Globals.log.ErrorFormat("{0} zero indices count", _logHeader);
+                }
             });
 
             // The vertices have been unique'ified into 'vertexCollection' and each mesh has
@@ -582,6 +585,7 @@ namespace org.herbal3d.convoar {
     // =============================================================
     public class GltfAsset : GltfClass {
         public GltfAttributes values;
+        public GltfAttributes extras;
 
         public GltfAsset(Gltf pRoot) : base(pRoot, "") {
             values = new GltfAttributes {
@@ -589,10 +593,17 @@ namespace org.herbal3d.convoar {
                 { "version", "2.0" },
                 { "copyright", ConvOAR.Globals.parms.P<string>("GltfCopyright") }
             };
+            extras = new GltfAttributes {
+                { "convoarCommit", ConvOAR.Globals.gitCommit },
+                { "convoarVersion", ConvOAR.Globals.version },
+                { "convoarBuildDate", ConvOAR.Globals.buildDate },
+            };
         }
 
         public override Object AsJSON() {
-            return values.AsJSON();
+            var ret = new Dictionary<string, Object>(values);
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
         }
     }
 
@@ -717,7 +728,6 @@ namespace org.herbal3d.convoar {
             ret.Add("mesh", mesh.referenceID);
             if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
             if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
-
             return ret;
         }
     }
@@ -1383,6 +1393,39 @@ namespace org.herbal3d.convoar {
             if (magFilter != null) ret.Add("minFilter", minFilter);
             if (magFilter != null) ret.Add("wrapS", wrapS);
             if (magFilter != null) ret.Add("wrapT", wrapT);
+            if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
+            if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
+            return ret;
+        }
+    }
+
+    // =============================================================
+    public class GltfLights : GltfListClass<GltfLight> {
+        public GltfLights(Gltf pRoot) : base(pRoot) {
+        }
+    }
+
+    public class GltfLight : GltfClass {
+        public string name;
+        public GltfExtensions extensions;
+        public GltfAttributes extras;
+
+        public GltfLight(Gltf pRoot, string pID, MaterialInfo pMatInfo) : base(pRoot, pID) {
+            // gltfRoot.lights.Add(new BHashULong(gltfRoot.samplers.Count), this);
+            LogGltf("{0} GltfLight: created empty. ID={1}", "Gltf", ID);
+        }
+
+        public static GltfLight GltfLightFactory(Gltf pRoot, MaterialInfo pMatInfo) {
+            GltfLight lit = null;
+            // if (!pRoot.lights.TryGetValue(pMatInfo.GetBHash(), out lit)) {
+            //     lit = new GltfLight(pRoot, "light-" + pMatInfo.GetBHash().ToString(), pMatInfo);
+            // }
+            return lit;
+        }
+
+        public override Object AsJSON() {
+            var ret = new Dictionary<string, Object>();
+            if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
             if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
             return ret;
