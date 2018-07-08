@@ -3,12 +3,12 @@
 HERE=$(PWD)
 CONVOAR=$HERE/../dist/convoar.exe
 
-DOBUILD=no
+DOBUILD=yes
 DOCOPY=yes
 
 # PROCESSING="UNOPTIMIZED"
-PROCESSING="MERGEDMATERIALS"
-# PROCESSING="UNOPTIMIZED MERGEDMATERIALS"
+# PROCESSING="MERGEDMATERIALS"
+PROCESSING="UNOPTIMIZED MERGEDMATERIALS"
 
 if [[ -z "$MB_REMOTEACCT" || -z "$MB_REMOTEHOST" ]] ; then
     echo "Cannot run script without MB_REMOTEACCT and MB_REMOTEHOST environment variables set"
@@ -17,8 +17,8 @@ fi
 REMOTEACCT=${MB_REMOTEACCT:-mb}
 REMOTEHOST=${MB_REMOTEHOST:-someplace.misterblue.com}
 
-# DOVERBOSE=""
-DOVERBOSE="--Verbose"
+DOVERBOSE=""
+# DOVERBOSE="--Verbose"
 
 REMOTEBASE=files.misterblue.com/BasilTest
 
@@ -41,10 +41,13 @@ OARS=""
 # OARS="$OARS OSGHUG-Mars.oar"
 # OARS="$OARS OSGHUG-maya3.oar"
 # OARS="$OARS OSGHUG-reefs.oar"
-OARS="$OARS sierpinski_triangle_122572_prims_01.oar"
+# OARS="$OARS sierpinski_triangle_122572_prims_01.oar"
 # OARS="$OARS WinterLand.oar"
+# OARS="$OARS Fantasy.oar"
+OARS="$OARS ZadarooSwamp.oar"
 
 for OAR in $OARS ; do
+    BASENAME="$(basename -s .oar $OAR)"
     for PROCESS in $PROCESSING ; do
         if [[ "$PROCESS" == "UNOPTIMIZED" ]] ; then
             PARAMS="$DOVERBOSE "
@@ -57,13 +60,17 @@ for OAR in $OARS ; do
         # PARAMS="$PARAMS --logGltfBuilding --verbose --LogBuilding --LogConversionStats"
 
         cd "$HERE"
-        DIR="convoar/$(basename -s .oar $OAR)/$SUBDIR"
+        DIR="convoar/${BASENAME}/$SUBDIR"
         if [[ "$DOBUILD" == "yes" ]] ; then
             echo "======= building $DIR"
             rm -rf "$DIR"
             mkdir -p "$DIR"
             cd "$DIR"
             $CONVOAR  $PARAMS "../../../$OAR"
+            # Create a single TGZ file with all the content for the 3DWebWorldz people
+            cd "$HERE"
+            cd "$DIR"
+            tar -czf "${BASENAME}.tgz" *
         fi
         cd "$HERE"
         if [[ "$DOCOPY" == "yes" ]] ; then
