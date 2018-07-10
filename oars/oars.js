@@ -1,20 +1,34 @@
+// Copyright 2018 Robert Adams
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-var conversionTypes = [
+// Create OAR file display page
+//
+let conversionTypes = [
     'unoptimized',
     'smallassets',
     'mergedmaterials'
 ];
 
-var tableColumns = [
+let tableColumns = [
     'OAR file',
     'Desc']
-    .Append(conversionTypes);
+    .concat(conversionTypes);
 
+let oarURL = 'http://files.misterblue.com/BasilTest/convoar/';
 
 $(document).ready(() => {
-    $.ajax(
+    DebugLog('Fetching ' + oarURL + 'index.json');
+    $.ajax({
         dataType: 'json',
-        url: 'http://files.misterblue.com/BasilTest/convoar/index.json',
+        url: oarURL + 'index.json',
         success: data => {
             BuildTable(data);
         },
@@ -24,54 +38,99 @@ $(document).ready(() => {
     });
 });
 
+function LogMessage(msg, aClass) {
+    if ($('#DEBUGG')) {
+        if (aClass)
+            $('#DEBUGG').append('<div class="' + aClass + '">' + msg + '</div');
+        else
+            $('#DEBUGG').append('<div>' + msg + '</div');
+        if ($('#DEBUGG').children().length > 20)
+            $('#DEBUGG').children('div:first').remove();
+    }
+};
+
+function DebugLog(msg) {
+    LogMessage(msg);
+};
+
+function ErrorLog(msg) {
+    LogMesssage(msg, 'c-errorMsg');
+};
+
 function BuildTable(data) {
-    var tbl = document.createElement('table');
-    var tr = document.createElement('tr');
+    let rows = [];
 
-    tableColumns.forEach( col => {
-        var th = document.createElement('th');
-        th.appendChild(document.createTextNode(col));
-        tr.appendChild(th);
+    let headers = [];
+    tableColumns.forEach(col => {
+        headers.push(makeHeader(makeText(col)));
     });
-    tbl.appenChild(tr);
+    rows.push(makeRow(headers));
 
-    data.keys.forEach( oar => {
-        tbl.appendChild(makeRow([
-            makeData(function() {
-                makeDiv(document.createElement(oar));
-                if (oar.image) {
-                    makeImg(urlBase, oar.image);
-                }
-            }),
-            makeData(makeDiv(document.createElement('desc')]
-            +
-            conversionTypes.map( typ => {
-                return makeDiv(
-            });
+    Object.keys(data).forEach( oar => {
+        let cols = [];
+        let firstData = [];
+        firstData.push(makeDiv(makeText(oar), 'c-oarName'));
+        if (data[oar].image) {
+            firstData.push(makeImage(oarURL + oar + '/' + data[oar].image, 'c-oarImage'));
+        }
+        cols.push(makeData(firstData, 'c-col-name'));
 
-        ]);
+        cols.push(makeData(makeText('desc', 'c-col-desc')));
+
+        conversionTypes.forEach( conv => {
+            if (data[oar].types.conv) {
+                cols.push(makeDataSelection(data[oar].types.conv, conv, oar));
+            }
+            else {
+                cols.push(makeData(makeText('.')));
+            }
+        });
+
+        rows.push(makeRow(cols));
     });
-
-    $('#tableplace').empty().append(tbl);
-    $('#tableplace').empty().append(makeTable(
-        [
-            makeRow(tableColumns.map(col => { return makeHeader(makeText(col)); } )),
-
-        ].concat(
-            data.keys.map( oar => {
-                return makeRow([
-                    makeData([
-                        makeDiv(makeText(oar)),
-
-                    ],
-                ].concat(
-                )
-                );
-            });
-    ));
+    $('#tableplace').empty().append(makeTable(rows));
 };
 
 function BuildErrorTable(e) {
+    $('#tableplace').empty().append(makeText('Could not load OAR index file'));
+};
+
+// Return a table data element containing everything about this type version of the oar
+function makeDataSelection(typeDesc, type, oar) {
+    let pp = [];
+    if (typeDesc.gltf) {
+        pp.push(makeDiv( makeButtonSmall('View', oar + '/' + type ), 'c-selection-gltf'));
+    };
+    if (typeDesc.tgz) {
+        pp.push(makeDiv( makeURL(oarURL + oar + '/' + typeDesc.tgz, 'TGZ', 'c-selection-tgz')));
+    }
+    if (typeDesc.zip) {
+        pp.push(makeDiv( makeURL(oarURL + oar + '/' + typeDesc.zip, 'ZIP', 'c-selection-zip')));
+    }
+    return makeData(pp, 'c-col-selection');
+};
+
+function makeButton(label, ref) {
+    let but = document.createElement('button');
+    but.setAttribute('type', 'button');
+    but.setAttribute('class', 'button clickable');
+    but.setAttribute('c-op', 'view');
+    but.setAttribute('c-ref', ref);
+    but.appendChild(makeText(label));
+    return but;
+}
+
+function makeButtonSmall(label) {
+};
+
+function makeURL(url, text, aClass) {
+    let anchor = document.createElement('a');
+    anchor.setAttribute('href', url);
+    anchor.appendChild(makeText(text));
+    if (aClass) {
+        anchor.setAttribute('class', aClass);
+    }
+    return anchor;
 };
 
 function makeTable(contents, aClass) {
@@ -94,28 +153,36 @@ function makeDiv(contents, aClass) {
     return makeThing('div', contents, aClass);
 };
 
-function makeText(contents, aClass) {
-    var tex = document.createTextNode(contents);
+function makeImage(src, aClass) {
+    let img = document.createElement('img');
+    img.setAttribute('src', src);
     if (aClass) {
-        thing.setAttribute('class', aClass);
+        img.setAttribute('class', aClass)
     }
+    return img;
+}
+
+function makeText(contents) {
+    let tex = document.createTextNode(contents);
     return tex;
 };
 
 function makeThing(type, contents, aClass) {
-    var thing = document.createElement(type);
+    let thing = document.createElement(type);
     if (aClass) {
         thing.setAttribute('class', aClass);
     }
-    if (contents.isArray) {
-        content.forEach(ent => {
-            if (ent) {
-                thing.appendChild(ent);
-            }
-        });
-    }
-    else {
-        thing.appendChild(contents);
+    if (contents) {
+        if (Array.isArray(contents)) {
+            contents.forEach(ent => {
+                if (typeof(ent) != 'undefined') {
+                    thing.appendChild(ent);
+                }
+            });
+        }
+        else {
+            thing.appendChild(contents);
+        }
     }
     return thing;
-}
+};
