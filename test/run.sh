@@ -1,14 +1,21 @@
 #! /bin/bash
 
 HERE=$(PWD)
-CONVOAR=$HERE/../dist/convoar.exe
 
+DOCLEAN=no
 DOBUILD=yes
 DOCOPY=yes
+GENINDEX=yes
+
+# if set to 'yes', will attempt to run the docker version of convoar
+USEDOCKER=no
+
+CONVOAR=$HERE/../dist/convoar.exe
 
 # PROCESSING="UNOPTIMIZED"
+# PROCESSING="SMALLASSETS"
 # PROCESSING="MERGEDMATERIALS"
-PROCESSING="UNOPTIMIZED MERGEDMATERIALS"
+PROCESSING="UNOPTIMIZED SMALLASSETS MERGEDMATERIALS"
 
 if [[ -z "$MB_REMOTEACCT" || -z "$MB_REMOTEHOST" ]] ; then
     echo "Cannot run script without MB_REMOTEACCT and MB_REMOTEHOST environment variables set"
@@ -44,14 +51,21 @@ OARS=""
 # OARS="$OARS sierpinski_triangle_122572_prims_01.oar"
 # OARS="$OARS WinterLand.oar"
 # OARS="$OARS Fantasy.oar"
-OARS="$OARS ZadarooSwamp.oar"
+# OARS="$OARS ZadarooSwamp.oar"
+
+cd "$HERE"
+OARS=$(ls *.oar)
 
 for OAR in $OARS ; do
     BASENAME="$(basename -s .oar $OAR)"
     for PROCESS in $PROCESSING ; do
         if [[ "$PROCESS" == "UNOPTIMIZED" ]] ; then
-            PARAMS="$DOVERBOSE "
+            PARAMS="$DOVERBOSE --TextureMaxSize 4096 --HalfRezTerrain false"
             SUBDIR=unoptimized
+        fi
+        if [[ "$PROCESS" == "SMALLASSETS" ]] ; then
+            PARAMS="$DOVERBOSE"
+            SUBDIR=smallassets
         fi
         if [[ "$PROCESS" == "MERGEDMATERIALS" ]] ; then
             PARAMS="$DOVERBOSE --MergeSharedMaterialMeshes true"
@@ -59,27 +73,71 @@ for OAR in $OARS ; do
         fi
         # PARAMS="$PARAMS --logGltfBuilding --verbose --LogBuilding --LogConversionStats"
 
+        # put a copy of the original OAR into the built tree
         cd "$HERE"
+        echo "======= copying $OAR to convoar/${BASENAME}"
+        cp "$OAR" convoar/${BASENAME}
+        # Add a JPG of the OAR file to the build tree if it exists
+        if [[ -e "jpg/${BASENAME}.jpg" ]] ; then
+            cp "jpg/${BASENAME}.jpg" "convoar/${BASENAME}"
+        fi
+
         DIR="convoar/${BASENAME}/$SUBDIR"
-        if [[ "$DOBUILD" == "yes" ]] ; then
-            echo "======= building $DIR"
+
+        # Optionally clean out the directory for a clean build
+        if [[ "$DOCLEAN" == "yes" ]] ; then
+            echo "======= cleaning $DIR"
+            cd "$HERE"
             rm -rf "$DIR"
             mkdir -p "$DIR"
-            cd "$DIR"
-            $CONVOAR  $PARAMS "../../../$OAR"
-            # Create a single TGZ file with all the content for the 3DWebWorldz people
-            cd "$HERE"
-            cd "$DIR"
-            tar -czf "${BASENAME}.tgz" *
         fi
-        cd "$HERE"
-        if [[ "$DOCOPY" == "yes" ]] ; then
-            echo "======= copying $DIR to nyxx"
-            ssh basil@nyxx "mkdir -p basil-git/Basiljs/$DIR"
-            rsync -r --delete-after "${DIR}/" "basil@nyxx:basil-git/Basiljs/$DIR"
-            echo "======= copying $DIR to misterblue"
-            ssh ${REMOTEACCT}@${REMOTEHOST} "mkdir -p $REMOTEBASE/$DIR"
-            rsync -e "/usr/bin/ssh" -r --delete-after "${DIR}/" "${REMOTEACCT}@${REMOTEHOST}:$REMOTEBASE/$DIR"
+
+        # If doing build and files have not already been built, do the build
+        if [[ "$DOBUILD" == "yes" ]] ; then
+            if [[ ! -e "${DIR}/${BASENAME}.gltf" ]] ; then
+                echo "======= building $DIR"
+                cd "$HERE"
+                rm -rf "$DIR"
+                mkdir -p "$DIR"
+                cd "$DIR"
+                if [[ "$USEDOCKER" == "yes" ]] ; then
+                    cp "../../../$OAR" .
+                    docker run -v $(pwd):/oar herbal3d/convoar:latest "$PARAMS" "$OAR"
+                    rm -f "$OAR"
+                else
+                    $CONVOAR  $PARAMS "../../../$OAR"
+                fi
+                # Create a single TGZ file with all the content for the 3DWebWorldz people
+                cd "$HERE"
+                cd "$DIR"
+                tar -czf "${BASENAME}.tgz" *
+                # Create a single ZIP file with all the content for the 3DWebWorldz people
+                cd "$HERE"
+                cd "$DIR"
+                zip -r ${BASENAME} *.gltf *.buf images
+            else
+                echo "======= not building $DIR: already exists"
+            fi
         fi
     done
 done
+
+# Update the Internet repositories with new version of everything
+cd "$HERE"
+if [[ "$DOCOPY" == "yes" ]] ; then
+    if [[ "$HOSTNAME" == "lakeoz ]] ; then
+        # if running on the Windows system, copy stuff to the linux system
+        echo "======= copying convoar to nyxx"
+        cd "$HERE"
+        rsync -r -v --delete-after convoar "basil@nyxx:basil-git/Basiljs"
+    fi
+    echo "======= copying convoar to misterblue"
+    cd "$HERE"
+    rsync -r -v --delete-after convoar "${REMOTEACCT}@${REMOTEHOST}:$REMOTEBASE"
+fi
+
+# Generate an indes for the directory
+cd "$HERE"
+if [[ "$GENINDEX" == "yes" ]] ; then
+    ./genIndex.sh > convoar/index.json
+fi

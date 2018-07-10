@@ -1,0 +1,199 @@
+// Copyright 2018 Robert Adams
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// 'Less' CSS defintions for Basil test page.
+
+// The one place for font and color definitions
+@font-global-family: Veranda,Arial,Helvetica,sans-serif;
+@font-global-size: 12px;
+
+// First greens =============================
+// @color-global-color: #baaf0b;
+// @color-global-bg: #369e09;
+
+// @color-dialog-color: #f0e8af;
+// @color-dialog-bg: #86af0a;
+// @color-group-bg: #769f0a;
+// @dialog-opacity: 0.8;
+
+// @color-dialog-accent: #b8af0b;
+// @color-dialog-button-color: @color-dialog-color;
+// @color-dialog-button-bg: #4dc41a;
+
+// @color-debug-color: #f0e84f;
+// @color-debug-bg: #4d6600;
+// @color-debug-error: #ff2020;
+// @debug-opacity: 0.4;
+
+// Creamier greens =============================
+@color-base-headline: #11455f;
+@color-base-color: #058e3f;
+@color-base-bg: #88d498;
+@color-base-accent2: #c6dabf;
+@color-base-accent: #e3e9d2;
+
+@color-global-color: @color-base-color;
+@color-global-bg: @color-base-headline;
+
+@color-dialog-color: @color-base-color;
+@color-dialog-bg: @color-base-headline;
+@color-group-bg: @color-base-bg;
+@dialog-opacity: 0.8;
+
+@color-dialog-accent: @color-base-accent;
+@color-dialog-button-color: @color-base-color;
+@color-dialog-button-bg: @color-base-accent2;
+
+@color-debug-color: #111;
+@color-debug-bg: @color-base-bg;
+@color-debug-error: #ff2020;
+@debug-opacity: 0.6;
+
+// Base for overlay dialog box
+.defn-dialog {
+    margin: 5px;
+    padding: 5px;
+    border-radius: 1em;
+    -moz-border-radius: 1em;
+    color: @color-dialog-color;
+    background: @color-dialog-bg;
+    opacity: @dialog-opacity;
+}
+
+// Base for block area within a dialog
+.defn-dialogBlock {
+    display: block;
+    border: 2px solid @color-dialog-accent;
+    background: @color-group-bg;
+    margin: 4px;
+    padding: 4px;
+}
+
+// Base for buttons in the dialog
+.defn-button {
+    display: inline;
+    margin: 4px;
+    padding: 2px;
+    text-align: center;
+    border: 3px solid @color-dialog-accent;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    color: @color-dialog-button-color;
+    background: @color-dialog-button-bg;
+    opacity: 100;
+}
+// value display areas (text, coord, ...)
+.defn-display {
+    display: inline;
+    margin: 1px;
+    padding: 2px;
+    border: 1px solid @color-dialog-accent;
+}
+
+// Button appearing in the dialog
+.button {
+    .defn-button;
+    width: 7em;
+    height: 2em;
+}
+
+// A smaller version of the button
+.button-sm {
+    .defn-button;
+    font-size: smaller;
+}
+
+body {
+    font-family: @font-global-family;
+    font-size: @font-global-size;
+    color: @color-global-color;
+    background: @color-global-bg;
+    padding: 0px;
+    margin: 0px;
+}
+
+// The layout for the whole page.
+// The width is smaller as Chrome seems to make scroll bars if it's 100%.
+#pageLayout {
+    position: absolute;
+    top: 0%;
+    left: 0%;
+    width: 98%;
+    height: 98%;
+    padding: 0px;
+    margin: 0px;
+}
+
+// The container that contains the canvas.
+#webGLcontainer {
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+    margin: 5px;
+}
+
+// The canvas that is passed to ThreeJS
+#webGLcanvas {
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+    margin: 5px;
+}
+
+// An overlay area for controls
+#controls {
+    position: absolute;
+    right: 0%;
+    bottom: 0%;
+    width: 25%;
+    height: 30em;
+    .defn-dialog;
+}
+//  <div> group as a displayed group in a dialog
+.dialog-group {
+    .defn-dialogBlock;
+}
+
+label {
+    display: block;
+}
+
+.textDisplay {
+    .defn-display;
+    border: 0px;
+}
+.coordDisplay {
+    .defn-display;
+}
+.coordEntry {
+    display: inline;
+    margin: 1px;
+    background: @color-dialog-button-bg;
+}
+
+// Overlay area for debug and error messages
+#DEBUGG {
+    position: absolute;
+    left: 0%;
+    bottom: 0%;
+    width: 60%;
+    height: 45em;
+    .defn-dialog;
+    color: @color-debug-color;
+    background: @color-debug-bg;
+    opacity: @debug-opacity;
+}
+
+// Class added to a reported error message in the DEBUGG area
+.errorMsg {
+    color: @color-debug-error;
+    font-weight: heavy;
+}

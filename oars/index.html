@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Misterblue's converted OAR collection</title>
+<link href="oars.css" rel="stylesheet">
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="oars.js"></script>
+</head>
+<body id="bodybody">
+<div id="tableplace">
+    <div id="webGLcontainer">
+        <canvas id="webGLcanvas"></canvas>
+    </div>
+    <div id="controls">
+        <div class="dialog-group">
+            <button type="button" class="button clickable" op="showDebug">Show Debug</button>
+            <button type="button" class="button clickable" op="addTestObject">Add Test Object</button>
+        </div>
+        <div class="dialog-group">
+            <div id="dialog-group-1">
+                <fieldset>
+                    <legend>Camera</legend>
+                    <label>Position: <div b-info="camPosition" class="coordDisplay"></div></label>
+                    <label>FPS: <div b-info="infoFPS" class="textDisplay"></div></label>
+                    <label>Drawcalls: <div b-info="infoDrawCalls" class="textDisplay"></div></label>
+                    <label>Vertices: <div b-info="infoVertices" class="textDisplay"></div></label>
+                    <label>Triangles: <div b-info="infoTriangles" class="textDisplay"></div></label>
+                    <label>Texture Mem: <div b-info="infoTextureMem" class="textDisplay"></div></label>
+                    <label>Geometry Mem: <div b-info="infoGeometryMem" class="textDisplay"></div></label>
+                </fieldset>
+            </div>
+            <div id="dialog-group-2">
+            <!--
+                <fieldset>
+                    <legend>Selected Object </legend>
+                    <label>Name: <div b-info="objName" class="textDisplay"></div></label>
+                    <label>UUID: <div b-info="objUuid" class="textDisplay"></div></label>
+                    <label>Position: <div b-info="objPosition" class="coordDisplay"></div></label>
+                    <label>Rotation: <div b-info="objRotation" class="coordDisplay"></div></label>
+                </fieldset>
+            -->
+            </div>
+            <div id="dialog-group-3">
+            </div>
+        </div>
+    </div>
+    <div id="DEBUGG"></div>
+</div>
+</body>
+</html>
