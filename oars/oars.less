@@ -35,7 +35,8 @@
 
 // Creamier greens =============================
 @color-base-headline: #11455f;
-@color-base-color: #058e3f;
+// @color-base-color: #baaf0b;
+@color-base-color: #dd2;
 @color-base-bg: #88d498;
 @color-base-accent2: #c6dabf;
 @color-base-accent: #e3e9d2;
@@ -49,7 +50,7 @@
 @dialog-opacity: 0.8;
 
 @color-dialog-accent: @color-base-accent;
-@color-dialog-button-color: @color-base-color;
+@color-dialog-button-color: @color-base-headline;
 @color-dialog-button-bg: @color-base-accent2;
 
 @color-debug-color: #111;
@@ -108,28 +109,21 @@
 // A smaller version of the button
 .button-sm {
     .defn-button;
+    width: 5em;
     font-size: smaller;
 }
 
-c-body {
+a {
+    color: @color-base-accent;
+}
+
+#c-body {
     font-family: @font-global-family;
     font-size: @font-global-size;
     color: @color-global-color;
     background: @color-global-bg;
-    padding: 0px;
-    margin: 0px;
-}
-
-// The layout for the whole page.
-// The width is smaller as Chrome seems to make scroll bars if it's 100%.
-#pageLayout {
-    position: absolute;
-    top: 0%;
-    left: 0%;
-    width: 98%;
-    height: 98%;
-    padding: 0px;
-    margin: 0px;
+    padding: 2em;
+    margin: 2em;
 }
 
 //  <div> group as a displayed group in a dialog
@@ -137,10 +131,23 @@ c-body {
     .defn-dialogBlock;
 }
 
+.c-table {
+    border: 2px solid @color-base-accent;
+}
+.c-table th {
+    font-weight: bold;
+    border: 2px solid @color-base-accent;
+}
+.c-table td {
+    border: 2px solid @color-base-accent;
+}
+
 .c-oarName {
+    display: inline;
 }
 .c-oarImage {
-    width: 100px;
+    display: block;
+    width: 200px;
 }
 .c-col-name {
 }

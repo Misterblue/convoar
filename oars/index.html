@@ -2,12 +2,73 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>Misterblue's converted OAR collection</title>
+<title>Convoar converted OAR collection</title>
 <link href="oars.css" rel="stylesheet">
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script type="text/javascript" src="oars.js"></script>
 </head>
 <body id="c-body">
+<h1>OAR Files Converted to GLTF with Convoar</h1>
+<p>
+Collection of 
+<a href="http://opensimulator.org">OpenSimulator</a>
+archive files ("OAR files")
+converted to
+<a href="https://www.khronos.org/gltf/">GLTF</a>
+using
+<a href="https://github.com/Misterblue/convoar">Convoar</a>
+.
+</p>
+<p>
+<a href="https://github.com/Misterblue/convoar">Convoar</a>
+reads the OAR file, converts the prims into meshes, and outputs
+the region as a
+<a href="https://www.khronos.org/gltf/">GLTF</a>
+scene.
+There are some optimization that are done so there are several
+versions of each converted OAR file below:
+    <ul>
+        <li>
+            <b>unoptimized</b>:
+            a straight conversion of the region.
+            All textures are original size and terrain is maximum resolution.
+            This is the best version for loading into
+            <a href="https://www.blender.org/">Blender</a>
+            or equivilant mesh scene editor.
+        </li>
+        <li>
+            <b>smallassets</b>:
+            meshes are unchanged from the unoptimized version but all
+            textures have been resized to be 256 pixels or less in any dimension
+            and the terrain is half resolution.
+            These two optimizations make significant improvements in the
+            scene load time.
+        </li>
+        <li>
+            <b>mergedmaterials</b>:
+            the meshes scene has been completely reorganized based on their material
+            rather than their object.
+            This makes the
+            <a href="https://www.khronos.org/gltf/">GLTF</a>
+            scene completely uneditable but greatly reduces the draw count
+            and makes even very complex regions displayable with WebGL.
+        </li>
+    </ul>
+</p>
+<p>
+Each of the converted versions of the original OAR can be downloaded (the
+<b>TGZ</b> and <b>ZIP</b> buttons while the <b>OAR</b> button downloads the
+original OAR file).
+</p>
+<p>
+The <b>VIEW</b> button opens another browser page with a simple
+<a href="https://threejs.org">ThreeJS</a> viewer on that version of the 
+<a href="https://www.khronos.org/gltf/">GLTF</a>
+file.
+Be sure to close that view page as having several views open at the same time
+till greatly overtax any graphics card.
+</p>
+
 <div id="c-tableplace"> </div>
 <div id="DEBUGG"> </div>
 </body>
