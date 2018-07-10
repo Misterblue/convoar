@@ -111,7 +111,7 @@
     font-size: smaller;
 }
 
-body {
+c-body {
     font-family: @font-global-family;
     font-size: @font-global-size;
     color: @color-global-color;
@@ -132,34 +132,25 @@ body {
     margin: 0px;
 }
 
-// The container that contains the canvas.
-#webGLcontainer {
-    width: 100%;
-    height: 100%;
-    padding: 0px;
-    margin: 5px;
-}
-
-// The canvas that is passed to ThreeJS
-#webGLcanvas {
-    width: 100%;
-    height: 100%;
-    padding: 0px;
-    margin: 5px;
-}
-
-// An overlay area for controls
-#controls {
-    position: absolute;
-    right: 0%;
-    bottom: 0%;
-    width: 25%;
-    height: 30em;
-    .defn-dialog;
-}
 //  <div> group as a displayed group in a dialog
 .dialog-group {
     .defn-dialogBlock;
+}
+
+.c-oarName {
+}
+.c-oarImage {
+    width: 100px;
+}
+.c-col-name {
+}
+.c-col-desc {
+}
+.c-selection-gltf {
+}
+.c-selection-tgz {
+}
+.c-selection-zip {
 }
 
 label {
@@ -179,13 +170,8 @@ label {
     background: @color-dialog-button-bg;
 }
 
-// Overlay area for debug and error messages
+// Debug display area
 #DEBUGG {
-    position: absolute;
-    left: 0%;
-    bottom: 0%;
-    width: 60%;
-    height: 45em;
     .defn-dialog;
     color: @color-debug-color;
     background: @color-debug-bg;
@@ -193,7 +179,7 @@ label {
 }
 
 // Class added to a reported error message in the DEBUGG area
-.errorMsg {
+.c-errorMsg {
     color: @color-debug-error;
     font-weight: heavy;
 }

@@ -88,11 +88,11 @@ function BuildTable(data) {
 
         rows.push(makeRow(cols));
     });
-    $('#tableplace').empty().append(makeTable(rows));
+    $('#c-tableplace').empty().append(makeTable(rows));
 };
 
 function BuildErrorTable(e) {
-    $('#tableplace').empty().append(makeText('Could not load OAR index file'));
+    $('#c-tableplace').empty().append(makeText('Could not load OAR index file'));
 };
 
 // Return a table data element containing everything about this type version of the oar
