@@ -136,17 +136,16 @@ Then, to do the conversion:
 
 ```bash
 docker pull herbal3d/convoar
-docker run -v /tmp/frog:/oar herbal3d/convoar REGION.oar
+docker run --user $(id -u):$(id -g) -v /tmp/frog:/oar herbal3d/convoar REGION.oar
 ```
 
 This maps the local directory `/tmp/frog` to the `/oar` directory in
 the Docker container, runs the container, and writes the converted file
 into the `/tmp/frog` directory.
 
-NOTE: the most common problem is permissions. This docker image attempts
-to write the output files as user 1000,1000 which could conflict with
-the local systems accounts. Make sure the write permissions in the
-destination directory account for this.
+NOTE: the most common problem is permissions. The command above, sets the
+user and group IDs to that of the current user (the `--user` parameter)
+which is usually is the right thing for write permissions into the mapped directory.
 
 # Releases and Roadmap
 
