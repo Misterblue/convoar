@@ -9,7 +9,7 @@
 
 Command line application for converting OpenSimulator OAR files into GLTF scene file.
 
-OAR files save [OpenSimulator] regions.
+An [OpenSimulator] OAR file saves a region's contents.
 All the information about the region (parcels, terrain, etc.)
 is saved in an OAR file along with
 all the objects and their locations (prims, meshes, scripts, textures, etc.).
@@ -17,16 +17,16 @@ Thus, an OAR file of a region is convertable into any other scene
 representation format.
 
 Convoar reads an OAR file and outputs a GLTF scene and image files
-containing most of the region information.
-Most specifically, textured mesh representation of all the objects
-described in the OAR file.
+which is most of the region information.
+Most specifically, it outputs the textured mesh representation of
+all the objects in the region.
 
 Convoar is evolving.
 See the "Releases and Roadmap" section below.
 The current version reads an OAR file and outputs either an unoptimized GLTF
 scene file or a "material reorganized" GLTF scene (see below).
 The output GLTF is not packed or binary
-so the output GLTF is a JSON `.gltf` file, one or more `.buf` files
+so the output files are a JSON `.gltf` file, one or more `.buf` files
 (containing the vertex information), and an `images` directory with
 the texture files for the mesh materials. By default, the output textures
 are either JPG or PNG format depending if there is any transparency
@@ -36,7 +36,7 @@ The unoptimized GLTF conversion is a simple conversion of the OAR primitives
 which creates many, many meshes and is very inefficient for rendering but
 is good for editing (importing into [Blender], for instance).
 
-The "material reorganized" scene has object corresponding to each
+The "material reorganized" scene has objects corresponding to each
 unique material (texture/color/features) and the meshes have been
 assigned to each of these material objects.
 This renders the scene uneditable but this should greatly reduce
@@ -82,7 +82,7 @@ Parameter  | Meaning
  `--help` | list all available parameters with descriptions and default values
 
 An invocation of `convoar ../REGION.oar` will create, in the output directory,
-the files `REGION.gltf`, one or more `REGION_bufferNNN.buf` files, and an
+the files `REGION.gltf`, one or more `REGION-bufferNNN.buf` files, and an
 `images` directory containing .JPG and .PNG files. The GLTF file will reference
 the `images  directory and the `.buf` files so the relative directory
 position of the `.buf   and `images` files is significant.
@@ -136,11 +136,11 @@ Then, to do the conversion:
 
 ```bash
 docker pull herbal3d/convoar
-docker run --user $(id -u):$(id -g) -v /tmp/frog:/oar herbal3d/convoar REGION.oar
+docker run --rm --user $(id -u):$(id -g) -v /tmp/frog:/oar herbal3d/convoar REGION.oar
 ```
 
-This maps the local directory `/tmp/frog` to the `/oar` directory in
-the Docker container, runs the container, and writes the converted file
+This maps the local `/tmp/frog` directory to the `/oar` directory in
+the Docker container, runs the container, and writes the output GLTF files
 into the `/tmp/frog` directory.
 
 NOTE: the most common problem is permissions. The command above, sets the
@@ -152,15 +152,16 @@ which is usually is the right thing for write permissions into the mapped direct
 - [x] Release 1.0
     * basic OAR to GLTF conversion
     * material-centric optimization
-- [ ] Release 1.1
+- [x] Release 1.1
+    * cleaned up and debugged command line and Docker version
+- [ ] Release 1.2
     * option to include all prim information in `extras` (scripts, notes, etc.)
     * pipeline tools in Docker image for binary/DRACO packing of GLTF file
     * invocation options to select sub-regions of OAR region
-- [ ] Release 1.2
+- [ ] Release 1.3
     * pipeline tools for scene optimizations (small mesh elimination, mesh decimation/simplification, etc.)
 
 [OpenSimulator]: http://opensimulator.org
 [Mono]: http://www.mono-project.com/
-[parameter wiki page]: https://github.com/Misterblue/convoar/wiki/Convoar-Command-Line-Parameters
 [Blender]: https://www.blender.org/
 
