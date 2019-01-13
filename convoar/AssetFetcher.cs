@@ -45,7 +45,7 @@ namespace org.herbal3d.convoar {
         public abstract void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage);
 
 #pragma warning disable 414     // disable 'assigned but not used' warning
-        private static string _logHeader = "[IAssetFetcher]";
+        private static readonly string _logHeader = "[IAssetFetcher]";
 #pragma warning restore 414
 
         // Displayables are the linksetable prim equivilient
@@ -83,10 +83,9 @@ namespace org.herbal3d.convoar {
         // Return 'true' if the Displayable was added to the list.
         public bool AddUniqueDisplayable(Displayable disp) {
             bool ret = false;
-            Displayable maybeDisp;
             BHash dispHash = disp.GetBHash();
             lock (Displayables) {
-                if (!Displayables.TryGetValue(dispHash, out maybeDisp)) {
+                if (!Displayables.TryGetValue(dispHash, out Displayable maybeDisp)) {
                     Displayables.Add(dispHash, disp);
                 }
             }
@@ -130,8 +129,7 @@ namespace org.herbal3d.convoar {
         // Add the passed MeshInfo the to list if it is not already in the list
         public void AddUniqueMeshInfo(MeshInfo meshInfo) {
             lock (Meshes) {
-                MeshInfo existingMeshInfo = null;
-                if (!Meshes.TryGetValue(meshInfo.GetBHash(), out existingMeshInfo)) {
+                if (!Meshes.TryGetValue(meshInfo.GetBHash(), out MeshInfo existingMeshInfo)) {
                     // If not already in the list, add this MeshInfo
                     Meshes.Add(meshInfo.GetBHash(), meshInfo.handle, meshInfo);
                 }
@@ -173,8 +171,7 @@ namespace org.herbal3d.convoar {
         // Add the passed MaterialInfo the to list if it is not already in the list
         public void AddUniqueMatInfo(MaterialInfo matInfo) {
             lock (Materials) {
-                MaterialInfo existingMatInfo = null;
-                if (!Materials.TryGetValue(matInfo.GetBHash(), out existingMatInfo)) {
+                if (!Materials.TryGetValue(matInfo.GetBHash(), out MaterialInfo existingMatInfo)) {
                     // If not already in the list, add this MeshInfo
                     Materials.Add(matInfo.GetBHash(), matInfo.handle, matInfo);
                 }
@@ -208,8 +205,7 @@ namespace org.herbal3d.convoar {
         // Add the passed MaterialInfo the to list if it is not already in the list
         public void AddUniqueImageInfo(ImageInfo imgInfo) {
             lock (Images) {
-                ImageInfo existingImageInfo = null;
-                if (!Images.TryGetValue(imgInfo.GetBHash(), out existingImageInfo)) {
+                if (!Images.TryGetValue(imgInfo.GetBHash(), out ImageInfo existingImageInfo)) {
                     // If not already in the list, add this MeshInfo
                     Images.Add(imgInfo.GetBHash(), imgInfo.handle, imgInfo);
                 }
@@ -305,7 +301,7 @@ namespace org.herbal3d.convoar {
     // Fetch an asset from  the OpenSimulator asset system
     public class OSAssetFetcher : IAssetFetcher {
     #pragma warning disable 414
-        private string _logHeader = "[OSAssetFetcher]";
+        private readonly string _logHeader = "[OSAssetFetcher]";
     #pragma warning restore 414
         private IAssetService _assetService;
 
@@ -395,8 +391,7 @@ namespace org.herbal3d.convoar {
                         CSJ2K.Util.BitmapImageCreator.Register();
                         imageDecoded = CSJ2K.J2kImage.FromBytes(asset.Data).As<Bitmap>();
                         */
-                        ManagedImage mimage;
-                        if (OpenJPEG.DecodeToImage(asset.Data, out mimage, out imageDecoded)) {
+                        if (OpenJPEG.DecodeToImage(asset.Data, out ManagedImage mimage, out imageDecoded)) {
                             mimage = null;  // 'mimage' is unused so release the reference
                         }
                         else {

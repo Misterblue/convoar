@@ -91,6 +91,9 @@ namespace org.herbal3d.convoar {
                 }
                 outt.Write("\n" + Indent(level) + " }");
             }
+            // Have had problems with NaN values showing up in JSON as "NaN" string
+            //   rather than a number and causing parsing errors. This code tells the
+            //   user something is wrong but puts a number in the output JSON.
             else if (val is float && Single.IsNaN((float)val)) {
                 ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Single.NaN!!");
                 outt.Write("0");
@@ -128,85 +131,5 @@ namespace org.herbal3d.convoar {
             buff.Append(" ] ");
             return buff.ToString();
         }
-
-        /*
-        public static string ArrayToJSONArray(float[] vals) {
-            return ParamsToJSONArray(vals);
-        }
-
-        // Examines passed object and creates the correct form of a JSON value.
-        // Strings are closed in quotes, arrays get square bracketed, and numbers are stringified.
-        public static string CreateJSONValue(Object val) {
-            string ret = String.Empty;
-            if (val is string) {
-                // escape any double quotes in the string value
-                ret = "\"" + ((string)val).Replace("\"", "\\\"") + "\"";
-                // ret = JsonConvert.SerializeObject(val);
-            }
-            else if (val is bool) {
-                ret = (bool)val ? "true" : "false";
-            }
-            else if (val is OMV.Color4) {
-                OMV.Color4 col = (OMV.Color4)val;
-                ret = ParamsToJSONArray(col.R, col.G, col.B, col.A);
-            }
-            else if (val is OMV.Matrix4) {
-                OMV.Matrix4 mat = (OMV.Matrix4)val;
-                ret = ParamsToJSONArray(
-                    mat[0, 0], mat[0, 1], mat[0, 2], mat[0, 3],
-                    mat[1, 0], mat[1, 1], mat[1, 2], mat[1, 3],
-                    mat[2, 0], mat[2, 1], mat[2, 2], mat[2, 3],
-                    mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3]
-                );
-            }
-            else if (val is OMV.Vector3) {
-                OMV.Vector3 vect = (OMV.Vector3)val;
-                ret = ParamsToJSONArray(vect.X, vect.Y, vect.Z);
-            }
-            else if (val is OMV.Quaternion) {
-                OMV.Quaternion quan = (OMV.Quaternion)val;
-                ret = ParamsToJSONArray(quan.X, quan.Y, quan.Z, quan.W);
-            }
-            else if (val.GetType().IsArray) {
-                ret = " [ ";
-                Object[] values = (Object[])val;
-                bool first = true;
-                for (int ii = 0; ii < values.Length; ii++) {
-                    if (!first) ret += ",";
-                    first = false;
-                    ret += CreateJSONValue(values[ii]);
-                }
-                ret += " ]";
-            }
-            else if (val is Dictionary<string, Object>) {
-                Dictionary<string, Object> dict = (Dictionary<string, Object>)val;
-                ret = " { ";
-                bool first = true;
-                foreach (var key in dict.Keys) {
-                    if (!first) ret += ",";
-                    first = false;
-                    ret += "\"" + key + "\": ";
-                    ret += CreateJSONValue(dict[key]);
-                }
-                ret += " }";
-
-            }
-            else if (val is float && Single.IsNaN((float)val)) {
-                ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Single.NaN!!");
-                ret = "0";
-            }
-            else if (val is double && Double.IsNaN((double)val)) {
-                ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Double.NaN!!");
-                ret = "0";
-            }
-            else {
-                ret = val.ToString();
-                if (ret == "NaN") {
-                    ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is NaN!!");
-                }
-            }
-            return ret;
-        }
-        */
     }
 }
