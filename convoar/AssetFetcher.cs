@@ -30,6 +30,8 @@ using OMV = OpenMetaverse;
 using OMVA = OpenMetaverse.Assets;
 using OpenMetaverse.Imaging;
 
+using CSJ2K;
+
 namespace org.herbal3d.convoar {
 
     // A Promise based interface to the asset fetcher
@@ -387,10 +389,10 @@ namespace org.herbal3d.convoar {
                 Image imageDecoded = null;
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
-                        /* Code for using NuGet CSJ2K. Thought it might be better but noticed no difference.
+                        // Code for using NuGet CSJ2K. Thought it might be better but noticed no difference.
                         CSJ2K.Util.BitmapImageCreator.Register();
                         imageDecoded = CSJ2K.J2kImage.FromBytes(asset.Data).As<Bitmap>();
-                        */
+                        /*
                         if (OpenJPEG.DecodeToImage(asset.Data, out ManagedImage mimage, out imageDecoded)) {
                             mimage = null;  // 'mimage' is unused so release the reference
                         }
@@ -398,6 +400,7 @@ namespace org.herbal3d.convoar {
                             // Could not decode the image. Odd.
                             imageDecoded = null;
                         }
+                        */
                         prom.Resolve(imageDecoded);
                     }
                     catch (Exception e) {
