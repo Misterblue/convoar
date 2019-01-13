@@ -40,7 +40,6 @@ namespace org.herbal3d.convoar {
     /// Also includes storage for global meshes, materials, and textures.
     /// </summary>
     public abstract class IAssetFetcher : IDisposable {
-        public abstract IPromise<OMVA.AssetTexture> FetchTexture(EntityHandle handle);
         public abstract IPromise<Image> FetchTextureAsImage(EntityHandle handle);
         public abstract IPromise<byte[]> FetchRawAsset(EntityHandle handle);
         public abstract void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data);
@@ -275,10 +274,6 @@ namespace org.herbal3d.convoar {
             throw new NotImplementedException();
         }
 
-        public override IPromise<OMVA.AssetTexture> FetchTexture(EntityHandle handle) {
-            throw new NotImplementedException();
-        }
-
         public override IPromise<Image> FetchTextureAsImage(EntityHandle handle) {
             throw new NotImplementedException();
         }
@@ -339,39 +334,6 @@ namespace org.herbal3d.convoar {
                 newAsset.Data = byteStream.ToArray();
             }
             _assetService.Store(newAsset);
-        }
-
-        /// <summary>
-        /// Fetch a texture and return an OMVA.AssetTexture. The only information initialized
-        /// in the AssetTexture is the UUID and the binary data.s
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        public override IPromise<OMVA.AssetTexture> FetchTexture(EntityHandle handle) {
-            var prom = new Promise<OMVA.AssetTexture>();
-
-            // Don't bother with async -- this call will hang until the asset is fetched
-            AssetBase asset = _assetService.Get(handle.ToString());
-            if (asset != null && asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
-                OMVA.AssetTexture tex = new OMVA.AssetTexture(((EntityHandleUUID)handle).GetUUID(), asset.Data);
-                try {
-                    if (tex.Decode()) {
-                        prom.Resolve(tex);
-                    }
-                    else {
-                        prom.Reject(new Exception("FetchTexture: could not decode JPEG2000 texture. ID=" + handle.ToString()));
-                    }
-                }
-                catch (Exception e) {
-                    prom.Reject(new Exception("FetchTexture: exception decoding JPEG2000 texture. ID=" + handle.ToString()
-                                + ", e=" + e.ToString()));
-                }
-            }
-            else {
-                prom.Reject(new Exception("FetchTexture: asset was not of type texture. ID=" + handle.ToString()));
-            }
-
-            return prom;
         }
 
         /// <summary>

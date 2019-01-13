@@ -37,7 +37,7 @@ namespace org.herbal3d.convoar {
 
     public class PrimToMesh {
         private OMVR.MeshmerizerR _mesher;
-        String _logHeader = "[PrimToMesh]";
+        static private readonly String _logHeader = "[PrimToMesh]";
 
         public PrimToMesh() {
             _mesher = new OMVR.MeshmerizerR();
@@ -114,13 +114,12 @@ namespace org.herbal3d.convoar {
 
         private Promise<DisplayableRenderable> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, IAssetFetcher assetFetcher, OMVR.DetailLevel lod) {
-
             return new Promise<DisplayableRenderable>((resolve, reject) => {
                 // Get the asset that the sculpty is built on
                 EntityHandleUUID texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
-                assetFetcher.FetchTexture(texHandle)
-                    .Then((bm) => {
-                        OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, bm.Image.ExportBitmap(), lod);
+                assetFetcher.FetchTextureAsImage(texHandle)
+                    .Then((img) => {
+                        OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, img as Bitmap, lod);
                         DisplayableRenderable dr =
                                 ConvertFacetedMeshToDisplayable(assetFetcher, fMesh, prim.Textures.DefaultTexture, prim.Scale);
                         BHash drHash = dr.GetBHash();
@@ -194,8 +193,9 @@ namespace org.herbal3d.convoar {
 
         private RenderableMesh ConvertFaceToRenderableMesh(OMVR.Face face, IAssetFetcher assetFetcher,
                         OMV.Primitive.TextureEntryFace defaultTexture, OMV.Vector3 primScale) {
-            RenderableMesh rmesh = new RenderableMesh();
-            rmesh.num = face.ID;
+            RenderableMesh rmesh = new RenderableMesh {
+                num = face.ID
+            };
 
             // Copy one face's mesh imformation from the FacetedMesh into a MeshInfo
             MeshInfo meshInfo = new MeshInfo {
@@ -254,7 +254,7 @@ namespace org.herbal3d.convoar {
                 BConverterOS.LogBProgress("{0} ConvertFaceToRenderableMesh: Converting tex coords using {1} texture",
                              _logHeader, face.TextureFace == null ? "default" : "face");
                 _mesher.TransformTexCoords(meshInfo.vertexs, meshInfo.faceCenter,
-                        face.TextureFace == null ? defaultTexture : face.TextureFace,  primScale);
+                        face.TextureFace ?? defaultTexture,  primScale);
             }
 
             // See that the material is in the cache
