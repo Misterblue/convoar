@@ -6,7 +6,11 @@ RSGPROMISE=../C-Sharp-Promise/bin/Release
 
 # Copy the dll file and the PDB file if it exists
 function GetLib() {
-    cp "$1/$2" libs
+    if [[ -z "$3" ]] ; then
+        cp "$1/$2" libs
+    else
+        cp "$1/$2" "$3"
+    fi
     pdbfile=$1/${2%.dll}.pdb
     if [[ -e "$pdbfile" ]] ; then
         cp "$pdbfile" libs
@@ -32,9 +36,10 @@ GetLib "$OPENSIM" "Nini.dll"
 GetLib "$OPENSIM" "nunit.framework.dll"
 GetLib "$OPENSIM" "Mono.Addins.dll"
 GetLib "$OPENSIM" "SmartThreadPool.dll"
-# GetLib "$OPENSIM" "openjpeg-dotnet.dll"
-# GetLib "$OPENSIM" "openjpeg-dotnet-x86_64.dll"
-# GetLib "$OPENSIM" "libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so"
+# Following are required for OpenSimulator terrain/baking code.
+GetLib "$OPENSIM" "openjpeg-dotnet.dll" "convoar"
+GetLib "$OPENSIM" "openjpeg-dotnet-x86_64.dll" "convoar"
+GetLib "$OPENSIM" "libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so" "convoar"
 
 GetLib "$LIBOMV" "OpenMetaverse.dll"
 GetLib "$LIBOMV" "OpenMetaverse.dll.config"

@@ -228,8 +228,71 @@ namespace org.herbal3d.convoar {
 
         // Convert a SceneObjectGroup into an instance with displayables
         public IPromise<BInstance> ConvertSogToInstance(SceneObjectGroup sog, IAssetFetcher assetFetcher, PrimToMesh mesher) {
-            var prom = new Promise<BInstance>();
+            return new Promise<BInstance>((promResolve, promReject) => {
+                LogBProgress("{0} ConvertSogToInstance: name={1}, id={2}, SOPs={3}",
+                            _logHeader, sog.Name, sog.UUID, sog.Parts.Length);
+                // Create meshes for all the parts of the SOG
+                Promise<Displayable>.All(
+                    sog.Parts.Select(sop => {
+                        LogBProgress("{0} ConvertSOGToInstance: Calling CreateMeshResource for sog={1}, sop={2}",
+                                    _logHeader, sog.UUID, sop.UUID);
+                        OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
+                        return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest);
+                    } )
+                )
+                .Then(renderables => {
+                    // Remove any failed SOG/SOP conversions.
+                    List<Displayable> filteredRenderables = renderables.Where(rend => rend != null).ToList();
 
+                    // 'filteredRenderables' are the DisplayRenderables for all the SOPs in the SOG
+                    // Get the root prim of the SOG
+                    List<Displayable> rootDisplayableList = filteredRenderables.Where(disp => {
+                        return disp.baseSOP.IsRoot;
+                    }).ToList();
+                    if (rootDisplayableList.Count != 1) {
+                        // There should be only one root prim
+                        ConvOAR.Globals.log.ErrorFormat("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
+                                    _logHeader, sog.UUID, rootDisplayableList.Count);
+                        promReject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
+                        return null;
+                    }
+
+                    // The root of the SOG
+                    Displayable rootDisplayable = rootDisplayableList.First();
+
+                    // Collect all the children prims and add them to the root Displayable
+                    rootDisplayable.children = filteredRenderables.Where(disp => {
+                        return !disp.baseSOP.IsRoot;
+                    // }).Select(disp => {
+                    //     return disp;
+                    }).ToList();
+
+                    return rootDisplayable;
+
+                })
+                .Done(rootDisplayable => {
+                    // Add the Displayable into the collection of known Displayables for instancing
+                    assetFetcher.AddUniqueDisplayable(rootDisplayable);
+
+                    // Package the Displayable into an instance that is position in the world
+                    BInstance inst = new BInstance();
+                    inst.Position = sog.AbsolutePosition;
+                    inst.Rotation = sog.GroupRotation;
+                    inst.Representation = rootDisplayable;
+
+                    if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
+                        DumpInstance(inst);
+                    }
+
+                    promResolve(inst);
+                }, e => {
+                     ConvOAR.Globals.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
+                     promReject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
+                });
+            });
+
+            /*
+            var prom = new Promise<BInstance>();
             LogBProgress("{0} ConvertSogToInstance: name={1}, id={2}, SOPs={3}",
                         _logHeader, sog.Name, sog.UUID, sog.Parts.Length);
             // Create meshes for all the parts of the SOG
@@ -264,8 +327,8 @@ namespace org.herbal3d.convoar {
                 // Collect all the children prims and add them to the root Displayable
                 rootDisplayable.children = filteredRenderables.Where(disp => {
                     return !disp.baseSOP.IsRoot;
-                }).Select(disp => {
-                    return disp;
+                // }).Select(disp => {
+                //     return disp;
                 }).ToList();
 
                 return rootDisplayable;
@@ -292,6 +355,7 @@ namespace org.herbal3d.convoar {
             });
 
             return prom;
+            */
         }
 
         private void DumpInstance(BInstance inst) {

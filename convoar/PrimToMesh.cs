@@ -233,7 +233,7 @@ namespace org.herbal3d.convoar {
                         })
                         .Catch(e => {
                             // Failure getting the image
-                            ConvOAR.Globals.log.ErrorFormat("{0} Failure fetching texture. id={1}. {2}",
+                            ConvOAR.Globals.log.ErrorFormat("{0} Failure fetching material texture. id={1}. {2}",
                                         _logHeader, matInfo.textureID, e);
                             // Create a simple, single color image to fill in for the missing image
                             var fillInImage = new Bitmap(32, 32, System.Drawing.Imaging.PixelFormat.Format32bppArgb);

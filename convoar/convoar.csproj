@@ -194,11 +194,10 @@
     <Compile Include="WebGLConstants.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".dockerignore">
-      <DependentUpon>Dockerfile</DependentUpon>
-    </None>
     <None Include="App.config" />
-    <None Include="Dockerfile" />
+    <None Include="libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -227,6 +226,14 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\GitCommit.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="openjpeg-dotnet-x86_64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="openjpeg-dotnet.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
