@@ -155,10 +155,12 @@ which is usually is the right thing for write permissions into the mapped direct
 - [x] Release 1.1
     * cleaned up and debugged command line and Docker version
 - [ ] Release 1.2
+    * bug release -- trying to figure out why some JPEG2000 don't decomopress.
+- [ ] Release 1.3
     * option to include all prim information in `extras` (scripts, notes, etc.)
     * pipeline tools in Docker image for binary/DRACO packing of GLTF file
     * invocation options to select sub-regions of OAR region
-- [ ] Release 1.3
+- [ ] Release 1.4
     * pipeline tools for scene optimizations (small mesh elimination, mesh decimation/simplification, etc.)
 
 [OpenSimulator]: http://opensimulator.org
