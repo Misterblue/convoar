@@ -149,6 +149,7 @@ namespace org.herbal3d.convoar {
         }
     }
         
+    // A renderable mesh has both mesh and material
     public class RenderableMesh {
         public int num;                 // number of this face on the prim
         public MeshInfo mesh;

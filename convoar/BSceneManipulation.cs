@@ -196,11 +196,11 @@ namespace org.herbal3d.convoar {
 
             // Find all the meshes in passed Displayable and add them to the lists indexed by their material
             //     mesh hashes.
-            private void MapMaterialsAndMeshes(BScene pBs, BInstance pInst, Displayable disp) {
-                RenderableMeshGroup rmg = disp.renderable as RenderableMeshGroup;
+            private void MapMaterialsAndMeshes(BScene pBs, BInstance pInst, Displayable pDisp) {
+                RenderableMeshGroup rmg = pDisp.renderable as RenderableMeshGroup;
                 if (rmg != null) {
                     foreach (RenderableMesh rMesh in rmg.meshes) {
-                        InvertedMesh imesh = new InvertedMesh(pBs, pInst, disp, rmg, rMesh);
+                        InvertedMesh imesh = new InvertedMesh(pBs, pInst, pDisp, rmg, rMesh);
 
                         BHash meshHash = rMesh.mesh.GetBHash();
                         if (!sharedMeshes.ContainsKey(meshHash)) {
@@ -215,7 +215,7 @@ namespace org.herbal3d.convoar {
                         meshByMaterial[materialHash].Add(imesh);
                     }
                 }
-                foreach (Displayable child in disp.children) {
+                foreach (Displayable child in pDisp.children) {
                     MapMaterialsAndMeshes(pBs, pInst, child);
                 }
             }
