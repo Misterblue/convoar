@@ -351,18 +351,20 @@ namespace org.herbal3d.convoar {
                 Image imageDecoded = null;
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
-                        // Code for using NuGet CSJ2K. Thought it might be better but noticed no difference.
-                        CSJ2K.Util.BitmapImageCreator.Register();
-                        imageDecoded = CSJ2K.J2kImage.FromBytes(asset.Data).As<Bitmap>();
-                        /*
-                        if (OpenJPEG.DecodeToImage(asset.Data, out ManagedImage mimage, out imageDecoded)) {
-                            mimage = null;  // 'mimage' is unused so release the reference
+                        if (ConvOAR.Globals.parms.P<bool>("UseOpenJPEG")) {
+                            if (OpenJPEG.DecodeToImage(asset.Data, out ManagedImage mimage, out imageDecoded)) {
+                                mimage = null;  // 'mimage' is unused so release the reference
+                            }
+                            else {
+                                // Could not decode the image. Odd.
+                                imageDecoded = null;
+                            }
                         }
                         else {
-                            // Could not decode the image. Odd.
-                            imageDecoded = null;
+                            // Code for using NuGet CSJ2K. Thought it might be better but noticed no difference.
+                            CSJ2K.Util.BitmapImageCreator.Register();
+                            imageDecoded = CSJ2K.J2kImage.FromBytes(asset.Data).As<Bitmap>();
                         }
-                        */
                         prom.Resolve(imageDecoded);
                     }
                     catch (Exception e) {

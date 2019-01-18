@@ -49,7 +49,7 @@ namespace org.herbal3d.convoar {
     // Convert things from OpenSimulator to Instances and Displayables things
     public class BConverterOS {
 
-        private static string _logHeader = "[BConverterOS]";
+        private static readonly string _logHeader = "[BConverterOS]";
 
         public BConverterOS() {
         }
@@ -59,9 +59,10 @@ namespace org.herbal3d.convoar {
             Promise<BScene> prom = new Promise<BScene>();
 
             // Assemble all the parameters that loadoar takes and uses
-            Dictionary<string, object> options = new Dictionary<string, object>();
-            // options.Add("merge", false);
-            options.Add("displacement", ConvOAR.Globals.parms.P<OMV.Vector3>("Displacement"));
+            Dictionary<string, object> options = new Dictionary<string, object> {
+                // options.Add("merge", false);
+                { "displacement", ConvOAR.Globals.parms.P<OMV.Vector3>("Displacement") }
+            };
             string optRotation = ConvOAR.Globals.parms.P<string>("Rotation");
             if (optRotation != null) options.Add("rotation", float.Parse(optRotation, System.Threading.Thread.CurrentThread.CurrentCulture));
             // options.Add("default-user", OMV.UUID.Random());
@@ -122,11 +123,12 @@ namespace org.herbal3d.convoar {
                 }
 
                 // package instances into a BScene
-                BScene bScene = new BScene();
-                bScene.instances = instanceList;
                 RegionInfo ri = scene.RegionInfo;
-                bScene.name = ri.RegionName;
-                bScene.terrainInstance = terrainInstance;
+                BScene bScene = new BScene {
+                    instances = instanceList,
+                    name = ri.RegionName,
+                    terrainInstance = terrainInstance
+                };
                 bScene.attributes.Add("RegionName", ri.RegionName);
                 bScene.attributes.Add("RegionSizeX", ri.RegionSizeX);
                 bScene.attributes.Add("RegionSizeY", ri.RegionSizeY);
@@ -151,13 +153,16 @@ namespace org.herbal3d.convoar {
         // Create an OpenSimulator Scene and add enough auxillery services and objects
         //   to it so it will allow the loading of assets.
         public Scene CreateScene(IAssetService memAssetService, string regionName) {
-            RegionInfo regionInfo = new RegionInfo(0, 0, null, regionName);
-            regionInfo.RegionName = regionName;
-            regionInfo.RegionSizeX = regionInfo.RegionSizeY = Constants.RegionSize;
-            regionInfo.RegionID = OMV.UUID.Random();
-            var estateSettings = new EstateSettings();
-            estateSettings.EstateOwner = OMV.UUID.Random();
-            regionInfo.EstateSettings = estateSettings;
+            var estateSettings = new EstateSettings {
+                EstateOwner = OMV.UUID.Random()
+            };
+            RegionInfo regionInfo = new RegionInfo(0, 0, null, regionName) {
+                RegionName = regionName,
+                RegionSizeX = Constants.RegionSize,
+                RegionSizeY = Constants.RegionSize,
+                RegionID = OMV.UUID.Random(),
+                EstateSettings = estateSettings
+            };
 
             Scene scene = new Scene(regionInfo);
 
@@ -192,8 +197,7 @@ namespace org.herbal3d.convoar {
                 StringBuilder sb = new StringBuilder();
                 foreach (Exception exSub in e.LoaderExceptions) {
                     sb.AppendLine(exSub.Message);
-                    FileNotFoundException exFileNotFound = exSub as FileNotFoundException;
-                    if (exFileNotFound != null) {
+                    if (exSub is FileNotFoundException exFileNotFound) {
                         if (!string.IsNullOrEmpty(exFileNotFound.FusionLog)) {
                             sb.AppendLine("Fusion Log:");
                             sb.AppendLine(exFileNotFound.FusionLog);
@@ -275,10 +279,11 @@ namespace org.herbal3d.convoar {
                     assetFetcher.AddUniqueDisplayable(rootDisplayable);
 
                     // Package the Displayable into an instance that is position in the world
-                    BInstance inst = new BInstance();
-                    inst.Position = sog.AbsolutePosition;
-                    inst.Rotation = sog.GroupRotation;
-                    inst.Representation = rootDisplayable;
+                    BInstance inst = new BInstance {
+                        Position = sog.AbsolutePosition,
+                        Rotation = sog.GroupRotation,
+                        Representation = rootDisplayable
+                    };
 
                     if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
                         DumpInstance(inst);
@@ -370,8 +375,7 @@ namespace org.herbal3d.convoar {
             string spacer = spaces.Substring(0, level * 2);
             LogBProgress("{0}{1}  displayable: name={2}, pos={3}, rot={4}",
                 _logHeader, spacer, disp.name, disp.offsetPosition, disp.offsetRotation);
-            RenderableMeshGroup rmg = disp.renderable as RenderableMeshGroup;
-            if (rmg != null) {
+            if (disp.renderable is RenderableMeshGroup rmg) {
                 rmg.meshes.ForEach(mesh => {
                     LogBProgress("{0}{1}    mesh: mesh={2}. material={3}",
                         _logHeader, spacer, mesh.mesh, mesh.material);

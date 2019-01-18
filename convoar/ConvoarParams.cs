@@ -74,6 +74,9 @@ namespace org.herbal3d.convoar {
             new ParameterDefn<string>("==========", "Optimizations", null),
             new ParameterDefn<bool>("MergeSharedMaterialMeshes", "whether to merge meshes with similar materials",
                 false, "m"),
+            new ParameterDefn<bool>("UseOpenJPEG", "Use OpenJPEG to decode JPEG2000 images. Alternative is CSJ2K",
+                true),
+
             /*
             new ParameterDefn<bool>("DoMeshSimplification", "pass over all the meshes and simplify if needed",
                 true ),
