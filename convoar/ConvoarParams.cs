@@ -318,8 +318,7 @@ namespace org.herbal3d.convoar {
         public T P<T>(string paramName) {
             T ret = default(T);
             if (TryGetParameter(paramName, out ParameterDefnBase pbase)) {
-                ParameterDefn<T> pdef = pbase as ParameterDefn<T>;
-                if (pdef != null) {
+                if (pbase is ParameterDefn<T> pdef) {
                     ret = pdef.Value();
                 }
                 else {
