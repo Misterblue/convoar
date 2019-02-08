@@ -59,6 +59,11 @@ namespace org.herbal3d.cs.os.CommonEntities {
         public AssetManager(BLogger pLog, IParameters pParam) {
             _log = pLog;
             _params = pParam;
+            Displayables = new Dictionary<BHash, Displayable>();
+            Renderables = new Dictionary<BHash, DisplayableRenderable>();
+            Meshes = new OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo>();
+            Materials = new OMV.DoubleDictionary<BHash, EntityHandle, MaterialInfo>();
+            Images = new OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo>();
         }
 
         // Displayables are the linksetable prim equivilient
@@ -82,14 +87,6 @@ namespace org.herbal3d.cs.os.CommonEntities {
             Meshes.Clear();
             Materials.Clear();
             Images.Clear();
-        }
-
-        public AssetManager() {
-            Displayables = new Dictionary<BHash, Displayable>();
-            Renderables = new Dictionary<BHash, DisplayableRenderable>();
-            Meshes = new OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo>();
-            Materials = new OMV.DoubleDictionary<BHash, EntityHandle, MaterialInfo>();
-            Images = new OMV.DoubleDictionary<BHash, EntityHandle, ImageInfo>();
         }
 
         // Adds this Displayable if it's not already in the list.
@@ -277,7 +274,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
     //    lists and their access functions in the base class;
     public class NullAssetFetcher : AssetManager {
 
-        public NullAssetFetcher() : base() {
+        public NullAssetFetcher(BLogger pLog, IParameters pParams) : base(pLog, pParams) {
         }
 
         public override IPromise<byte[]> FetchRawAsset(EntityHandle handle) {
