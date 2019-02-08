@@ -8,11 +8,13 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>org.herbal3d.convoar</RootNamespace>
     <AssemblyName>convoar</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -27,8 +29,6 @@
     <ApplicationVersion>1.2.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -159,40 +159,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssetFetcher.cs" />
-    <Compile Include="BSceneManipulation.cs" />
-    <Compile Include="PersistRules.cs" />
-    <Compile Include="BAttributes.cs" />
-    <Compile Include="BCoordinates.cs" />
-    <Compile Include="BScene.cs" />
-    <Compile Include="ConvoarTerrain.cs" />
-    <Compile Include="BConverter.cs" />
     <Compile Include="BConverterOS.cs" />
-    <Compile Include="BHasher.cs" />
-    <Compile Include="BInstance.cs" />
     <Compile Include="Convoar.cs" />
     <Compile Include="ConvoarParams.cs" />
     <Compile Include="ConvoarStats.cs" />
     <Compile Include="ConvoarTests.cs" />
-    <Compile Include="Displayable.cs" />
-    <Compile Include="EntityHandle.cs" />
     <Compile Include="GltfClasses.cs" />
-    <Compile Include="ImageInfo.cs" />
     <Compile Include="JSONHelpers.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="MaterialInfo.cs" />
     <Compile Include="MemAssetService.cs" />
-    <Compile Include="MeshInfo.cs" />
     <Compile Include="NullUserAccountService.cs" />
     <Compile Include="ParameterParsing.cs" />
-    <Compile Include="PrimToMesh.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Utilities.cs" />
     <Compile Include="WebGLConstants.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -236,6 +218,16 @@
     <Content Include="openjpeg-dotnet.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CommonEntities\CommonEntities.csproj">
+      <Project>{ded4bc9a-cfbd-453d-814f-b3850d14ff27}</Project>
+      <Name>CommonEntities</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Util\Util.csproj">
+      <Project>{dab7cef5-c7c1-4dfa-85d7-267658efc466}</Project>
+      <Name>Util</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">

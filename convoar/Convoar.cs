@@ -21,6 +21,9 @@ using System.Text;
 
 using OpenSim.Services.Interfaces;
 
+using org.herbal3d.cs.Util;
+using org.herbal3d.cs.os.CommonEntities;
+
 namespace org.herbal3d.convoar {
 
     // Class passed around for global context for this region module instance.
@@ -29,13 +32,13 @@ namespace org.herbal3d.convoar {
     public class GlobalContext {
         public ConvoarParams parms;
         public ConvoarStats stats;
-        public Logger log;
+        public BLogger log;
         public string contextName;  // a unique identifier for this context -- used in filenames, ...
         public string version;
         public string buildDate;
         public string gitCommit;
 
-        public GlobalContext(ConvoarParams pParms, Logger pLog)
+        public GlobalContext(ConvoarParams pParms, BLogger pLog)
         {
             parms = pParms;
             log = pLog;
@@ -76,7 +79,8 @@ namespace org.herbal3d.convoar {
         // If run from the command line, create instance and call 'Start' with args.
         // If run programmatically, create instance and call 'Start' with parameters.
         public void Start(string[] args) {
-            Globals = new GlobalContext(new ConvoarParams(), new LoggerLog4Net()) {
+            BLogger logger = new LoggerLog4Net();
+            Globals = new GlobalContext(new ConvoarParams(logger), logger) {
                 stats = new ConvoarStats()
             };
 
@@ -123,20 +127,20 @@ namespace org.herbal3d.convoar {
             // Base asset storage system -- 'MemAssetService' is in-memory storage
             using (MemAssetService memAssetService = new MemAssetService()) {
 
-                // 'assetFetcher' is the asset cache and fetching code -- where all the mesh,
+                // 'assetManager' is the asset cache and fetching code -- where all the mesh,
                 //    material, and instance information is stored for later processing.
-                using (IAssetFetcher assetFetcher = new OSAssetFetcher(memAssetService)) {
+                using (AssetManager assetManager = new OSAssetFetcher(memAssetService, Globals.log, Globals.parms)) {
 
                     try {
-                        LoadOAR(memAssetService, assetFetcher, bScene => {
+                        LoadOAR(memAssetService, assetManager, bScene => {
                             Globals.contextName = bScene.name;
 
                             Globals.log.DebugFormat("{0} Scene created. name={1}, instances={2}",
                                 _logHeader, bScene.name, bScene.instances.Count);
-                            Globals.log.DebugFormat("{0}    num assetFetcher.images={1}", _logHeader, assetFetcher.Images.Count);
-                            Globals.log.DebugFormat("{0}    num assetFetcher.materials={1}", _logHeader, assetFetcher.Materials.Count);
-                            Globals.log.DebugFormat("{0}    num assetFetcher.meshes={1}", _logHeader, assetFetcher.Meshes.Count);
-                            Globals.log.DebugFormat("{0}    num assetFetcher.renderables={1}", _logHeader, assetFetcher.Renderables.Count);
+                            Globals.log.DebugFormat("{0}    num assetFetcher.images={1}", _logHeader, assetManager.Images.Count);
+                            Globals.log.DebugFormat("{0}    num assetFetcher.materials={1}", _logHeader, assetManager.Materials.Count);
+                            Globals.log.DebugFormat("{0}    num assetFetcher.meshes={1}", _logHeader, assetManager.Meshes.Count);
+                            Globals.log.DebugFormat("{0}    num assetFetcher.renderables={1}", _logHeader, assetManager.Renderables.Count);
 
                             if (ConvOAR.Globals.parms.P<bool>("AddTerrainMesh")) {
                                 ConvOAR.Globals.log.DebugFormat("{0} Adding terrain to scene", _logHeader);
@@ -162,17 +166,17 @@ namespace org.herbal3d.convoar {
                             }
                             */
                             if (Globals.parms.P<bool>("MergeSharedMaterialMeshes")) {
-                                using (BSceneManipulation optimizer = new BSceneManipulation()) {
+                                using (BSceneManipulation optimizer = new BSceneManipulation(Globals.log, Globals.parms)) {
                                     bScene = optimizer.RebuildSceneBasedOnSharedMeshes(bScene);
                                     Globals.log.DebugFormat("{0} merged meshes in scene. numInstances={1}", _logHeader, bScene.instances.Count);
                                 }
                             }
 
                             // Output the transformed scene as Gltf version 2
-                            Gltf gltf = new Gltf(bScene.name);
+                            Gltf gltf = new Gltf(bScene.name, Globals.log, Globals.parms);
 
                             try {
-                                gltf.LoadScene(bScene, assetFetcher);
+                                gltf.LoadScene(bScene, assetManager);
 
                                 Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
                                 Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
@@ -182,9 +186,9 @@ namespace org.herbal3d.convoar {
                                 Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
                                 Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
 
-                                PersistRules.ResolveAndCreateDir(gltf.persist.filename);
+                                PersistRules.ResolveAndCreateDir(gltf.persist.Filename);
 
-                                using (StreamWriter outt = File.CreateText(gltf.persist.filename)) {
+                                using (StreamWriter outt = File.CreateText(gltf.persist.Filename)) {
                                     gltf.ToJSON(outt);
                                 }
                                 gltf.WriteBinaryFiles();
@@ -249,7 +253,7 @@ namespace org.herbal3d.convoar {
         }
 
         // Initialization if using ConvOAR programmatically.
-        public void Start(ConvoarParams pParameters, Logger pLogger) {
+        public void Start(ConvoarParams pParameters, BLogger pLogger) {
             Globals = new GlobalContext(pParameters, pLogger) {
                 stats = new ConvoarStats()
             };
@@ -261,12 +265,12 @@ namespace org.herbal3d.convoar {
         //     processes the input files. Note that the filename can be an 'http:' type URL.
         // (Tried building this with Promises but had execution problems so resorted to using a callback)
         public delegate void BSceneLoadedCallback(BScene loadedScene);
-        public bool LoadOAR(IAssetService assetService, IAssetFetcher assetFetcher, BSceneLoadedCallback loadedCallback) {
+        public bool LoadOAR(IAssetService assetService, AssetManager assetManager, BSceneLoadedCallback loadedCallback) {
             bool ret = false;
 
-            BConverterOS converter = new BConverterOS();
+            BConverterOS converter = new BConverterOS(Globals.log, Globals.parms);
 
-            converter.ConvertOarToScene(assetService, assetFetcher)
+            converter.ConvertOarToScene(assetService, assetManager)
                 .Catch(e => {
                     ConvOAR.Globals.log.ErrorFormat("{0} LoadOAR exception: {1}", _logHeader, e);
                     throw (e);

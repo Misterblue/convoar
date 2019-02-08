@@ -17,16 +17,16 @@ using System;
 
 using log4net;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.Util {
 
-    public abstract class Logger {
+    public abstract class BLogger {
         public abstract void SetVerbose(bool val);
         public abstract void Log(string msg, params Object[] args);
         public abstract void DebugFormat(string msg, params Object[] args);
         public abstract void ErrorFormat(string msg, params Object[] args);
     }
 
-    public class LoggerConsole : Logger {
+    public class LoggerConsole : BLogger {
         private static readonly ILog _log = LogManager.GetLogger("convoar");
 
         private bool _verbose = false;
@@ -51,7 +51,7 @@ namespace org.herbal3d.convoar {
     }
 
     // Do logging with Log4net
-    public class LoggerLog4Net : Logger {
+    public class LoggerLog4Net : BLogger {
         private static readonly ILog _log = LogManager.GetLogger("convoar");
         private static string _logHeader = "[Logger]";
 

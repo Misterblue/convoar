@@ -61,7 +61,7 @@ namespace org.herbal3d.convoar.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Fri 06/01/2018 16:56:35.70 
+        ///   Looks up a localized string similar to Thu 02/07/2019 14:40:02.36 
         ///.
         /// </summary>
         internal static string BuildDate {
@@ -71,7 +71,7 @@ namespace org.herbal3d.convoar.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 39736a4490321ea73bd6e06405b30d36f81ca343
+        ///   Looks up a localized string similar to 53c1d3e6ab3c2ea5cf898d61ad41055c73f3c3a1
         ///.
         /// </summary>
         internal static string GitCommit {

@@ -25,11 +25,11 @@ using System.IO;
 
 using RSG;
 
-using log4net;
+using org.herbal3d.cs.Util;
 
 using OMV = OpenMetaverse;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
 
     // Classes to handle persistance of output.
     // The converted images go somewhere for later fetching.
@@ -104,36 +104,42 @@ namespace org.herbal3d.convoar {
               { TargetType.Default, ImageFormat.Png },
         };
 
-        public string baseDirectory { get; set; }
+        public string BaseDirectory { get; set; }
         private AssetType _assetType;
         private TargetType _targetType;
         private string _assetInfo;
 
+        private BLogger _log;
+        private IParameters _params;
+
     #pragma warning disable 414
-        private static string _logHeader = "[PersistRules]";
+        private static readonly string _logHeader = "[PersistRules]";
     #pragma warning restore 414
 
         // Rules for storing files into TargetDir and into type specific sub-directory therein
-        public PersistRules(AssetType pAssetType, string pInfo) {
-            PersistInit(pAssetType, pInfo, TargetType.Default);
+        public PersistRules(AssetType pAssetType, string pInfo, BLogger pLog, IParameters pParams) {
+            PersistInit(pAssetType, pInfo, TargetType.Default, pLog, pParams);
         }
 
-        public PersistRules(AssetType pAssetType, string pInfo, TargetType pTargetType) {
-            PersistInit(pAssetType, pInfo, pTargetType);
+        public PersistRules(AssetType pAssetType, string pInfo, TargetType pTargetType, BLogger pLog, IParameters pParams) {
+            PersistInit(pAssetType, pInfo, pTargetType, pLog, pParams);
         }
 
         public PersistRules Clone() {
-            PersistRules pr = new PersistRules(this._assetType, this._assetInfo, this._targetType);
-            pr.baseDirectory = this.baseDirectory;
+            PersistRules pr = new PersistRules(_assetType, _assetInfo, _targetType, _log, _params) {
+                BaseDirectory = this.BaseDirectory
+            };
             return pr;
         }
 
-        private void PersistInit(AssetType pAssetType, string pInfo, TargetType pTargetType) {
+        private void PersistInit(AssetType pAssetType, string pInfo, TargetType pTargetType, BLogger pLog, IParameters pParams) {
             _assetType = pAssetType;
             _assetInfo = pInfo;
             _targetType = FigureOutTargetType();
+            _log = pLog;
+            _params = pParams;
 
-            baseDirectory = AssetTypeToSubDir[_assetType];
+            BaseDirectory = AssetTypeToSubDir[_assetType];
         }
 
         // If target type is not specified, select the image type depending on parameters and transparency
@@ -143,22 +149,22 @@ namespace org.herbal3d.convoar {
             // If target type is not specified, select the image type depending on parameters and transparency
             if (_targetType == TargetType.Default) {
                 if (_assetType == AssetType.Image) {
-                    ret = TextureFormatToTargetType[ConvOAR.Globals.parms.P<string>("PreferredTextureFormatIfNoTransparency").ToLower()];
+                    ret = TextureFormatToTargetType[_params.P<string>("PreferredTextureFormatIfNoTransparency").ToLower()];
                 }
                 if (_assetType == AssetType.ImageTrans) {
-                    ret = TextureFormatToTargetType[ConvOAR.Globals.parms.P<string>("PreferredTextureFormat").ToLower()];
+                    ret = TextureFormatToTargetType[_params.P<string>("PreferredTextureFormat").ToLower()];
                 }
             }
             return ret;
         }
 
-        public string filename {
+        public string Filename {
             get {
                 return CreateFilename();
             }
         }
 
-        public string uri {
+        public string Uri {
             get {
                 return CreateURI();
             }
@@ -169,26 +175,26 @@ namespace org.herbal3d.convoar {
             if (imageInfo.image != null && !File.Exists(texFilename)) {
                 Image texImage = imageInfo.image;
                 try {
-                    // _context.log.DebugFormat("{0} WriteOutImageForEP: id={1}, hasAlpha={2}, format={3}",
+                    // _log.DebugFormat("{0} WriteOutImageForEP: id={1}, hasAlpha={2}, format={3}",
                     //                 _logHeader, faceInfo.textureID, faceInfo.hasAlpha, texImage.PixelFormat);
                     PersistRules.ResolveAndCreateDir(texFilename);
                     texImage.Save(texFilename, TargetTypeToImageFormat[_targetType]);
                 }
                 catch (Exception e) {
-                    ConvOAR.Globals.log.ErrorFormat("{0} FAILED PNG FILE CREATION: {0}", e);
+                    _log.ErrorFormat("{0} FAILED PNG FILE CREATION: {0}", e);
                 }
             }
         }
 
 
         private string CreateFilename() {
-            // string fnbase = JoinFilePieces(ConvOAR.Globals.parms.OutputDir, baseDirectory);
-            string fnbase = baseDirectory;
+            // string fnbase = JoinFilePieces(_params.P<string>("OutputDir"), baseDirectory);
+            string fnbase = BaseDirectory;
             return JoinFilePieces(fnbase, _assetInfo + "." + TargetTypeToExtension[_targetType]);
         }
 
         private string CreateURI() {
-            string uribase = JoinURIPieces(ConvOAR.Globals.parms.P<string>("URIBase"), baseDirectory);
+            string uribase = JoinURIPieces(_params.P<string>("URIBase"), BaseDirectory);
             return JoinURIPieces(uribase, _assetInfo + "." + TargetTypeToExtension[_targetType]);
         }
 
@@ -208,8 +214,9 @@ namespace org.herbal3d.convoar {
                 }
             }
             catch (Exception e) {
-                ConvOAR.Globals.log.ErrorFormat("{0} Failed creation of GLTF file directory. dir={1}, e: {2}",
-                            _logHeader, absDir, e);
+                // _log.ErrorFormat("{0} Failed creation of directory. dir={1}, e: {2}",
+                //             _logHeader, absDir, e);
+                var temp = e;   // supress warning
                 return null;
             }
             return absDir;

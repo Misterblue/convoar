@@ -20,7 +20,9 @@ using System.Drawing.Drawing2D;
 
 using OMV = OpenMetaverse;
 
-namespace org.herbal3d.convoar {
+using org.herbal3d.cs.Util;
+
+namespace org.herbal3d.cs.os.CommonEntities {
 
     public class ImageInfo {
         public EntityHandle handle;
@@ -33,16 +35,20 @@ namespace org.herbal3d.convoar {
         public int ySize = 0;
 
 #pragma warning disable 414
-        private string _logHeader = "[ImageInfo]";
+        private readonly string _logHeader = "[ImageInfo]";
 #pragma warning restore 414
+        private readonly BLogger _log;
+        private readonly IParameters _params;
 
-        public ImageInfo() : this(new EntityHandleUUID() ){
+        public ImageInfo(BLogger pLog, IParameters pParams) : this(new EntityHandleUUID(), pLog, pParams ){
         }
 
-        public ImageInfo(EntityHandle pHandle) {
+        public ImageInfo(EntityHandle pHandle, BLogger pLog, IParameters pParams) {
             handle = pHandle;
             imageIdentifier = handle.GetUUID(); // image is unique unless underlying set
-            persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString());
+            _log = pLog;
+            _params = pParams;
+            persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString(), pLog, pParams);
         }
 
         public ImageInfo(Image pImage) {
@@ -54,7 +60,7 @@ namespace org.herbal3d.convoar {
         // Create a new ImageInfo that has a copy of all the information from this one.
         // THis creates a copy of the image so it can be modified without touching the original.
         public ImageInfo Clone() {
-            ImageInfo ret = new ImageInfo();
+            ImageInfo ret = new ImageInfo(_log, _params);
             if (image != null) {
                 ret.SetImage((Image)image.Clone());
             }
@@ -68,12 +74,12 @@ namespace org.herbal3d.convoar {
             ySize = image.Height;
             hasTransprency = CheckForTransparency();
             if (hasTransprency) {
-                persist = new PersistRules(PersistRules.AssetType.ImageTrans, handle.ToString());
+                persist = new PersistRules(PersistRules.AssetType.ImageTrans, handle.ToString(), _log, _params);
             }
             else {
-                persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString());
+                persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString(), _log, _params);
             }
-            // ConvOAR.Globals.log.DebugFormat("{0} SetImage. ID={1}, xSize={2}, ySize={3}, hasTrans={4}",
+            // _log.DebugFormat("{0} SetImage. ID={1}, xSize={2}, ySize={3}, hasTrans={4}",
             //             _logHeader, handle, xSize, ySize, hasTransprency);
         }
 
@@ -88,8 +94,7 @@ namespace org.herbal3d.convoar {
             if (image != null) {
                 if (Image.IsAlphaPixelFormat(image.PixelFormat)) {
                     // The image could have alpha values in it
-                    Bitmap bitmapImage = image as Bitmap;
-                    if (bitmapImage != null) {
+                    if (image is Bitmap bitmapImage) {
                         for (int xx = 0; xx < bitmapImage.Width; xx++) {
                             for (int yy = 0; yy < bitmapImage.Height; yy++) {
                                 if (bitmapImage.GetPixel(xx, yy).A != 255) {

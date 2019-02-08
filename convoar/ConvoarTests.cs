@@ -22,6 +22,9 @@ using System.Threading.Tasks;
 
 using OpenSim.Region.Framework.Scenes;
 
+using org.herbal3d.cs.Util;
+using org.herbal3d.cs.os.CommonEntities;
+
 using OMV = OpenMetaverse;
 using OMVR = OpenMetaverse.Rendering;
 
@@ -45,8 +48,14 @@ namespace org.herbal3d.convoar.tests {
     [TestFixture]
     public class ParameterParsing : ConvoarTestCase {
 
+        ConvoarParams _params;
+        BLogger _log;
+
         [TestFixtureSetUp]
         public void Init() {
+            _log = new LoggerConsole();
+            _params = new ConvoarParams(_log);
+            ConvOAR.Globals = new GlobalContext(_params, _log);
         }
 
         [TestFixtureTearDown]
@@ -55,8 +64,7 @@ namespace org.herbal3d.convoar.tests {
 
         [TestCase]
         public void ProcessArgsParameter() {
-            ConvoarParams parms = new ConvoarParams();
-            bool oldExportTextures = parms.P<bool>("ExportTextures");
+            bool oldExportTextures = _params.P<bool>("ExportTextures");
             string inputOARFileParameterName = "InputOAR";
             string inputOARFile = "AnOARFileToRead.oar";
             string outputDirectory = "this/that";
@@ -68,12 +76,12 @@ namespace org.herbal3d.convoar.tests {
                 "--verticesmaxForBuffer", "1234",
                 inputOARFile
             };
-            parms.SetParameterValue("ExportTextures", "false");
-            parms.SetParameterValue("MergeStaticMeshes", "false");
+            _params.SetParameterValue("ExportTextures", "false");
+            _params.SetParameterValue("MergeStaticMeshes", "false");
 
             Exception exceptionCode = null;
             try {
-                parms.MergeCommandLine(args, null, inputOARFileParameterName);
+                _params.MergeCommandLine(args, null, inputOARFileParameterName);
             }
             catch (Exception e) {
                 exceptionCode = e;
@@ -83,29 +91,28 @@ namespace org.herbal3d.convoar.tests {
                 Assert.Fail("Exception merging parameters: " + exceptionCode.ToString());
             }
             else {
-                Assert.AreEqual(outputDirectory, parms.P<string>("OutputDir"), "Output directory specification short form was not set");
-                Assert.AreEqual(true, parms.P<bool>("ExportTextures"), "ExportTextures was not parameterized properly");
-                Assert.AreEqual("GIF", parms.P<string>("PreferredTextureFormat"), "Preferred texture format was not set");
-                Assert.AreEqual(true, parms.P<bool>("MergeStaticMeshes"), "MergeStaticMeshes was not set");
-                Assert.AreEqual(1234, parms.P<int>("VerticesMaxForBuffer"), "VerticesMaxForBuffer was not set");
-                Assert.AreEqual(inputOARFile, parms.P<string>("InputOAR"), "The trailing filename was not set");
+                Assert.AreEqual(outputDirectory, _params.P<string>("OutputDir"), "Output directory specification short form was not set");
+                Assert.AreEqual(true, _params.P<bool>("ExportTextures"), "ExportTextures was not parameterized properly");
+                Assert.AreEqual("GIF", _params.P<string>("PreferredTextureFormat"), "Preferred texture format was not set");
+                Assert.AreEqual(true, _params.P<bool>("MergeStaticMeshes"), "MergeStaticMeshes was not set");
+                Assert.AreEqual(1234, _params.P<int>("VerticesMaxForBuffer"), "VerticesMaxForBuffer was not set");
+                Assert.AreEqual(inputOARFile, _params.P<string>("InputOAR"), "The trailing filename was not set");
             }
         }
 
         [TestCase]
         public void ProcessNoParameter() {
-            ConvoarParams parms = new ConvoarParams();
             string outputDirectory = "this/that";
             string[] args = new string[] {
                 "-d", outputDirectory,
                 "--noExportTextures",
                 "--preferredTextureFormat", "GIF",
             };
-            parms.SetParameterValue("ExportTextures", "true");
+            _params.SetParameterValue("ExportTextures", "true");
 
             Exception exceptionCode = null;
             try {
-                parms.MergeCommandLine(args);
+                _params.MergeCommandLine(args);
             }
             catch (Exception e) {
                 exceptionCode = e;
@@ -115,7 +122,7 @@ namespace org.herbal3d.convoar.tests {
                 Assert.Fail("Exception merging parameters: " + exceptionCode.ToString());
             }
             else {
-                Assert.AreEqual(false, parms.P<bool>("ExportTextures"), "ExportTextures was not set to false");
+                Assert.AreEqual(false, _params.P<bool>("ExportTextures"), "ExportTextures was not set to false");
             }
         }
     }
@@ -125,32 +132,33 @@ namespace org.herbal3d.convoar.tests {
     [TestFixture]
     public class TerrainMeshGeneration : ConvoarTestCase {
 
-        ConvoarParams _parms;
-        Logger _log;
+        ConvoarParams _params;
+        BLogger _log;
         MemAssetService _assetService;
-        private IAssetFetcher _assetFetcher = null;
+        private AssetManager _assetManager = null;
         private BConverterOS _converter = null;
         private OMV.Primitive.TextureEntryFace _defaultTexture = null;
         Scene _scene;
 
         [TestFixtureSetUp]
         public void Init() {
-            _parms = new ConvoarParams();
             _log = new LoggerConsole();
-            ConvOAR.Globals = new GlobalContext(_parms, _log);
+            _params = new ConvoarParams(_log);
+            ConvOAR.Globals = new GlobalContext(_params, _log);
             _assetService = new MemAssetService();
-            _converter = new BConverterOS();
+            _converter = new BConverterOS(_log, _params);
             _scene = _converter.CreateScene(_assetService, "convoar-test");
-            _assetFetcher = new OSAssetFetcher(_assetService);
+            _assetManager = new OSAssetFetcher(_assetService, _log, _params);
             OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
-            _defaultTexture = new OMV.Primitive.TextureEntryFace(null);
-            _defaultTexture.TextureID = defaultTextureID;
+            _defaultTexture = new OMV.Primitive.TextureEntryFace(null) {
+                TextureID = defaultTextureID
+            };
         }
 
         [TestFixtureTearDown]
         public void TearDown() {
             _scene.Close();
-            _assetFetcher.Dispose();
+            _assetManager.Dispose();
             _assetService.Dispose();
         }
 
@@ -161,9 +169,9 @@ namespace org.herbal3d.convoar.tests {
         [TestCase(100, 200)]
         public void VerifyMeshCoversWholeRegion(int heightmapSize, int regionSize) {
             float[,] heightMap = CreateHeightmap(heightmapSize);
-            PrimToMesh mesher = new PrimToMesh();
+            PrimToMesh mesher = new PrimToMesh(_log, _params);
             DisplayableRenderable dr = mesher.MeshFromHeightMap(heightMap, regionSize, regionSize,
-                                    _assetFetcher, _defaultTexture);
+                                    _assetManager, _defaultTexture);
             RenderableMeshGroup rmg = dr as RenderableMeshGroup;
             Assert.IsTrue(rmg != null, "MeshFromHeightMap did not return a RenderableMeshGroup");
             Assert.AreEqual(rmg.meshes.Count, 1, "MeshFromHeightMap returned more than one mesh");

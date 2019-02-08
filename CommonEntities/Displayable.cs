@@ -22,9 +22,11 @@ using System.Threading.Tasks;
 
 using OpenSim.Region.Framework.Scenes;
 
+using org.herbal3d.cs.Util;
+
 using OMV = OpenMetaverse;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
     /// <summary>
     /// A set of classes that hold viewer displayable items. These can be
     /// meshes, procedures, or whatever.
@@ -71,15 +73,18 @@ namespace org.herbal3d.convoar {
         public SceneObjectPart baseSOP = null;
         public BAttributes attributes = new BAttributes();
 
-        public Displayable() {
+        private readonly IParameters _params;
+
+        public Displayable(IParameters pParams) {
             handle = new EntityHandleUUID();
+            _params = pParams;
         }
 
-        public Displayable(DisplayableRenderable pRenderable) : this() {
+        public Displayable(DisplayableRenderable pRenderable, IParameters pParams) : this(pParams) {
             renderable = pRenderable;
         }
 
-        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop) : this() {
+        public Displayable(DisplayableRenderable pRenderable, SceneObjectPart sop, IParameters pParams) : this(pParams) {
             name = sop.Name;
             baseSOP = sop;
             baseUUID = sop.UUID;
@@ -89,7 +94,7 @@ namespace org.herbal3d.convoar {
                 offsetPosition = baseSOP.OffsetPosition;
                 offsetRotation = baseSOP.RotationOffset;
             }
-            if (ConvOAR.Globals.parms.P<bool>("DisplayTimeScaling")) {
+            if (_params.P<bool>("DisplayTimeScaling")) {
                 scale = sop.Scale;
             }
 

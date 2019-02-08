@@ -30,24 +30,36 @@ using OMV = OpenMetaverse;
 using OMVA = OpenMetaverse.Assets;
 using OpenMetaverse.Imaging;
 
+using org.herbal3d.cs.Util;
+
 using CSJ2K;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
 
     // A Promise based interface to the asset fetcher
     /// <summary>
     /// A Promise based interface to the asset fetcher.
     /// Also includes storage for global meshes, materials, and textures.
     /// </summary>
-    public abstract class IAssetFetcher : IDisposable {
+    public abstract class AssetManager : IDisposable {
+
+        // Fetching operations that happen through to the underlying simulator asset system
         public abstract IPromise<Image> FetchTextureAsImage(EntityHandle handle);
         public abstract IPromise<byte[]> FetchRawAsset(EntityHandle handle);
         public abstract void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data);
         public abstract void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage);
 
 #pragma warning disable 414     // disable 'assigned but not used' warning
-        private static readonly string _logHeader = "[IAssetFetcher]";
+        private static readonly string _logHeader = "[AssetFetcher]";
 #pragma warning restore 414
+
+        protected readonly BLogger _log;
+        protected readonly IParameters _params;
+
+        public AssetManager(BLogger pLog, IParameters pParam) {
+            _log = pLog;
+            _params = pParam;
+        }
 
         // Displayables are the linksetable prim equivilient
         // The top Displayable is the root prim and the children Displayables are the linkset members
@@ -72,7 +84,7 @@ namespace org.herbal3d.convoar {
             Images.Clear();
         }
 
-        public IAssetFetcher() {
+        public AssetManager() {
             Displayables = new Dictionary<BHash, Displayable>();
             Renderables = new Dictionary<BHash, DisplayableRenderable>();
             Meshes = new OMV.DoubleDictionary<BHash, EntityHandle, MeshInfo>();
@@ -115,7 +127,7 @@ namespace org.herbal3d.convoar {
                         }
                     }
                     catch (Exception e) {
-                        ConvOAR.Globals.log.ErrorFormat("{0} GetRenderable: builder exception: {1}", _logHeader, e);
+                        _log.ErrorFormat("{0} GetRenderable: builder exception: {1}", _logHeader, e);
                     }
                     Renderables.Add(hash, renderable);
                 }
@@ -150,10 +162,8 @@ namespace org.herbal3d.convoar {
                         Meshes.Add(hash, meshInfo.handle, meshInfo);
                         // Assert the hash we're indexing it under is the one in meshInfo
                         if (!hash.Equals(meshInfo.GetBHash())) {
-                            ConvOAR.Globals.log.ErrorFormat(
-                                "AssetFetcher.GetMeshInfo: adding mesh with different hash!");
-                            ConvOAR.Globals.log.ErrorFormat(
-                                "AssetFetcher.GetMeshInfo: meshInfo.handle={0}, passed hash={1}, meshInfo.hash={2}",
+                            _log.ErrorFormat( "AssetFetcher.GetMeshInfo: adding mesh with different hash!");
+                            _log.ErrorFormat( "AssetFetcher.GetMeshInfo: meshInfo.handle={0}, passed hash={1}, meshInfo.hash={2}",
                                         meshInfo.handle, hash.ToString(), meshInfo.GetBHash().ToString());
                         }
                     }
@@ -265,7 +275,7 @@ namespace org.herbal3d.convoar {
 
     // An AssetFetcher that does not have an asset system behind it but is used for the
     //    lists and their access functions in the base class;
-    public class NullAssetFetcher : IAssetFetcher {
+    public class NullAssetFetcher : AssetManager {
 
         public NullAssetFetcher() : base() {
         }
@@ -296,13 +306,13 @@ namespace org.herbal3d.convoar {
     }
 
     // Fetch an asset from  the OpenSimulator asset system
-    public class OSAssetFetcher : IAssetFetcher {
+    public class OSAssetFetcher : AssetManager {
     #pragma warning disable 414
         private readonly string _logHeader = "[OSAssetFetcher]";
     #pragma warning restore 414
         private IAssetService _assetService;
 
-        public OSAssetFetcher(IAssetService pAssetService) : base() {
+        public OSAssetFetcher(IAssetService pAssetService, BLogger pLog, IParameters pParam) : base(pLog, pParam) {
             _assetService = pAssetService;
         }
 
@@ -351,7 +361,7 @@ namespace org.herbal3d.convoar {
                 Image imageDecoded = null;
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
-                        if (ConvOAR.Globals.parms.P<bool>("UseOpenJPEG")) {
+                        if (_params.P<bool>("UseOpenJPEG")) {
                             if (OpenJPEG.DecodeToImage(asset.Data, out ManagedImage mimage, out imageDecoded)) {
                                 mimage = null;  // 'mimage' is unused so release the reference
                             }

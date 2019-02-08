@@ -20,13 +20,18 @@
 using System;
 using System.Text;
 
+using org.herbal3d.cs.Util;
+
 using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
-    public class ConvoarParams {
+    public class ConvoarParams : IParameters {
         private static readonly string _logHeader = "[CONVOAR PARAMS]";
 
-        public ConvoarParams() {
+        private readonly BLogger _log;
+
+        public ConvoarParams(BLogger pLog) {
+            _log = pLog;
             SetParameterDefaultValues();
         }
 
@@ -205,10 +210,10 @@ namespace org.herbal3d.convoar {
                         // System.Console.WriteLine("SetValue: setting value on {0} to {1}", this.name, setValue);
                         // Store the parsed value
                         value = setValue;
-                        ConvOAR.Globals.log.DebugFormat("{0} SetValue. {1} = {2}", _logHeader, name, setValue);
+                        context._log.DebugFormat("{0} SetValue. {1} = {2}", _logHeader, name, setValue);
                     }
                     catch (Exception e) {
-                        ConvOAR.Globals.log.ErrorFormat("{0} Failed parsing parameter value '{1}': '{2}'", _logHeader, valAsString, e);
+                        context._log.ErrorFormat("{0} Failed parsing parameter value '{1}': '{2}'", _logHeader, valAsString, e);
                     }
                 }
                 else {
@@ -216,10 +221,10 @@ namespace org.herbal3d.convoar {
                     try {
                         T setValue = (T)Convert.ChangeType(valAsString, GetValueType());
                         value = setValue;
-                        ConvOAR.Globals.log.DebugFormat("{0} SetValue. Converter. {1} = {2}", _logHeader, name, setValue);
+                        context._log.DebugFormat("{0} SetValue. Converter. {1} = {2}", _logHeader, name, setValue);
                     }
                     catch (Exception e) {
-                        ConvOAR.Globals.log.ErrorFormat("{0} Conversion failed for {1}: {2}", _logHeader, this.name, e);
+                        context._log.ErrorFormat("{0} Conversion failed for {1}: {2}", _logHeader, this.name, e);
                     }
                 }
             }
@@ -322,7 +327,7 @@ namespace org.herbal3d.convoar {
                     ret = pdef.Value();
                 }
                 else {
-                    ConvOAR.Globals.log.ErrorFormat("{0} Fetched unknown parameter. Param={1}", _logHeader, paramName);
+                    _log.ErrorFormat("{0} Fetched unknown parameter. Param={1}", _logHeader, paramName);
                 }
             }
             return ret;

@@ -20,9 +20,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using org.herbal3d.cs.Util;
+
 using OMV = OpenMetaverse;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
     public class BInstance {
         public EntityHandle handle = new EntityHandleUUID();
         public OMV.Vector3 Position = OMV.Vector3.Zero;

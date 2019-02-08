@@ -20,10 +20,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using org.herbal3d.cs.Util;
+
 using OMV = OpenMetaverse;
 using OMVR = OpenMetaverse.Rendering;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
 
     public class MaterialInfo {
         public EntityHandleUUID handle;
@@ -39,13 +41,16 @@ namespace org.herbal3d.convoar {
         public bool twoSided;
 
         private BHash _hash = null;
+        private readonly IParameters _params;
 
-        public MaterialInfo(OMV.Primitive.TextureEntryFace defaultTexture) {
+        public MaterialInfo(OMV.Primitive.TextureEntryFace defaultTexture, IParameters pParams) {
             faceTexture = new OMV.Primitive.TextureEntryFace(defaultTexture);
+            _params = pParams;
         }
 
-        public MaterialInfo(OMVR.Face face, OMV.Primitive.TextureEntryFace defaultTexture) {
+        public MaterialInfo(OMVR.Face face, OMV.Primitive.TextureEntryFace defaultTexture, IParameters pParams) {
             handle = new EntityHandleUUID();
+            _params = pParams;
             faceTexture = face.TextureFace;
             if (faceTexture == null) {
                 faceTexture = defaultTexture;
@@ -58,7 +63,7 @@ namespace org.herbal3d.convoar {
             bump = faceTexture.Bump;
             glow = faceTexture.Glow;
             shiny = faceTexture.Shiny;
-            twoSided = ConvOAR.Globals.parms.P<bool>("DoubleSided");
+            twoSided = _params.P<bool>("DoubleSided");
         }
 
         public BHash GetBHash() {
@@ -81,7 +86,7 @@ namespace org.herbal3d.convoar {
                     hasher.Add(textureID.Value.GetHashCode());
                 }
                 _hash = hasher.Finish();
-                // ConvOAR.Globals.log.DebugFormat("MaterialInfo.GetBHash: rgba={0},bump={1},glow={2},shiny={3},tex={4},hash={5}",
+                // _log.DebugFormat("MaterialInfo.GetBHash: rgba={0},bump={1},glow={2},shiny={3},tex={4},hash={5}",
                 //     RGBA, bump, glow, shiny, textureID.HasValue ? textureID.Value.ToString() : "none", _hash.ToString());
             }
             return _hash;

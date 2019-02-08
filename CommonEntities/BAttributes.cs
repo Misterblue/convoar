@@ -20,7 +20,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
     // Holds a list of attributes.
     // These are name/value pairs and are used to pass information from 
     //    an entitys sources representation to the output representation.

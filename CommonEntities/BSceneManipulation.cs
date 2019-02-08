@@ -20,16 +20,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using org.herbal3d.cs.Util;
+
 using OMV = OpenMetaverse;
 using OMVR = OpenMetaverse.Rendering;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
 
     // Representation of instances and whole scene information
     public class BSceneManipulation : IDisposable {
-        private static string _logHeader = "[BSceneManipulation]";
+        private static readonly string _logHeader = "[BSceneManipulation]";
+        private readonly BLogger _log;
+        private readonly IParameters _params;
 
-        public BSceneManipulation() {
+        public BSceneManipulation(BLogger pLog, IParameters pParams) {
+            _log = pLog;
+            _params = pParams;
         }
 
         public void Dispose() {
@@ -42,20 +48,20 @@ namespace org.herbal3d.convoar {
             using (SceneAnalysis analysis = new SceneAnalysis(bScene)) {
 
                 int lastInstanceCount = newInstances.Count;
-                if (ConvOAR.Globals.parms.P<bool>("SeparateInstancedMeshes")) {
+                if (_params.P<bool>("SeparateInstancedMeshes")) {
                     newInstances.AddRange(SeparateMeshInstances(bScene, analysis));
                 }
                 // Any shared meshes have been gathered into instances in 'newInstances'
                 //     and the meshes have been removed from the shared materials in the analysis.
                 int instancesAdded = newInstances.Count - lastInstanceCount;
-                ConvOAR.Globals.log.DebugFormat("{0} OptimizeScene: BInstances added by mesh instances = {1}", _logHeader, instancesAdded);
+                _log.DebugFormat("{0} OptimizeScene: BInstances added by mesh instances = {1}", _logHeader, instancesAdded);
 
                 lastInstanceCount = newInstances.Count;
-                if (ConvOAR.Globals.parms.P<bool>("MergeSharedMaterialMeshes")) {
+                if (_params.P<bool>("MergeSharedMaterialMeshes")) {
                     newInstances.AddRange(MergeSharedMaterialMeshes(bScene, analysis));
                 }
                 instancesAdded = newInstances.Count - lastInstanceCount;
-                ConvOAR.Globals.log.DebugFormat("{0} OptimizeScene: BInstances added by material sharing = {1}", _logHeader, instancesAdded);
+                _log.DebugFormat("{0} OptimizeScene: BInstances added by material sharing = {1}", _logHeader, instancesAdded);
             }
 
             return bScene;
@@ -71,8 +77,9 @@ namespace org.herbal3d.convoar {
                 newInstances.AddRange(MergeSharedMaterialMeshes(bScene, analysis));
             }
 
-            BScene newScene = new BScene(bScene);
-            newScene.instances = newInstances;
+            BScene newScene = new BScene(bScene) {
+                instances = newInstances
+            };
 
             return newScene;
         }
@@ -115,8 +122,10 @@ namespace org.herbal3d.convoar {
             // meshes organized by the mesh they share (for finding instances of identical mesh
             public Dictionary<BHash, List<InvertedMesh>> sharedMeshes = new Dictionary<BHash, List<InvertedMesh>>();
             public BScene scene;
+            private readonly BLogger _log;
 
-            public SceneAnalysis() {
+            public SceneAnalysis(BLogger pLog) {
+                _log = pLog;
             }
             public SceneAnalysis(BScene bScene) {
                 this.scene = bScene;
@@ -154,7 +163,7 @@ namespace org.herbal3d.convoar {
                 foreach (InvertedMesh imesh in meshList) {
                     BHash materialHash = imesh.renderableMesh.material.GetBHash();
                     if (!meshByMaterial[materialHash].Remove(imesh)) {
-                        ConvOAR.Globals.log.DebugFormat("{0} RemoveMeshesFromMaterials: couldn't remove imesh. matHash={1}",
+                        _log.DebugFormat("{0} RemoveMeshesFromMaterials: couldn't remove imesh. matHash={1}",
                                 _logHeader, materialHash);
                     }
                 }
@@ -165,7 +174,7 @@ namespace org.herbal3d.convoar {
                 foreach (InvertedMesh imesh in meshList) {
                     BHash shapeHash = imesh.renderableMesh.mesh.GetBHash();
                     if (!sharedMeshes[shapeHash].Remove(imesh)) {
-                        ConvOAR.Globals.log.DebugFormat("{0} RemoveMeshesFromShared: couldn't remove imesh. shapeHash={1}",
+                        _log.DebugFormat("{0} RemoveMeshesFromShared: couldn't remove imesh. shapeHash={1}",
                                 _logHeader, shapeHash);
                     }
                 }
@@ -174,10 +183,9 @@ namespace org.herbal3d.convoar {
             public void RemoveMeshesFromScene(List<InvertedMesh> meshList) {
                 // Remove these meshes from the ones that are shared by material
                 foreach (InvertedMesh imesh in meshList) {
-                    RenderableMeshGroup renderableMeshGroup = imesh.containingDisplayableRenderable as RenderableMeshGroup;
-                    if (renderableMeshGroup != null) {
+                    if (imesh.containingDisplayableRenderable is RenderableMeshGroup renderableMeshGroup) {
                         if (!renderableMeshGroup.meshes.Remove(imesh.renderableMesh)) {
-                            ConvOAR.Globals.log.DebugFormat("{0} RemoveMeshesFromScene: couldn't remove imesh.",
+                            _log.DebugFormat("{0} RemoveMeshesFromScene: couldn't remove imesh.",
                                     _logHeader);
                             return;
                         }
@@ -197,8 +205,7 @@ namespace org.herbal3d.convoar {
             // Find all the meshes in passed Displayable and add them to the lists indexed by their material
             //     mesh hashes.
             private void MapMaterialsAndMeshes(BScene pBs, BInstance pInst, Displayable pDisp) {
-                RenderableMeshGroup rmg = pDisp.renderable as RenderableMeshGroup;
-                if (rmg != null) {
+                if (pDisp.renderable is RenderableMeshGroup rmg) {
                     foreach (RenderableMesh rMesh in rmg.meshes) {
                         InvertedMesh imesh = new InvertedMesh(pBs, pInst, pDisp, rmg, rMesh);
 
@@ -235,20 +242,20 @@ namespace org.herbal3d.convoar {
                 // The duplicated meshes usually share a material so pull them together into meshes
                 //    in one instance.
                 // Note: the 'SelectMany' is used to flatten the list of lists
-                int meshShareThreshold = ConvOAR.Globals.parms.P<int>("MeshShareThreshold");
-                ConvOAR.Globals.log.DebugFormat("{0} SeparateMeshes: Separating instanced meshes. threshold={1}",
+                int meshShareThreshold = _params.P<int>("MeshShareThreshold");
+                _log.DebugFormat("{0} SeparateMeshes: Separating instanced meshes. threshold={1}",
                             _logHeader, meshShareThreshold);
 
                 /*
                 foreach (BHash key in analysis.sharedMeshes.Keys) {     // DEBUG DEBUG
-                    ConvOAR.Globals.log.DebugFormat("{0} SeparateMeshes: mesh hash {1} . meshes={2}",       // DEBUG DEBUG
+                    _log.DebugFormat("{0} SeparateMeshes: mesh hash {1} . meshes={2}",       // DEBUG DEBUG
                             _logHeader, key, analysis.sharedMeshes[key].Count);     // DEBUG DEBUG
                 };      // DEBUG DEBUG
                 */
 
                 ret.AddRange(analysis.sharedMeshes.Values.Where(val => val.Count > meshShareThreshold).SelectMany(meshList => {
                     // Creates Instances for the shared messes in this list and also takes the meshes out of 'meshByMaterial'
-                    ConvOAR.Globals.log.DebugFormat("{0} MergeSharedMaterialMeshes: shared mesh hash: {1}/{2}, cnt={3}",
+                    _log.DebugFormat("{0} MergeSharedMaterialMeshes: shared mesh hash: {1}/{2}, cnt={3}",
                             _logHeader, meshList.First().renderableMesh.mesh.GetBHash(),
                             meshList.First().renderableMesh.material.GetBHash(),
                             meshList.Count);
@@ -258,7 +265,7 @@ namespace org.herbal3d.convoar {
                 }).ToList() );
             }
             catch (Exception e) {
-                ConvOAR.Globals.log.DebugFormat("{0} SeparateMeshInstances: exception: {1}", _logHeader, e);
+                _log.DebugFormat("{0} SeparateMeshInstances: exception: {1}", _logHeader, e);
             }
 
             return ret;
@@ -271,18 +278,18 @@ namespace org.herbal3d.convoar {
             try {
                 // 'analysis.meshByMaterial' has all meshes/instances grouped by material used
                 // 'analysis.sharedMeshes' has all meshes grouped by the mesh
-                ConvOAR.Globals.log.DebugFormat("{0} MergeShareMaterialHashes: number of materials = {1}",
+                _log.DebugFormat("{0} MergeShareMaterialHashes: number of materials = {1}",
                                     _logHeader, analysis.meshByMaterial.Count);
 
                 // Merge the meshes and create an Instance containing the new mesh set
                 ret.AddRange(analysis.meshByMaterial.Keys.SelectMany(materialHash => {
-                    ConvOAR.Globals.log.DebugFormat("{0} MergeShareMaterialHashes: material hash {1} . meshes={2}",
+                    _log.DebugFormat("{0} MergeShareMaterialHashes: material hash {1} . meshes={2}",
                                 _logHeader, materialHash, analysis.meshByMaterial[materialHash].Count);
                     return CreateInstancesFromSharedMaterialMeshes(materialHash, analysis.meshByMaterial[materialHash]);
                 }).ToList() );
             }
             catch (Exception e) {
-                ConvOAR.Globals.log.DebugFormat("{0} MergeShareMaterialHashes: exception: {1}", _logHeader, e);
+                _log.DebugFormat("{0} MergeShareMaterialHashes: exception: {1}", _logHeader, e);
             }
 
             return ret;
@@ -320,10 +327,11 @@ namespace org.herbal3d.convoar {
             InvertedMesh rootIMesh = meshes.First();
 
             // The new instance will be at the location of the root mesh with no rotation
-            BInstance inst = new BInstance();
-            inst.Position = rootIMesh.containingInstance.Position;
-            inst.Rotation = OMV.Quaternion.Identity;
-            inst.coordAxis = rootIMesh.containingInstance.coordAxis;
+            BInstance inst = new BInstance {
+                Position = rootIMesh.containingInstance.Position,
+                Rotation = OMV.Quaternion.Identity,
+                coordAxis = rootIMesh.containingInstance.coordAxis
+            };
 
             try {
                 // The mesh we're going to build
@@ -349,21 +357,23 @@ namespace org.herbal3d.convoar {
                     meshInfo.indices.AddRange(imesh.renderableMesh.mesh.indices.Select(ind => ind + indicesBase));
                 }
 
-                RenderableMesh newMesh = new RenderableMesh();
-                newMesh.num = 0;
-                newMesh.material = rootIMesh.renderableMesh.material;   // The material we share
-                newMesh.mesh = meshInfo;
+                RenderableMesh newMesh = new RenderableMesh {
+                    num = 0,
+                    material = rootIMesh.renderableMesh.material,   // The material we share
+                    mesh = meshInfo
+                };
 
                 RenderableMeshGroup meshGroup = new RenderableMeshGroup();
                 meshGroup.meshes.Add(newMesh);
 
-                Displayable displayable = new Displayable(meshGroup);
-                displayable.name = "combinedMaterialMeshes-" + materialHash.ToString();
+                Displayable displayable = new Displayable(meshGroup, _params) {
+                    name = "combinedMaterialMeshes-" + materialHash.ToString()
+                };
 
                 inst.Representation = displayable;
             }
             catch (Exception e) {
-                ConvOAR.Globals.log.ErrorFormat("{0} CreateInstanceFromSharedMaterialMeshes: exception: {1}", _logHeader, e);
+                _log.ErrorFormat("{0} CreateInstanceFromSharedMaterialMeshes: exception: {1}", _logHeader, e);
             }
 
             return inst;
@@ -399,7 +409,7 @@ namespace org.herbal3d.convoar {
         private List<Displayable> PackMeshesIntoDisplayables(List<InvertedMesh> meshList, OMV.Vector3 gPos, CreateNameFunc createName) {
             return meshList.Select(imesh => {
                 /*
-                ConvOAR.Globals.log.DebugFormat("{0} CreateInstanceForSharedMeshes: hash={1}, instPos={2}, dispPos={3}, numVerts={4}",
+                _log.DebugFormat("{0} CreateInstanceForSharedMeshes: hash={1}, instPos={2}, dispPos={3}, numVerts={4}",
                                 _logHeader, imesh.renderableMesh.mesh.GetBHash(),
                                 imesh.containingInstance.Position,
                                 imesh.containingDisplayable.offsetPosition,
@@ -409,11 +419,12 @@ namespace org.herbal3d.convoar {
                 RenderableMeshGroup mesh = new RenderableMeshGroup();
                 mesh.meshes.Add(imesh.renderableMesh);
 
-                Displayable disp = new Displayable(mesh);
-                disp.name = createName(imesh);
-                disp.offsetPosition = imesh.globalPosition - gPos;
-                disp.offsetRotation = imesh.globalRotation;
-                disp.renderable = mesh;
+                Displayable disp = new Displayable(mesh, _params) {
+                    name = createName(imesh),
+                    offsetPosition = imesh.globalPosition - gPos,
+                    offsetRotation = imesh.globalRotation,
+                    renderable = mesh
+                };
 
                 return disp;
             }).ToList();

@@ -20,28 +20,31 @@ using System.Drawing;
 
 using OpenSim.Region.CoreModules.World.LegacyMap;
 
+using org.herbal3d.cs.Util;
+
 using OMV = OpenMetaverse;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using OMVR = OpenMetaverse.Rendering;
 
-namespace org.herbal3d.convoar {
-    public class ConvoarTerrain {
+namespace org.herbal3d.cs.os.CommonEntities {
+    public class Terrain {
 
-        private static string LogHeader = "ConvoarTerrain";
+        private static readonly string LogHeader = "Terrain";
 
         // Create a mesh for the terrain of the current scene
         public static BInstance CreateTerrainMesh(
                             Scene scene,
-                            PrimToMesh assetMesher, IAssetFetcher assetFetcher) {
+                            PrimToMesh assetMesher, AssetManager assetManager,
+                            BLogger pLog, IParameters pParam) {
 
             ITerrainChannel terrainDef = scene.Heightmap;
             int XSize = terrainDef.Width;
             int YSize = terrainDef.Height;
 
             float[,] heightMap = new float[XSize, YSize];
-            if (ConvOAR.Globals.parms.P<bool>("HalfRezTerrain")) {
-                ConvOAR.Globals.log.DebugFormat("{0}: CreateTerrainMesh. creating half sized terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
+            if (pParam.P<bool>("HalfRezTerrain")) {
+                pLog.DebugFormat("{0}: CreateTerrainMesh. creating half sized terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
                 // Half resolution mesh that approximates the heightmap
                 heightMap = new float[XSize/2, YSize/2];
                 for (int xx = 0; xx < XSize; xx += 2) {
@@ -55,7 +58,7 @@ namespace org.herbal3d.convoar {
                 }
             }
             else {
-                ConvOAR.Globals.log.DebugFormat("{0}: CreateTerrainMesh. creating terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
+                pLog.DebugFormat("{0}: CreateTerrainMesh. creating terrain sized <{1},{2}>", LogHeader, XSize/2, YSize/2);
                 for (int xx = 0; xx < XSize; xx++) {
                     for (int yy = 0; yy < YSize; yy++) {
                         heightMap[xx, yy] = terrainDef.GetHeightAtXYZ(xx, yy, 26);
@@ -64,16 +67,17 @@ namespace org.herbal3d.convoar {
             }
 
             // Number found in RegionSettings.cs as DEFAULT_TERRAIN_TEXTURE_3
-            OMV.UUID convoarID = new OMV.UUID(ConvOAR.Globals.parms.P<string>("ConvoarID"));
+            OMV.UUID convoarID = new OMV.UUID(pParam.P<string>("ConvoarID"));
 
             OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
-            OMV.Primitive.TextureEntryFace terrainFace = new OMV.Primitive.TextureEntryFace(null);
-            terrainFace.TextureID = defaultTextureID;
+            OMV.Primitive.TextureEntryFace terrainFace = new OMV.Primitive.TextureEntryFace(null) {
+                TextureID = defaultTextureID
+            };
 
             EntityHandleUUID terrainTextureHandle = new EntityHandleUUID();
-            MaterialInfo terrainMaterialInfo = new MaterialInfo(terrainFace);
+            MaterialInfo terrainMaterialInfo = new MaterialInfo(terrainFace, pParam);
 
-            if (ConvOAR.Globals.parms.P<bool>("CreateTerrainSplat")) {
+            if (pParam.P<bool>("CreateTerrainSplat")) {
                 // Use the OpenSim maptile generator to create a texture for the terrain
                 var terrainRenderer = new TexturedMapTileRenderer();
                 Nini.Config.IConfigSource config = new Nini.Config.IniConfigSource();
@@ -84,13 +88,14 @@ namespace org.herbal3d.convoar {
                 terrainRenderer.TerrainToBitmap(mapbmp);
 
                 // Place the newly created image into the Displayable caches
-                ImageInfo terrainImageInfo = new ImageInfo();
-                terrainImageInfo.handle = terrainTextureHandle;
-                terrainImageInfo.image = mapbmp;
-                terrainImageInfo.resizable = false; // terrain image resolution is not reduced
-                assetFetcher.Images.Add(new BHashULong(terrainTextureHandle.GetHashCode()), terrainTextureHandle, terrainImageInfo);
+                ImageInfo terrainImageInfo = new ImageInfo(pLog, pParam) {
+                    handle = terrainTextureHandle,
+                    image = mapbmp,
+                    resizable = false // terrain image resolution is not reduced
+                };
+                assetManager.Images.Add(new BHashULong(terrainTextureHandle.GetHashCode()), terrainTextureHandle, terrainImageInfo);
                 // Store the new image into the asset system so it can be read later.
-                assetFetcher.StoreTextureImage(terrainTextureHandle, scene.Name + " Terrain", convoarID, mapbmp);
+                assetManager.StoreTextureImage(terrainTextureHandle, scene.Name + " Terrain", convoarID, mapbmp);
                 // Link this image to the material
                 terrainFace.TextureID = terrainTextureHandle.GetUUID();
             }
@@ -98,10 +103,11 @@ namespace org.herbal3d.convoar {
                 // Use the default texture code for terrain
                 terrainTextureHandle = new EntityHandleUUID(defaultTextureID);
                 BHash terrainHash = new BHashULong(defaultTextureID.GetHashCode());
-                assetFetcher.GetImageInfo(terrainHash, () => {
-                    ImageInfo terrainImageInfo = new ImageInfo();
-                    terrainImageInfo.handle = terrainTextureHandle;
-                    assetFetcher.FetchTextureAsImage(terrainTextureHandle)
+                assetManager.GetImageInfo(terrainHash, () => {
+                    ImageInfo terrainImageInfo = new ImageInfo(pLog, pParam) {
+                        handle = terrainTextureHandle
+                    };
+                    assetManager.FetchTextureAsImage(terrainTextureHandle)
                     .Then(img => {
                         terrainImageInfo.image = img;
                     });
@@ -111,14 +117,15 @@ namespace org.herbal3d.convoar {
 
             // The above has created a MaterialInfo for the terrain texture
 
-            ConvOAR.Globals.log.DebugFormat("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
+            pLog.DebugFormat("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
             DisplayableRenderable terrainDisplayable = assetMesher.MeshFromHeightMap(heightMap,
-                            terrainDef.Width, terrainDef.Height, assetFetcher, terrainFace);
+                            terrainDef.Width, terrainDef.Height, assetManager, terrainFace);
 
             BInstance terrainInstance = new BInstance();
-            Displayable terrainDisp = new Displayable(terrainDisplayable);
-            terrainDisp.name = "Terrain";
-            terrainDisp.baseUUID = OMV.UUID.Random();
+            Displayable terrainDisp = new Displayable(terrainDisplayable, pParam) {
+                name = "Terrain",
+                baseUUID = OMV.UUID.Random()
+            };
             terrainInstance.Representation = terrainDisp;
 
             return terrainInstance;
@@ -166,11 +173,12 @@ namespace org.herbal3d.convoar {
             uint index = 0;
             for (int xx = 0; xx < sizeX; xx++) {
                 for (int yy = 0; yy < sizeY; yy++) {
-                    Vert vert = new Vert();
-                    vert.Position = new OMV.Vector3(stepX * xx, stepY * yy, heights[xx, yy]);
-                    vert.Normal = new OMV.Vector3(0f, 1f, 0f);  // normal pointing up for the moment
-                    vert.TexCoord = new OMV.Vector2(coordStepX * xx, coordStepY * yy);
-                    vert.index = index++;
+                    Vert vert = new Vert {
+                        Position = new OMV.Vector3(stepX * xx, stepY * yy, heights[xx, yy]),
+                        Normal = new OMV.Vector3(0f, 1f, 0f),  // normal pointing up for the moment
+                        TexCoord = new OMV.Vector2(coordStepX * xx, coordStepY * yy),
+                        index = index++
+                    };
                     vertices[xx, yy] = vert;
                 }
             }
@@ -207,10 +215,11 @@ namespace org.herbal3d.convoar {
             for (int xx = 0; xx < sizeX; xx++) {
                 for (int yy = 0; yy < sizeY; yy++) {
                     Vert vert = vertices[xx, yy];
-                    OMVR.Vertex oVert = new OMVR.Vertex();
-                    oVert.Position = vert.Position;
-                    oVert.Normal = vert.Normal;
-                    oVert.TexCoord = vert.TexCoord;
+                    OMVR.Vertex oVert = new OMVR.Vertex {
+                        Position = vert.Position,
+                        Normal = vert.Normal,
+                        TexCoord = vert.TexCoord
+                    };
                     vertexList.Add(oVert);
                 }
             }
@@ -236,9 +245,10 @@ namespace org.herbal3d.convoar {
                 }
             }
 
-            OMVR.Face aface = new OMVR.Face();
-            aface.Vertices = vertexList;
-            aface.Indices = indices;
+            OMVR.Face aface = new OMVR.Face {
+                Vertices = vertexList,
+                Indices = indices
+            };
             return aface;
         }
 

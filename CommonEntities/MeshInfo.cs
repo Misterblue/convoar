@@ -20,10 +20,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using org.herbal3d.cs.Util;
+
 using OMV = OpenMetaverse;
 using OMVR = OpenMetaverse.Rendering;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
 
     public class MeshInfo {
         public EntityHandleUUID handle;

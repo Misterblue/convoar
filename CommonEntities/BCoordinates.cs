@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 
 using OMV = OpenMetaverse;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
     // World coordinates.
     // Type double so it can be anywhere on the globe.
     public class BCoordinateBase<T> {
@@ -79,7 +79,7 @@ namespace org.herbal3d.convoar {
     // Capturing the processing of the coordinate system for a mesh
     public class CoordAxis {
 #pragma warning disable 414
-        private static string _logHeader = "[CoordAxis]";
+        private static readonly string _logHeader = "[CoordAxis]";
 #pragma warning restore 414
 
         public const int Handedness = 0x200;    // bit that specifies the handedness
@@ -106,10 +106,10 @@ namespace org.herbal3d.convoar {
         public CoordAxis(int initCoord) {
             system = initCoord;
         }
-        public int getUpDimension { get  { return system & UpDimension; } }
-        public int getHandedness { get  { return system & Handedness; } }
-        public int getUVOrigin { get  { return system & UVOrigin; } }
-        public bool isHandednessChanging(CoordAxis nextSystem) {
+        public int GetUpDimension { get  { return system & UpDimension; } }
+        public int GetHandedness { get  { return system & Handedness; } }
+        public int GetgetUVOrigin() { return system & UVOrigin; }
+        public bool IsHandednessChanging(CoordAxis nextSystem) {
             return (system & Handedness) != (nextSystem.system & Handedness);
         }
         public string SystemName { get { return SystemNames[system]; } }
@@ -119,8 +119,8 @@ namespace org.herbal3d.convoar {
             { LeftHand_Yup, "LeftHand,Y-up" },
             { LeftHand_Zup, "LeftHand,Z-up" }
         };
-        public CoordAxis clone() {
-            return new CoordAxis(this.system);
+        public CoordAxis Clone() {
+            return new CoordAxis(system);
         }
         // Convert the positions and all the vertices in an ExtendedPrim from one
         //     coordinate space to another. ExtendedPrim.coordSpace gives the current
@@ -134,8 +134,8 @@ namespace org.herbal3d.convoar {
 
                 OMV.Matrix4 coordTransform = OMV.Matrix4.Identity;
                 OMV.Quaternion coordTransformQ = OMV.Quaternion.Identity;
-                if (inst.coordAxis.getUpDimension == CoordAxis.Zup
-                    && newCoords.getUpDimension == CoordAxis.Yup) {
+                if (inst.coordAxis.GetUpDimension == CoordAxis.Zup
+                    && newCoords.GetUpDimension == CoordAxis.Yup) {
                     // The one thing we know to do is change from Zup to Yup
                     coordTransformQ = OMV.Quaternion.CreateFromAxisAngle(1.0f, 0.0f, 0.0f, -(float)Math.PI / 2f);
                     // Make a clean matrix version.
@@ -154,14 +154,14 @@ namespace org.herbal3d.convoar {
                 inst.Rotation = coordTransformQ * inst.Rotation;
 
                 inst.coordAxis = newCoords;
-                // ConvOAR.Globals.log.DebugFormat("{0} FixCoordinates. dispID={1}, oldPos={2}, newPos={3}, oldRot={4}, newRot={5}",
+                // _log.DebugFormat("{0} FixCoordinates. dispID={1}, oldPos={2}, newPos={3}, oldRot={4}, newRot={5}",
                 //     _logHeader, inst.handle, oldPos, inst.Position, oldRot, inst.Rotation);
 
                 // Go through all the vertices and change the UV coords if necessary
                 List<MeshInfo> meshInfos = CollectMeshesFromDisplayable(inst.Representation);
 
                 meshInfos.ForEach(meshInfo => {
-                    if (meshInfo.coordAxis.getUVOrigin != newCoords.getUVOrigin) {
+                    if (meshInfo.coordAxis.GetgetUVOrigin() != newCoords.GetgetUVOrigin()) {
                         for (int ii = 0; ii < meshInfo.vertexs.Count; ii++) {
                             var vert = meshInfo.vertexs[ii];
                             vert.TexCoord.Y = 1f - vert.TexCoord.Y;
@@ -172,7 +172,7 @@ namespace org.herbal3d.convoar {
                 });
             }
             else {
-                ConvOAR.Globals.log.DebugFormat("FixCoordinates. Not converting coord system. dispID={0}", inst.handle);
+                // _log.DebugFormat("FixCoordinates. Not converting coord system. dispID={0}", inst.handle);
             }
         }
 

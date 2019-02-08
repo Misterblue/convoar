@@ -32,12 +32,15 @@ using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.CoreModules.World.Terrain;
 using OpenSim.Region.CoreModules.World.Archiver;
-using OpenSim.Tests.Common;
-using OpenSim.Data.Null;
 using OpenSim.Region.PhysicsModule.BasicPhysics;
 using OpenSim.Region.PhysicsModules.SharedBase;
+using OpenSim.Tests.Common;
+using OpenSim.Data.Null;
 
 using RSG;
+
+using org.herbal3d.cs.Util;
+using org.herbal3d.cs.os.CommonEntities;
 
 using OMV = OpenMetaverse;
 using OMVS = OpenMetaverse.StructuredData;
@@ -51,25 +54,30 @@ namespace org.herbal3d.convoar {
 
         private static readonly string _logHeader = "[BConverterOS]";
 
-        public BConverterOS() {
+        private readonly BLogger _log;
+        private readonly IParameters _params;
+
+        public BConverterOS(BLogger pLog, IParameters pParams) {
+            _log = pLog;
+            _params = pParams;
         }
 
-        public Promise<BScene> ConvertOarToScene(IAssetService assetService, IAssetFetcher assetFetcher) {
+        public Promise<BScene> ConvertOarToScene(IAssetService assetService, AssetManager assetManager) {
 
             Promise<BScene> prom = new Promise<BScene>();
 
             // Assemble all the parameters that loadoar takes and uses
             Dictionary<string, object> options = new Dictionary<string, object> {
                 // options.Add("merge", false);
-                { "displacement", ConvOAR.Globals.parms.P<OMV.Vector3>("Displacement") }
+                { "displacement", _params.P<OMV.Vector3>("Displacement") }
             };
-            string optRotation = ConvOAR.Globals.parms.P<string>("Rotation");
+            string optRotation = _params.P<string>("Rotation");
             if (optRotation != null) options.Add("rotation", float.Parse(optRotation, System.Threading.Thread.CurrentThread.CurrentCulture));
             // options.Add("default-user", OMV.UUID.Random());
             // if (optSkipAssets != null) options.Add('skipAssets', true);
             // if (optForceTerrain != null) options.Add("force-terrain", true);
             // if (optNoObjects != null) options.Add("no-objects", true);
-            string optSubRegion = ConvOAR.Globals.parms.P<string>("SubRegion");
+            string optSubRegion = _params.P<string>("SubRegion");
             if (optSubRegion != null) {
                 List<float> bounds = optSubRegion.Split(',').Select<string,float>(x => { return float.Parse(x); }).ToList();
                 options.Add("bounding-origin", new OMV.Vector3(bounds[0], bounds[1], bounds[2]));
@@ -78,42 +86,42 @@ namespace org.herbal3d.convoar {
 
             // Create an OpenSimulator region and scene to load the OAR into
             string regionName = "convoar";
-            if (String.IsNullOrEmpty(ConvOAR.Globals.parms.P<String>("RegionName"))) {
+            if (String.IsNullOrEmpty(_params.P<String>("RegionName"))) {
                 // Try to build the region name from the OAR filesname
-                regionName = Path.GetFileNameWithoutExtension(ConvOAR.Globals.parms.P<string>("InputOAR"));
+                regionName = Path.GetFileNameWithoutExtension(_params.P<string>("InputOAR"));
             }
             else {
-                regionName = ConvOAR.Globals.parms.P<string>("RegionName");
+                regionName = _params.P<string>("RegionName");
             }
             Scene scene = CreateScene(assetService, regionName);
 
             // Load the archive into our scene
-            ArchiveReadRequest archive = new ArchiveReadRequest(scene, ConvOAR.Globals.parms.P<string>("InputOAR"), Guid.Empty, options);
+            ArchiveReadRequest archive = new ArchiveReadRequest(scene, _params.P<string>("InputOAR"), Guid.Empty, options);
             archive.DearchiveRegion(false);
 
             // Convert SOGs from OAR into EntityGroups
-            // ConvOAR.Globals.log.Log("Num assets = {0}", assetService.NumAssets);
+            // _log.Log("Num assets = {0}", assetService.NumAssets);
             LogBProgress("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
 
-            PrimToMesh mesher = new PrimToMesh();
+            PrimToMesh mesher = new PrimToMesh(_log, _params);
 
             // Convert SOGs => BInstances
             Promise<BInstance>.All(
                 scene.GetSceneObjectGroups().Select(sog => {
-                    return ConvertSogToInstance(sog, assetFetcher, mesher);
+                    return ConvertSogToInstance(sog, assetManager, mesher);
                 })
             )
             .Done(instances => {
-                ConvOAR.Globals.log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
+                _log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
                 List<BInstance> instanceList = new List<BInstance>();
                 instanceList.AddRange(instances);
 
                 // Add the terrain mesh to the scene
                 BInstance terrainInstance = null;
-                if (ConvOAR.Globals.parms.P<bool>("AddTerrainMesh")) {
-                    ConvOAR.Globals.log.DebugFormat("{0} Creating terrain for scene", _logHeader);
-                    // instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher));
-                    terrainInstance = ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetFetcher);
+                if (_params.P<bool>("AddTerrainMesh")) {
+                    _log.DebugFormat("{0} Creating terrain for scene", _logHeader);
+                    // instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetManager));
+                    terrainInstance = Terrain.CreateTerrainMesh(scene, mesher, assetManager, _log, _params);
                     CoordAxis.FixCoordinates(terrainInstance, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
                 }
 
@@ -142,7 +150,7 @@ namespace org.herbal3d.convoar {
 
                 prom.Resolve(bScene);
             }, e => {
-                ConvOAR.Globals.log.ErrorFormat("{0} failed SOG conversion: {1}", _logHeader, e);
+                _log.ErrorFormat("{0} failed SOG conversion: {1}", _logHeader, e);
                 // prom.Reject(new Exception(String.Format("Failed conversion: {0}", e)));
             });
 
@@ -206,11 +214,11 @@ namespace org.herbal3d.convoar {
                     sb.AppendLine();
                 }
                 string errorMessage = sb.ToString();
-                ConvOAR.Globals.log.Log("BConverterOS.CreateScene: exception adding region:");
-                ConvOAR.Globals.log.Log(errorMessage);
+                _log.Log("BConverterOS.CreateScene: exception adding region:");
+                _log.Log(errorMessage);
             }
             catch (Exception e) {
-                ConvOAR.Globals.log.Log("BConverterOS.CreateScene: exception adding region: {0}", e);
+                _log.Log("BConverterOS.CreateScene: exception adding region: {0}", e);
             }
 
             SceneManager.Instance.Add(scene);
@@ -231,7 +239,7 @@ namespace org.herbal3d.convoar {
         }
 
         // Convert a SceneObjectGroup into an instance with displayables
-        public IPromise<BInstance> ConvertSogToInstance(SceneObjectGroup sog, IAssetFetcher assetFetcher, PrimToMesh mesher) {
+        public IPromise<BInstance> ConvertSogToInstance(SceneObjectGroup sog, AssetManager assetManager, PrimToMesh mesher) {
             return new Promise<BInstance>((promResolve, promReject) => {
                 LogBProgress("{0} ConvertSogToInstance: name={1}, id={2}, SOPs={3}",
                             _logHeader, sog.Name, sog.UUID, sog.Parts.Length);
@@ -241,7 +249,7 @@ namespace org.herbal3d.convoar {
                         LogBProgress("{0} ConvertSOGToInstance: Calling CreateMeshResource for sog={1}, sop={2}",
                                     _logHeader, sog.UUID, sop.UUID);
                         OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
-                        return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest);
+                        return mesher.CreateMeshResource(sog, sop, aPrim, assetManager, OMVR.DetailLevel.Highest);
                     } )
                 )
                 .Then(renderables => {
@@ -255,7 +263,7 @@ namespace org.herbal3d.convoar {
                     }).ToList();
                     if (rootDisplayableList.Count != 1) {
                         // There should be only one root prim
-                        ConvOAR.Globals.log.ErrorFormat("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
+                        _log.ErrorFormat("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
                                     _logHeader, sog.UUID, rootDisplayableList.Count);
                         promReject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
                         return null;
@@ -276,7 +284,7 @@ namespace org.herbal3d.convoar {
                 })
                 .Done(rootDisplayable => {
                     // Add the Displayable into the collection of known Displayables for instancing
-                    assetFetcher.AddUniqueDisplayable(rootDisplayable);
+                    assetManager.AddUniqueDisplayable(rootDisplayable);
 
                     // Package the Displayable into an instance that is position in the world
                     BInstance inst = new BInstance {
@@ -285,13 +293,13 @@ namespace org.herbal3d.convoar {
                         Representation = rootDisplayable
                     };
 
-                    if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
+                    if (_params.P<bool>("LogBuilding")) {
                         DumpInstance(inst);
                     }
 
                     promResolve(inst);
                 }, e => {
-                     ConvOAR.Globals.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
+                     _log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
                      promReject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
                 });
             });
@@ -306,7 +314,7 @@ namespace org.herbal3d.convoar {
                     LogBProgress("{0} ConvertSOGToInstance: Calling CreateMeshResource for sog={1}, sop={2}",
                                 _logHeader, sog.UUID, sop.UUID);
                     OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
-                    return mesher.CreateMeshResource(sog, sop, aPrim, assetFetcher, OMVR.DetailLevel.Highest);
+                    return mesher.CreateMeshResource(sog, sop, aPrim, assetManager, OMVR.DetailLevel.Highest);
                 } )
             )
             .Then(renderables => {
@@ -320,7 +328,7 @@ namespace org.herbal3d.convoar {
                 }).ToList();
                 if (rootDisplayableList.Count != 1) {
                     // There should be only one root prim
-                    ConvOAR.Globals.log.ErrorFormat("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
+                    _log.ErrorFormat("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
                                 _logHeader, sog.UUID, rootDisplayableList.Count);
                     prom.Reject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
                     return null;
@@ -341,7 +349,7 @@ namespace org.herbal3d.convoar {
             })
             .Done(rootDisplayable => {
                 // Add the Displayable into the collection of known Displayables for instancing
-                assetFetcher.AddUniqueDisplayable(rootDisplayable);
+                assetManager.AddUniqueDisplayable(rootDisplayable);
 
                 // Package the Displayable into an instance that is position in the world
                 BInstance inst = new BInstance();
@@ -349,13 +357,13 @@ namespace org.herbal3d.convoar {
                 inst.Rotation = sog.GroupRotation;
                 inst.Representation = rootDisplayable;
 
-                if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
+                if (_params.P<bool>("LogBuilding")) {
                     DumpInstance(inst);
                 }
 
                 prom.Resolve(inst);
             }, e => {
-                 ConvOAR.Globals.log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
+                 _log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
                  prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
             });
 
@@ -386,9 +394,9 @@ namespace org.herbal3d.convoar {
             });
         }
 
-        public static void LogBProgress(string msg, params Object[] args) {
-            if (ConvOAR.Globals.parms.P<bool>("LogBuilding")) {
-                ConvOAR.Globals.log.Log(msg, args);
+        public void LogBProgress(string msg, params Object[] args) {
+            if (_params.P<bool>("LogBuilding")) {
+                _log.Log(msg, args);
             }
         }
     }

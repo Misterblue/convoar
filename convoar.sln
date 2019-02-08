@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "convoar", "convoar\convoar.csproj", "{BD9942A1-315C-4961-B56A-D1770BED83B0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "Util\Util.csproj", "{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonEntities", "CommonEntities\CommonEntities.csproj", "{DED4BC9A-CFBD-453D-814F-B3850D14FF27}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,22 @@ Global
 		{BD9942A1-315C-4961-B56A-D1770BED83B0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BD9942A1-315C-4961-B56A-D1770BED83B0}.Release|x64.ActiveCfg = Release|x64
 		{BD9942A1-315C-4961-B56A-D1770BED83B0}.Release|x64.Build.0 = Release|x64
+		{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}.Debug|x64.Build.0 = Debug|Any CPU
+		{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}.Release|x64.ActiveCfg = Release|Any CPU
+		{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}.Release|x64.Build.0 = Release|Any CPU
+		{DED4BC9A-CFBD-453D-814F-B3850D14FF27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DED4BC9A-CFBD-453D-814F-B3850D14FF27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DED4BC9A-CFBD-453D-814F-B3850D14FF27}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DED4BC9A-CFBD-453D-814F-B3850D14FF27}.Debug|x64.Build.0 = Debug|Any CPU
+		{DED4BC9A-CFBD-453D-814F-B3850D14FF27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DED4BC9A-CFBD-453D-814F-B3850D14FF27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DED4BC9A-CFBD-453D-814F-B3850D14FF27}.Release|x64.ActiveCfg = Release|Any CPU
+		{DED4BC9A-CFBD-453D-814F-B3850D14FF27}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
