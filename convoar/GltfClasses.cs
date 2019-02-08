@@ -71,7 +71,9 @@ namespace org.herbal3d.convoar {
         public void UpdateGltfv2ReferenceIndexes() {
             int refIndex = 0;
             foreach (T entry in this.Values) {
+#pragma warning disable IDE0019 // Use pattern matching
                 GltfClass entryGltf = entry as GltfClass;
+#pragma warning restore IDE0019 // Use pattern matching
                 if (entryGltf != null) {
                     entryGltf.referenceID = refIndex;
                 }

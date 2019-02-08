@@ -55,7 +55,10 @@ namespace org.herbal3d.convoar.tests {
         public void Init() {
             _log = new LoggerConsole();
             _params = new ConvoarParams(_log);
-            ConvOAR.Globals = new GlobalContext(_params, _log);
+            ConvOAR.Globals = new GlobalContext() {
+                log = _log,
+                parms = _params
+            };
         }
 
         [TestFixtureTearDown]
@@ -144,7 +147,10 @@ namespace org.herbal3d.convoar.tests {
         public void Init() {
             _log = new LoggerConsole();
             _params = new ConvoarParams(_log);
-            ConvOAR.Globals = new GlobalContext(_params, _log);
+            ConvOAR.Globals = new GlobalContext() {
+                log = _log,
+                parms = _params
+            };
             _assetService = new MemAssetService();
             _converter = new BConverterOS(_log, _params);
             _scene = _converter.CreateScene(_assetService, "convoar-test");

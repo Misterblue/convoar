@@ -38,10 +38,8 @@ namespace org.herbal3d.convoar {
         public string buildDate;
         public string gitCommit;
 
-        public GlobalContext(ConvoarParams pParms, BLogger pLog)
+        public GlobalContext()
         {
-            parms = pParms;
-            log = pLog;
             stats = null;
             contextName = String.Empty;
             version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -79,10 +77,11 @@ namespace org.herbal3d.convoar {
         // If run from the command line, create instance and call 'Start' with args.
         // If run programmatically, create instance and call 'Start' with parameters.
         public void Start(string[] args) {
-            BLogger logger = new LoggerLog4Net();
-            Globals = new GlobalContext(new ConvoarParams(logger), logger) {
+            Globals = new GlobalContext() {
+                log = new LoggerLog4Net(),
                 stats = new ConvoarStats()
             };
+            Globals.parms = new ConvoarParams(Globals.log);
 
             // A single parameter of '--help' outputs the invocation parameters
             if (args.Length > 0 && args[0] == "--help") {
@@ -254,7 +253,9 @@ namespace org.herbal3d.convoar {
 
         // Initialization if using ConvOAR programmatically.
         public void Start(ConvoarParams pParameters, BLogger pLogger) {
-            Globals = new GlobalContext(pParameters, pLogger) {
+            Globals = new GlobalContext() {
+                log = pLogger,
+                parms = pParameters,
                 stats = new ConvoarStats()
             };
         }
