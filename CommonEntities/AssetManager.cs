@@ -18,13 +18,12 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Threading.Tasks;
 
 using OpenSim.Framework;
 using OpenSim.Services.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
-
-using RSG;
 
 using OMV = OpenMetaverse;
 using OMVA = OpenMetaverse.Assets;
@@ -36,16 +35,15 @@ using CSJ2K;
 
 namespace org.herbal3d.cs.os.CommonEntities {
 
-    // A Promise based interface to the asset fetcher
     /// <summary>
-    /// A Promise based interface to the asset fetcher.
+    /// An async interface to the asset fetcher.
     /// Also includes storage for global meshes, materials, and textures.
     /// </summary>
     public abstract class AssetManager : IDisposable {
 
         // Fetching operations that happen through to the underlying simulator asset system
-        public abstract IPromise<Image> FetchTextureAsImage(EntityHandle handle);
-        public abstract IPromise<byte[]> FetchRawAsset(EntityHandle handle);
+        public abstract Task<Image> FetchTextureAsImage(EntityHandle handle);
+        public abstract Task<byte[]> FetchRawAsset(EntityHandle handle);
         public abstract void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data);
         public abstract void StoreTextureImage(EntityHandle handle, string name, OMV.UUID creatorID, Image pImage);
 
@@ -223,24 +221,33 @@ namespace org.herbal3d.cs.os.CommonEntities {
         // Fetch a ImageInfo corresponding to the passed hash but, if the
         //   ImageInfo is not in the table, invoke the passed builder to create
         //   an instance of the needed ImageInfo.
-        public delegate ImageInfo ImageInfoBuilder();
-        public ImageInfo GetImageInfo(BHash hash, ImageInfoBuilder builder) {
-            ImageInfo imageInfo = null;
-            lock (Images) {
-                if (!Images.TryGetValue(hash, out imageInfo)) {
-                    if (builder != null) {
-                        imageInfo = builder();
-                        Images.Add(hash, imageInfo.handle, imageInfo);
+        public delegate Task<ImageInfo> ImageInfoBuilder();
+        public async Task<ImageInfo> GetImageInfo(BHash hash, ImageInfoBuilder builder) {
+            if (!Images.TryGetValue(hash, out ImageInfo imageInfo)) {
+                if (builder != null) {
+                    imageInfo = await builder();
+                }
+                else {
+                    imageInfo = null;
+                }
+            }
+            if (imageInfo != null) {
+                // A pitiful excuse for handling the race condition of two identical images
+                //    being accessed at the same time. If one was already created, just
+                //    ignore what we built above.
+                lock (Images) {
+                    if (Images.ContainsKey(hash)) {
+                        Images.TryGetValue(hash, out imageInfo);
                     }
                     else {
-                        imageInfo = null;
+                        Images.Add(hash, imageInfo.handle, imageInfo);
                     }
                 }
             }
             return imageInfo;
         }
         // Short form that just returns 'null' if not found.
-        public ImageInfo GetImageInfo(BHash hash) {
+        public Task<ImageInfo> GetImageInfo(BHash hash) {
             return GetImageInfo(hash, null);
         }
 
@@ -277,13 +284,15 @@ namespace org.herbal3d.cs.os.CommonEntities {
         public NullAssetFetcher(BLogger pLog, IParameters pParams) : base(pLog, pParams) {
         }
 
-        public override IPromise<byte[]> FetchRawAsset(EntityHandle handle) {
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public override async Task<byte[]> FetchRawAsset(EntityHandle handle) {
             throw new NotImplementedException();
         }
 
-        public override IPromise<Image> FetchTextureAsImage(EntityHandle handle) {
+        public override async Task<Image> FetchTextureAsImage(EntityHandle handle) {
             throw new NotImplementedException();
         }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
         public override int GetHashCode() {
             return base.GetHashCode();
@@ -313,18 +322,16 @@ namespace org.herbal3d.cs.os.CommonEntities {
             _assetService = pAssetService;
         }
 
-        public override IPromise<byte[]> FetchRawAsset(EntityHandle handle) {
-            var prom = new Promise<byte[]>();
-
-            // Don't bother with async -- this call will hang until the asset is fetched
-            byte[] returnBytes = _assetService.GetData(handle.ToString());
-            if (returnBytes.Length > 0) {
-                prom.Resolve(returnBytes);
+        public override async Task<byte[]> FetchRawAsset(EntityHandle handle) {
+            byte[] returnBytes = new byte[0];
+            var asset = await AssetServiceGetAsync(handle);
+            if (asset != null) {
+                returnBytes = asset.Data;
             }
-            else {
-                prom.Reject(new Exception("FetchRawAsset: could not fetch asset " + handle.ToString()));
+            if (returnBytes.Length == 0) {
+                throw new Exception("FetchRawAsset: could not fetch asset " + handle.ToString());
             }
-            return prom;
+            return returnBytes;
         }
 
         public override void StoreRawAsset(EntityHandle handle, string name, OMV.AssetType assetType, OMV.UUID creatorID, byte[] data) {
@@ -349,13 +356,11 @@ namespace org.herbal3d.cs.os.CommonEntities {
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public override IPromise<Image> FetchTextureAsImage(EntityHandle handle) {
-            var prom = new Promise<Image>();
+        public override async Task<Image> FetchTextureAsImage(EntityHandle handle) {
+            Image imageDecoded = null;
 
-            // Don't bother with async -- this call will hang until the asset is fetched
-            AssetBase asset = _assetService.Get(handle.ToString());
+            AssetBase asset = await AssetServiceGetAsync(handle);
             if (asset != null) {
-                Image imageDecoded = null;
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
                         if (_params.P<bool>("UseOpenJPEG")) {
@@ -372,11 +377,10 @@ namespace org.herbal3d.cs.os.CommonEntities {
                             CSJ2K.Util.BitmapImageCreator.Register();
                             imageDecoded = CSJ2K.J2kImage.FromBytes(asset.Data).As<Bitmap>();
                         }
-                        prom.Resolve(imageDecoded);
                     }
                     catch (Exception e) {
-                        prom.Reject(new Exception("FetchTextureAsImage: exception decoding JPEG2000 texture. ID=" + handle.ToString()
-                                    + ", e=" + e.ToString()));
+                        throw new Exception("FetchTextureAsImage: exception decoding JPEG2000 texture. ID=" + handle.ToString()
+                                    + ", e=" + e.ToString());
                     }
                 }
                 // THis application overloads the definition of TextureTGA to be a PNG format bytes
@@ -388,18 +392,28 @@ namespace org.herbal3d.cs.os.CommonEntities {
                         imageDecoded = (Image)readBitmap.Clone();
                         readBitmap.Dispose();
                     }
-                    prom.Resolve(imageDecoded);
                 }
                 else {
-                    prom.Reject(new Exception("FetchTextureAsImage: asset was not of type texture. ID=" + handle.ToString()));
+                    throw new Exception("FetchTextureAsImage: asset was not of type texture. ID=" + handle.ToString());
                 }
             }
             else {
-                prom.Reject(new Exception("FetchTextureAsImage: could not fetch texture asset. ID=" + handle.ToString()));
+                throw new Exception("FetchTextureAsImage: could not fetch texture asset. ID=" + handle.ToString());
             }
 
-            return prom;
+            return imageDecoded;
         }
+
+        // An async/await version of async call to OpenSimulator AssetService.
+        public async Task<AssetBase> AssetServiceGetAsync(EntityHandle pHandle) {
+            var tcs = new TaskCompletionSource<AssetBase>();
+            _assetService.Get(pHandle.GetUUID().ToString(), this, (rid, rsender, rasset) => {
+                tcs.SetResult(rasset);
+            });
+
+            return await tcs.Task;
+        }
+
 
         public override void Dispose() {
             base.Dispose();

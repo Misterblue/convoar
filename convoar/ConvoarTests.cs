@@ -173,10 +173,10 @@ namespace org.herbal3d.convoar.tests {
         }
 
         [TestCase(100, 200)]
-        public void VerifyMeshCoversWholeRegion(int heightmapSize, int regionSize) {
+        public async void VerifyMeshCoversWholeRegion(int heightmapSize, int regionSize) {
             float[,] heightMap = CreateHeightmap(heightmapSize);
             PrimToMesh mesher = new PrimToMesh(_log, _params);
-            DisplayableRenderable dr = mesher.MeshFromHeightMap(heightMap, regionSize, regionSize,
+            DisplayableRenderable dr = await mesher.MeshFromHeightMap(heightMap, regionSize, regionSize,
                                     _assetManager, _defaultTexture);
             RenderableMeshGroup rmg = dr as RenderableMeshGroup;
             Assert.IsTrue(rmg != null, "MeshFromHeightMap did not return a RenderableMeshGroup");

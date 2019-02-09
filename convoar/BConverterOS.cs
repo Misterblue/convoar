@@ -20,6 +20,7 @@ using System.Linq;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
@@ -36,8 +37,6 @@ using OpenSim.Region.PhysicsModule.BasicPhysics;
 using OpenSim.Region.PhysicsModules.SharedBase;
 using OpenSim.Tests.Common;
 using OpenSim.Data.Null;
-
-using RSG;
 
 using org.herbal3d.cs.Util;
 using org.herbal3d.cs.os.CommonEntities;
@@ -61,9 +60,8 @@ namespace org.herbal3d.convoar {
             _params = pParams;
         }
 
-        public Promise<BScene> ConvertOarToScene(IAssetService assetService, AssetManager assetManager) {
-
-            Promise<BScene> prom = new Promise<BScene>();
+        public async Task<BScene> ConvertOarToScene(IAssetService assetService, AssetManager assetManager) {
+            BScene bScene = null;
 
             // Assemble all the parameters that loadoar takes and uses
             Dictionary<string, object> options = new Dictionary<string, object> {
@@ -104,13 +102,14 @@ namespace org.herbal3d.convoar {
 
             PrimToMesh mesher = new PrimToMesh(_log, _params);
 
-            // Convert SOGs => BInstances
-            Promise<BInstance>.All(
-                scene.GetSceneObjectGroups().Select(sog => {
-                    return ConvertSogToInstance(sog, assetManager, mesher);
-                })
-            )
-            .Done(instances => {
+            try {
+                // Convert SOGs => BInstances
+                var instances = await Task.WhenAll(
+                    scene.GetSceneObjectGroups().Select(sog => {
+                        return ConvertSogToInstance(sog, assetManager, mesher);
+                    }).ToArray()
+                );
+
                 _log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
                 List<BInstance> instanceList = new List<BInstance>();
                 instanceList.AddRange(instances);
@@ -120,7 +119,7 @@ namespace org.herbal3d.convoar {
                 if (_params.P<bool>("AddTerrainMesh")) {
                     _log.DebugFormat("{0} Creating terrain for scene", _logHeader);
                     // instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetManager));
-                    terrainInstance = Terrain.CreateTerrainMesh(scene, mesher, assetManager, _log, _params);
+                    terrainInstance = await Terrain.CreateTerrainMesh(scene, mesher, assetManager, _log, _params);
                     CoordAxis.FixCoordinates(terrainInstance, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
                 }
 
@@ -131,7 +130,7 @@ namespace org.herbal3d.convoar {
 
                 // package instances into a BScene
                 RegionInfo ri = scene.RegionInfo;
-                BScene bScene = new BScene {
+                bScene = new BScene {
                     instances = instanceList,
                     name = ri.RegionName,
                     terrainInstance = terrainInstance
@@ -146,15 +145,13 @@ namespace org.herbal3d.convoar {
                 bScene.attributes.Add("WorldLocY", ri.WorldLocY);
                 bScene.attributes.Add("WaterHeight", ri.RegionSettings.WaterHeight);
                 bScene.attributes.Add("DefaultLandingPorint", ri.DefaultLandingPoint);
-
-                prom.Resolve(bScene);
-            }, e => {
+            }
+            catch (Exception e) {
                 _log.ErrorFormat("{0} failed SOG conversion: {1}", _logHeader, e);
-                // prom.Reject(new Exception(String.Format("Failed conversion: {0}", e)));
-            });
+                throw new Exception(String.Format("Failed conversion: {0}", e));
+            }
 
-            return prom;
-
+            return bScene;
         }
 
         // Create an OpenSimulator Scene and add enough auxillery services and objects
@@ -238,86 +235,21 @@ namespace org.herbal3d.convoar {
         }
 
         // Convert a SceneObjectGroup into an instance with displayables
-        public IPromise<BInstance> ConvertSogToInstance(SceneObjectGroup sog, AssetManager assetManager, PrimToMesh mesher) {
-            return new Promise<BInstance>((promResolve, promReject) => {
+        public async Task<BInstance> ConvertSogToInstance(SceneObjectGroup sog, AssetManager assetManager, PrimToMesh mesher) {
+            BInstance ret = null;
+            try {
                 LogBProgress("{0} ConvertSogToInstance: name={1}, id={2}, SOPs={3}",
                             _logHeader, sog.Name, sog.UUID, sog.Parts.Length);
                 // Create meshes for all the parts of the SOG
-                Promise<Displayable>.All(
+                var renderables = await Task.WhenAll(
                     sog.Parts.Select(sop => {
                         LogBProgress("{0} ConvertSOGToInstance: Calling CreateMeshResource for sog={1}, sop={2}",
                                     _logHeader, sog.UUID, sop.UUID);
                         OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
                         return mesher.CreateMeshResource(sog, sop, aPrim, assetManager, OMVR.DetailLevel.Highest);
-                    } )
-                )
-                .Then(renderables => {
-                    // Remove any failed SOG/SOP conversions.
-                    List<Displayable> filteredRenderables = renderables.Where(rend => rend != null).ToList();
+                    }).ToArray()
+                );
 
-                    // 'filteredRenderables' are the DisplayRenderables for all the SOPs in the SOG
-                    // Get the root prim of the SOG
-                    List<Displayable> rootDisplayableList = filteredRenderables.Where(disp => {
-                        return disp.baseSOP.IsRoot;
-                    }).ToList();
-                    if (rootDisplayableList.Count != 1) {
-                        // There should be only one root prim
-                        string errorMsg = String.Format("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
-                                    _logHeader, sog.UUID, rootDisplayableList.Count);
-                        _log.ErrorFormat(errorMsg);
-                        promReject(new Exception(errorMsg));
-                        return null;
-                    }
-
-                    // The root of the SOG
-                    Displayable rootDisplayable = rootDisplayableList.First();
-
-                    // Collect all the children prims and add them to the root Displayable
-                    rootDisplayable.children = filteredRenderables.Where(disp => {
-                        return !disp.baseSOP.IsRoot;
-                    // }).Select(disp => {
-                    //     return disp;
-                    }).ToList();
-
-                    return rootDisplayable;
-
-                })
-                .Done(rootDisplayable => {
-                    // Add the Displayable into the collection of known Displayables for instancing
-                    assetManager.AddUniqueDisplayable(rootDisplayable);
-
-                    // Package the Displayable into an instance that is position in the world
-                    BInstance inst = new BInstance {
-                        Position = sog.AbsolutePosition,
-                        Rotation = sog.GroupRotation,
-                        Representation = rootDisplayable
-                    };
-
-                    if (_params.P<bool>("LogBuilding")) {
-                        DumpInstance(inst);
-                    }
-
-                    promResolve(inst);
-                }, e => {
-                     _log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
-                     promReject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
-                });
-            });
-
-            /*
-            var prom = new Promise<BInstance>();
-            LogBProgress("{0} ConvertSogToInstance: name={1}, id={2}, SOPs={3}",
-                        _logHeader, sog.Name, sog.UUID, sog.Parts.Length);
-            // Create meshes for all the parts of the SOG
-            Promise<Displayable>.All(
-                sog.Parts.Select(sop => {
-                    LogBProgress("{0} ConvertSOGToInstance: Calling CreateMeshResource for sog={1}, sop={2}",
-                                _logHeader, sog.UUID, sop.UUID);
-                    OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
-                    return mesher.CreateMeshResource(sog, sop, aPrim, assetManager, OMVR.DetailLevel.Highest);
-                } )
-            )
-            .Then(renderables => {
                 // Remove any failed SOG/SOP conversions.
                 List<Displayable> filteredRenderables = renderables.Where(rend => rend != null).ToList();
 
@@ -328,10 +260,10 @@ namespace org.herbal3d.convoar {
                 }).ToList();
                 if (rootDisplayableList.Count != 1) {
                     // There should be only one root prim
-                    _log.ErrorFormat("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
+                    string errorMsg = String.Format("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
                                 _logHeader, sog.UUID, rootDisplayableList.Count);
-                    prom.Reject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
-                    return null;
+                    _log.ErrorFormat(errorMsg);
+                    throw new Exception(errorMsg);
                 }
 
                 // The root of the SOG
@@ -340,35 +272,29 @@ namespace org.herbal3d.convoar {
                 // Collect all the children prims and add them to the root Displayable
                 rootDisplayable.children = filteredRenderables.Where(disp => {
                     return !disp.baseSOP.IsRoot;
-                // }).Select(disp => {
-                //     return disp;
+                    // }).Select(disp => {
+                    //     return disp;
                 }).ToList();
 
-                return rootDisplayable;
-
-            })
-            .Done(rootDisplayable => {
                 // Add the Displayable into the collection of known Displayables for instancing
                 assetManager.AddUniqueDisplayable(rootDisplayable);
 
                 // Package the Displayable into an instance that is position in the world
-                BInstance inst = new BInstance();
-                inst.Position = sog.AbsolutePosition;
-                inst.Rotation = sog.GroupRotation;
-                inst.Representation = rootDisplayable;
+                ret = new BInstance {
+                    Position = sog.AbsolutePosition,
+                    Rotation = sog.GroupRotation,
+                    Representation = rootDisplayable
+                };
 
                 if (_params.P<bool>("LogBuilding")) {
-                    DumpInstance(inst);
+                    DumpInstance(ret);
                 }
-
-                prom.Resolve(inst);
-            }, e => {
+            }
+            catch (Exception e) {
                  _log.ErrorFormat("{0} Failed meshing of SOG. ID={1}: {2}", _logHeader, sog.UUID, e);
-                 prom.Reject(new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e)));
-            });
-
-            return prom;
-            */
+                 throw new Exception(String.Format("failed meshing of SOG. ID={0}: {1}", sog.UUID, e));
+            }
+            return ret;
         }
 
         private void DumpInstance(BInstance inst) {

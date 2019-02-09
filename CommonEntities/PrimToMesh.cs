@@ -24,8 +24,6 @@ using System.Threading.Tasks;
 
 using org.herbal3d.cs.Util;
 
-using RSG;
-
 using OMV = OpenMetaverse;
 using OMVS = OpenMetaverse.StructuredData;
 using OMVA = OpenMetaverse.Assets;
@@ -55,123 +53,119 @@ namespace org.herbal3d.cs.os.CommonEntities {
         ///    into the caches.
         /// </summary>
         // Returns 'null' if the SOG/SOP could not be converted into a displayable
-        public IPromise<Displayable> CreateMeshResource(SceneObjectGroup sog, SceneObjectPart sop,
+        public async Task<Displayable> CreateMeshResource(SceneObjectGroup sog, SceneObjectPart sop,
                     OMV.Primitive prim, AssetManager assetManager, OMVR.DetailLevel lod) {
 
-            return new Promise<Displayable>((resolve, reject) => {
-                try {
-                    if (prim.Sculpt != null) {
-                        if (prim.Sculpt.Type == OMV.SculptType.Mesh) {
-                            LogBProgress("{0}: CreateMeshResource: creating mesh", _logHeader);
-                            // _tats.numMeshAssets++;
-                            MeshFromPrimMeshData(sog, sop, prim, assetManager, lod)
-                                .Then(dispable => {
-                                    resolve(new Displayable(dispable, sop, _params));
-                                }, e => {
-                                    // prom.Reject(e);
-                                    resolve(null);
-                                });
-                        }
-                        else {
-                            LogBProgress("{0}: CreateMeshResource: creating sculpty", _logHeader);
-                            // _stats.numSculpties++;
-                            MeshFromPrimSculptData(sog, sop, prim, assetManager, lod)
-                                .Then(dispable => {
-                                    resolve(new Displayable(dispable, sop, _params));
-                                }, e => {
-                                    // prom.Reject(e);
-                                    resolve(null);
-                                });
-                        }
+            Displayable displayable = null;
+            try {
+                if (prim.Sculpt != null) {
+                    if (prim.Sculpt.Type == OMV.SculptType.Mesh) {
+                        LogBProgress("{0}: CreateMeshResource: creating mesh", _logHeader);
+                        // _tats.numMeshAssets++;
+                        var dispable = await MeshFromPrimMeshData(sog, sop, prim, assetManager, lod);
+                        displayable = new Displayable(dispable, sop, _params);
                     }
                     else {
-                        LogBProgress("{0}: CreateMeshResource: creating primshape", _logHeader);
-                        // _stats.numSimplePrims++;
-                        MeshFromPrimShapeData(sog, sop, prim, assetManager, lod)
-                            .Then(dispable => {
-                                LogBProgress("{0} CreateMeshResource: prim created", _logHeader);
-                                resolve(new Displayable(dispable, sop, _params));
-                            }, e => {
-                                // prom.Reject(e);
-                                resolve(null);
-                            });
+                        LogBProgress("{0}: CreateMeshResource: creating sculpty", _logHeader);
+                        // _stats.numSculpties++;
+                        var dispable = await MeshFromPrimSculptData(sog, sop, prim, assetManager, lod);
+                        displayable = new Displayable(dispable, sop, _params);
                     }
                 }
-                catch (Exception e) {
-                    reject(e);
+                else {
+                    LogBProgress("{0}: CreateMeshResource: creating primshape", _logHeader);
+                    // _stats.numSimplePrims++;
+                    var dispable = await MeshFromPrimShapeData(sog, sop, prim, assetManager, lod);
+                    displayable = new Displayable(dispable, sop, _params);
                 }
-            });
+            }
+            catch (Exception e) {
+                string errorMsg = String.Format("{0} CreateMeshResource: exception meshing {1}: {2}",
+                            _logHeader, sop.UUID, e);
+                _log.ErrorFormat(errorMsg);
+                throw new Exception(errorMsg);
+            }
+            return displayable;
         }
 
-        private Promise<DisplayableRenderable> MeshFromPrimShapeData(SceneObjectGroup sog, SceneObjectPart sop,
+        private async Task<DisplayableRenderable> MeshFromPrimShapeData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, AssetManager assetManager, OMVR.DetailLevel lod) {
-            return new Promise<DisplayableRenderable>((resolve, reject) => {
-                OMVR.FacetedMesh mesh = _mesher.GenerateFacetedMesh(prim, lod);
-                DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetManager, mesh, prim.Textures.DefaultTexture, prim.Scale);
-                BHash drHash = dr.GetBHash();
-                DisplayableRenderable realDR = assetManager.GetRenderable(drHash, () => { return dr; });
-                LogBProgress("{0} MeshFromPrimShapeData. numGenedMeshed={1}",
-                        _logHeader, ((RenderableMeshGroup)realDR).meshes.Count);
-                resolve(realDR);
-            });
+            OMVR.FacetedMesh mesh = _mesher.GenerateFacetedMesh(prim, lod);
+            DisplayableRenderable dr = await ConvertFacetedMeshToDisplayable(assetManager, mesh, prim.Textures.DefaultTexture, prim.Scale);
+            BHash drHash = dr.GetBHash();
+            DisplayableRenderable realDR = assetManager.GetRenderable(drHash, () => { return dr; });
+            LogBProgress("{0} MeshFromPrimShapeData. numGenedMeshed={1}",
+                    _logHeader, ((RenderableMeshGroup)realDR).meshes.Count);
+            return realDR;
         }
 
-        private Promise<DisplayableRenderable> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,
+        private async Task<DisplayableRenderable> MeshFromPrimSculptData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, AssetManager assetManager, OMVR.DetailLevel lod) {
-            return new Promise<DisplayableRenderable>((resolve, reject) => {
+            DisplayableRenderable realDR = null;
+            try {
                 // Get the asset that the sculpty is built on
                 EntityHandleUUID texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
-                assetManager.FetchTextureAsImage(texHandle)
-                    .Then((img) => {
-                        OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, img as Bitmap, lod);
-                        DisplayableRenderable dr =
-                                ConvertFacetedMeshToDisplayable(assetManager, fMesh, prim.Textures.DefaultTexture, prim.Scale);
-                        BHash drHash = dr.GetBHash();
-                        DisplayableRenderable realDR = assetManager.GetRenderable(drHash, () => { return dr; });
-                        LogBProgress("{0} MeshFromPrimSculptData. numFaces={1}, numGenedMeshed={2}",
+                var img = await assetManager.FetchTextureAsImage(texHandle);
+
+                OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, img as Bitmap, lod);
+                DisplayableRenderable dr =
+                        await ConvertFacetedMeshToDisplayable(assetManager, fMesh, prim.Textures.DefaultTexture, prim.Scale);
+                BHash drHash = dr.GetBHash();
+                realDR = assetManager.GetRenderable(drHash, () => { return dr; });
+                LogBProgress("{0} MeshFromPrimSculptData. numFaces={1}, numGenedMeshed={2}",
                                 _logHeader, fMesh.Faces.Count, ((RenderableMeshGroup)realDR).meshes.Count);
-                        resolve(realDR);
-                    }, (e) => {
-                        _log.ErrorFormat("{0} MeshFromPrimSculptData: Rejected FetchTexture: {1}: {2}", _logHeader, texHandle, e);
-                        reject(null);
-                    });
-            });
+            }
+            catch (Exception e) {
+                string errorMsg = String.Format("{0} MeshFromPrimSculptData: exception meshing {1}: {2}",
+                            _logHeader, sop.UUID, e);
+                _log.ErrorFormat(errorMsg);
+                throw new Exception(errorMsg);
+            }
+            return realDR;
         }
 
-        private Promise<DisplayableRenderable> MeshFromPrimMeshData(SceneObjectGroup sog, SceneObjectPart sop,
+        private async Task<DisplayableRenderable> MeshFromPrimMeshData(SceneObjectGroup sog, SceneObjectPart sop,
                                 OMV.Primitive prim, AssetManager assetManager, OMVR.DetailLevel lod) {
 
-            EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
-            return new Promise<DisplayableRenderable>((resolve, reject) => {
-                assetManager.FetchRawAsset(meshHandle)
-                    .Then(meshBytes => {
-                            // OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
-                            // if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
-                            OMVR.FacetedMesh fMesh = null;
-                        try {
-                            fMesh = _mesher.GenerateFacetedMeshMesh(prim, meshBytes);
-                        }
-                        catch (Exception e) {
-                            _log.ErrorFormat("{0} Exception in GenerateFacetedMeshMesh: {1}", _logHeader, e);
-                        }
-                        if (fMesh != null) {
-                            DisplayableRenderable dr = ConvertFacetedMeshToDisplayable(assetManager, fMesh, prim.Textures.DefaultTexture, prim.Scale);
-                                // Don't know the hash of the DisplayableRenderable until after it has been created.
-                                // Now use the hash to see if this has already been done.
-                                // If this DisplayableRenderable has already been built, use the other one and throw this away.
-                                BHash drHash = dr.GetBHash();
-                            DisplayableRenderable realDR = assetManager.GetRenderable(drHash, () => { return dr; });
-                            resolve(realDR);
-                        }
-                        else {
-                            reject(new Exception("MeshFromPrimMeshData: could not decode mesh information from asset. ID="
-                                            + prim.ID.ToString()));
-                        }
-                    }, e => {
-                        _log.ErrorFormat("{0} MeshFromPrimMeshData: exception: {1}", _logHeader, e);
-                        reject(e);
-                    });
-            });
+            DisplayableRenderable realDR = null;
+            Exception failure = null;
+
+            try {
+                EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
+                var meshBytes = await assetManager.FetchRawAsset(meshHandle);
+                // OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
+                // if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
+                OMVR.FacetedMesh fMesh = null;
+                try {
+                    fMesh = _mesher.GenerateFacetedMeshMesh(prim, meshBytes);
+                }
+                catch (Exception e) {
+                    _log.ErrorFormat("{0} MeshFromPrimMeshData: Exception from GenerateFacetedMeshMesh: {1}", _logHeader, e);
+                    fMesh = null;
+                }
+                if (fMesh != null) {
+                    DisplayableRenderable dr = await ConvertFacetedMeshToDisplayable(assetManager, fMesh, prim.Textures.DefaultTexture, prim.Scale);
+                    // Don't know the hash of the DisplayableRenderable until after it has been created.
+                    // Now use the hash to see if this has already been done.
+                    // If this DisplayableRenderable has already been built, use the other one and throw this away.
+                    BHash drHash = dr.GetBHash();
+                    realDR = assetManager.GetRenderable(drHash, () => { return dr; });
+                }
+                else {
+                    failure = new Exception("MeshFromPrimMeshData: could not decode mesh information from asset. ID="
+                                    + prim.ID.ToString());
+                }
+            }
+            catch (Exception e) {
+                failure = new Exception(
+                    String.Format("MeshFromPrimMeshData: could not decode mesh information from asset. ID={0}: {1}",
+                                    prim.ID, e)
+                );
+            }
+            if (failure != null) {
+                throw failure;
+            }
+            return realDR;
         }
 
         /// <summary>
@@ -185,17 +179,19 @@ namespace org.herbal3d.cs.os.CommonEntities {
         /// <param name="primScale">Scaling for the base prim that is used when appliying any texture
         /// to the face (updating UV).</param>
         /// <returns></returns>
-        private DisplayableRenderable ConvertFacetedMeshToDisplayable(AssetManager assetManager, OMVR.FacetedMesh fmesh,
+        private async Task<DisplayableRenderable> ConvertFacetedMeshToDisplayable(AssetManager assetManager, OMVR.FacetedMesh fmesh,
                         OMV.Primitive.TextureEntryFace defaultTexture, OMV.Vector3 primScale) {
             RenderableMeshGroup ret = new RenderableMeshGroup();
-            ret.meshes.AddRange(fmesh.Faces.Where(face => face.Indices.Count > 0).Select(face => {
-                return ConvertFaceToRenderableMesh(face, assetManager, defaultTexture, primScale);
-            }));
+            ret.meshes.AddRange(await Task.WhenAll(
+                fmesh.Faces.Where(face => face.Indices.Count > 0).Select(face => {
+                    return ConvertFaceToRenderableMesh(face, assetManager, defaultTexture, primScale);
+                })
+            ) );
             // _log.DebugFormat("{0} ConvertFacetedMeshToDisplayable: complete. numMeshes={1}", _logHeader, ret.meshes.Count);
             return ret;
         }
 
-        private RenderableMesh ConvertFaceToRenderableMesh(OMVR.Face face, AssetManager assetManager,
+        private async Task<RenderableMesh> ConvertFaceToRenderableMesh(OMVR.Face face, AssetManager assetManager,
                         OMV.Primitive.TextureEntryFace defaultTexture, OMV.Vector3 primScale) {
             RenderableMesh rmesh = new RenderableMesh {
                 num = face.ID
@@ -227,26 +223,26 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 // Textures/images use the UUID from OpenSim and the hash is just the hash of the UUID
                 EntityHandleUUID textureHandle = new EntityHandleUUID((OMV.UUID)matInfo.textureID);
                 BHash textureHash = new BHashULong(textureHandle.GetUUID().GetHashCode());
-                ImageInfo lookupImageInfo = assetManager.GetImageInfo(textureHash, () => {
+                ImageInfo lookupImageInfo = await assetManager.GetImageInfo(textureHash, async () => {
                     // The image is not in the cache yet so create an ImageInfo entry for it
                     // Note that image gets the same UUID as the OpenSim texture
                     ImageInfo imageInfo = new ImageInfo(textureHandle, _log, _params);
-                    assetManager.FetchTextureAsImage(textureHandle)
-                        .Then(img => {
-                            imageInfo.SetImage(img);
-                        })
-                        .Catch(e => {
-                            // Failure getting the image
-                            _log.ErrorFormat("{0} Failure fetching material texture. id={1}. {2}",
-                                        _logHeader, matInfo.textureID, e);
-                            // Create a simple, single color image to fill in for the missing image
-                            var fillInImage = new Bitmap(32, 32, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                            Color theColor = Color.FromArgb(128, 202, 213, 170);    // 0x80CAB5AA
-                            for (int xx=0; xx<32; xx++)
-                                for (int yy=0; yy<32; yy++)
-                                    fillInImage.SetPixel(xx, yy, theColor);
-                            imageInfo.SetImage(fillInImage);
-                        });
+                    try {
+                        var img = await assetManager.FetchTextureAsImage(textureHandle);
+                        imageInfo.SetImage(img);
+                    }
+                    catch (Exception e) {
+                        // Failure getting the image
+                        _log.ErrorFormat("{0} Failure fetching material texture. id={1}. {2}",
+                                    _logHeader, matInfo.textureID, e);
+                        // Create a simple, single color image to fill in for the missing image
+                        var fillInImage = new Bitmap(32, 32, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                        Color theColor = Color.FromArgb(128, 202, 213, 170);    // 0x80CAB5AA
+                        for (int xx=0; xx<32; xx++)
+                            for (int yy=0; yy<32; yy++)
+                                fillInImage.SetPixel(xx, yy, theColor);
+                        imageInfo.SetImage(fillInImage);
+                    }
                     imageInfo.imageIdentifier = (OMV.UUID)matInfo.textureID;
                     LogBProgress("{0} ConvertFaceToRenderableMesh: create ImageInfo. hash={1}, id={2}",
                                     _logHeader, textureHash, imageInfo.handle);
@@ -280,7 +276,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
         // Returns an ExtendedPrimGroup with a mesh for the passed heightmap.
         // Note that the returned EPG does not include any face information -- the caller must add a texture.
-        public DisplayableRenderable MeshFromHeightMap( float[,] pHeightMap, int regionSizeX, int regionSizeY,
+        public async Task<DisplayableRenderable> MeshFromHeightMap( float[,] pHeightMap, int regionSizeX, int regionSizeY,
                     AssetManager assetManager, OMV.Primitive.TextureEntryFace defaultTexture) {
 
             // OMVR.Face rawMesh = m_mesher.TerrainMesh(pHeightMap, 0, pHeightMap.GetLength(0)-1, 0, pHeightMap.GetLength(1)-1);
@@ -288,7 +284,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
                     _logHeader, pHeightMap.GetLength(0), pHeightMap.GetLength(1), regionSizeX, regionSizeY);
             OMVR.Face rawMesh = Terrain.TerrainMesh(pHeightMap, (float)regionSizeX, (float)regionSizeY);
 
-            RenderableMesh rm = ConvertFaceToRenderableMesh(rawMesh, assetManager, defaultTexture, new OMV.Vector3(1, 1, 1));
+            RenderableMesh rm = await ConvertFaceToRenderableMesh(rawMesh, assetManager, defaultTexture, new OMV.Vector3(1, 1, 1));
 
             RenderableMeshGroup rmg = new RenderableMeshGroup();
             rmg.meshes.Add(rm);

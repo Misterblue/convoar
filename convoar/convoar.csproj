@@ -26,7 +26,7 @@
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.2.1.%2a</ApplicationVersion>
+    <ApplicationVersion>1.2.2.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -141,9 +141,6 @@
     </Reference>
     <Reference Include="OpenSim.Tests.Common">
       <HintPath>..\libs\OpenSim.Tests.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="RSG.Promise">
-      <HintPath>..\libs\RSG.Promise.dll</HintPath>
     </Reference>
     <Reference Include="SmartThreadPool">
       <HintPath>..\libs\SmartThreadPool.dll</HintPath>

@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading.Tasks;
 
 using OpenSim.Region.CoreModules.World.LegacyMap;
 
@@ -33,7 +34,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
         private static readonly string LogHeader = "Terrain";
 
         // Create a mesh for the terrain of the current scene
-        public static BInstance CreateTerrainMesh(
+        public static async Task<BInstance> CreateTerrainMesh(
                             Scene scene,
                             PrimToMesh assetMesher, AssetManager assetManager,
                             BLogger pLog, IParameters pParam) {
@@ -77,6 +78,8 @@ namespace org.herbal3d.cs.os.CommonEntities {
             EntityHandleUUID terrainTextureHandle = new EntityHandleUUID();
             MaterialInfo terrainMaterialInfo = new MaterialInfo(terrainFace, pParam);
 
+            Image terrainImage = null;
+            ImageInfo terrainImageInfo = null;
             if (pParam.P<bool>("CreateTerrainSplat")) {
                 // Use the OpenSim maptile generator to create a texture for the terrain
                 var terrainRenderer = new TexturedMapTileRenderer();
@@ -86,39 +89,40 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 var mapbmp = new Bitmap(terrainDef.Width, terrainDef.Height,
                                         System.Drawing.Imaging.PixelFormat.Format24bppRgb);
                 terrainRenderer.TerrainToBitmap(mapbmp);
+                terrainImage = (Image)mapbmp;
 
                 // Place the newly created image into the Displayable caches
-                ImageInfo terrainImageInfo = new ImageInfo(pLog, pParam) {
+                terrainImageInfo = new ImageInfo(pLog, pParam) {
                     handle = terrainTextureHandle,
                     image = mapbmp,
                     resizable = false // terrain image resolution is not reduced
                 };
-                assetManager.Images.Add(new BHashULong(terrainTextureHandle.GetHashCode()), terrainTextureHandle, terrainImageInfo);
-                // Store the new image into the asset system so it can be read later.
-                assetManager.StoreTextureImage(terrainTextureHandle, scene.Name + " Terrain", convoarID, mapbmp);
-                // Link this image to the material
-                terrainFace.TextureID = terrainTextureHandle.GetUUID();
             }
             else {
                 // Use the default texture code for terrain
                 terrainTextureHandle = new EntityHandleUUID(defaultTextureID);
-                BHash terrainHash = new BHashULong(defaultTextureID.GetHashCode());
-                assetManager.GetImageInfo(terrainHash, () => {
-                    ImageInfo terrainImageInfo = new ImageInfo(pLog, pParam) {
-                        handle = terrainTextureHandle
+                BHash terrainHash = new BHashULong(terrainTextureHandle.GetHashCode());
+                terrainImageInfo = await assetManager.GetImageInfo(terrainHash, async () => {
+                    // The image is not already in the cache so create ImageInfo
+                    ImageInfo newTerrainImageInfo = new ImageInfo(pLog, pParam) {
+                        handle = terrainTextureHandle,
+                        resizable = false // terrain image resolution is not reduced
                     };
-                    assetManager.FetchTextureAsImage(terrainTextureHandle)
-                    .Then(img => {
-                        terrainImageInfo.image = img;
-                    });
-                    return terrainImageInfo;
+                    var img = await assetManager.FetchTextureAsImage(terrainTextureHandle);
+                    newTerrainImageInfo.image = img;
+                    return newTerrainImageInfo;
                 });
             }
+            assetManager.Images.Add(new BHashULong(terrainTextureHandle.GetHashCode()), terrainTextureHandle, terrainImageInfo);
+            // Store the new image into the asset system so it can be read later.
+            assetManager.StoreTextureImage(terrainTextureHandle, scene.Name + " Terrain", convoarID, terrainImage);
+            // Link this image to the material
+            terrainFace.TextureID = terrainTextureHandle.GetUUID();
 
             // The above has created a MaterialInfo for the terrain texture
 
             pLog.DebugFormat("{0}: CreateTerrainMesh. calling MeshFromHeightMap", LogHeader);
-            DisplayableRenderable terrainDisplayable = assetMesher.MeshFromHeightMap(heightMap,
+            DisplayableRenderable terrainDisplayable = await assetMesher.MeshFromHeightMap(heightMap,
                             terrainDef.Width, terrainDef.Height, assetManager, terrainFace);
 
             BInstance terrainInstance = new BInstance();
