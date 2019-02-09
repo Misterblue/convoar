@@ -34,7 +34,7 @@ if [[ "$DO_GIT_TAG" == "yes" ]] ; then
 fi
 
 if [[ "$DO_DOCKER_BUILD" == "yes" ]] ; then
-    docker build --no-cache -t herbal3d/convoar .
+    docker build --no-cache --build-arg VERSION=${VERSION} -t herbal3d/convoar .
 
     docker tag $DOCKERHUB_USER/$IMAGE:latest $DOCKERHUB_USER/$IMAGE:$VERSION
 fi

@@ -3,6 +3,8 @@
 FROM mono:latest
 # FROM mono:4.6
 
+ARG VERSION
+
 ENV TARGET=Release
 # ENV TARGET=Debug
 
@@ -14,7 +16,7 @@ ENV CONVOAR_PASSWORD=convoarconvoar
 # Optout of the .NET Core Telemetry (https://aka.ms/dotnet-cli-telemetry)
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
 
-LABEL Version="1.2"
+LABEL Version=${VERSION}
 LABEL Description="Docker container convoar"
 
 # add the development environment and base tools
@@ -39,6 +41,7 @@ USER ${USER}:${USER}
 RUN cd /home/${USER} \
     && git clone https://github.com/Misterblue/convoar.git \
     && cd convoar \
+    && nuget restore convoar.sln \
     && msbuild /p:Configuration=${TARGET}
 
 # Alternate Linux method that uses the precompiled binaries in  the repository
