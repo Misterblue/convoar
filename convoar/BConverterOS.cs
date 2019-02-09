@@ -102,14 +102,26 @@ namespace org.herbal3d.convoar {
 
             PrimToMesh mesher = new PrimToMesh(_log, _params);
 
+            BInstance[] instances = new BInstance[0];
             try {
                 // Convert SOGs => BInstances
-                var instances = await Task.WhenAll(
-                    scene.GetSceneObjectGroups().Select(sog => {
-                        return ConvertSogToInstance(sog, assetManager, mesher);
-                    }).ToArray()
-                );
+                // Create a collection of parallel tasks for the SOG conversions.
+                List<Task<BInstance>> convertAllSOGs = new List<Task<BInstance>>();
+                foreach (var sog in scene.GetSceneObjectGroups()) {
+                    convertAllSOGs.Add(ConvertSogToInstance(sog, assetManager, mesher));
+                }
+                instances = await Task.WhenAll(convertAllSOGs);
+            }
+            catch (AggregateException ae) {
+                foreach (var e in ae.InnerExceptions) {
+                    _log.ErrorFormat("Convert SOGs exception: {0}", e);
+                }
+            }
+            catch (Exception e) {
+                _log.ErrorFormat("Convert SOGs exception: {0}", e);
+            }
 
+            try {
                 _log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
                 List<BInstance> instanceList = new List<BInstance>();
                 instanceList.AddRange(instances);
@@ -237,19 +249,31 @@ namespace org.herbal3d.convoar {
         // Convert a SceneObjectGroup into an instance with displayables
         public async Task<BInstance> ConvertSogToInstance(SceneObjectGroup sog, AssetManager assetManager, PrimToMesh mesher) {
             BInstance ret = null;
+
+            Displayable[] renderables = new Displayable[0];
             try {
                 LogBProgress("{0} ConvertSogToInstance: name={1}, id={2}, SOPs={3}",
                             _logHeader, sog.Name, sog.UUID, sog.Parts.Length);
                 // Create meshes for all the parts of the SOG
-                var renderables = await Task.WhenAll(
-                    sog.Parts.Select(sop => {
-                        LogBProgress("{0} ConvertSOGToInstance: Calling CreateMeshResource for sog={1}, sop={2}",
+                List<Task<Displayable>> convertSOPs = new List<Task<Displayable>>();
+                foreach (var sop in sog.Parts) {
+                    LogBProgress("{0} ConvertSOGToInstance: Calling CreateMeshResource for sog={1}, sop={2}",
                                     _logHeader, sog.UUID, sop.UUID);
-                        OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
-                        return mesher.CreateMeshResource(sog, sop, aPrim, assetManager, OMVR.DetailLevel.Highest);
-                    }).ToArray()
-                );
+                    OMV.Primitive aPrim = sop.Shape.ToOmvPrimitive();
+                    convertSOPs.Add(mesher.CreateMeshResource(sog, sop, aPrim, assetManager, OMVR.DetailLevel.Highest));
+                }
+                renderables = await Task.WhenAll(convertSOPs);
+            }
+            catch (AggregateException ae) {
+                foreach (var e in ae.InnerExceptions) {
+                    _log.ErrorFormat("ConvertSogToInstance: exception: {0}", e);
+                }
+            }
+            catch (Exception e) {
+                _log.ErrorFormat("ConvertSogToInstance: exception: {0}", e);
+            }
 
+            try {
                 // Remove any failed SOG/SOP conversions.
                 List<Displayable> filteredRenderables = renderables.Where(rend => rend != null).ToList();
 
