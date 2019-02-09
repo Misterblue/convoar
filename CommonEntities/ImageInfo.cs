@@ -51,12 +51,6 @@ namespace org.herbal3d.cs.os.CommonEntities {
             persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString(), pLog, pParams);
         }
 
-        public ImageInfo(Image pImage) {
-            handle = new EntityHandleUUID();
-            imageIdentifier = handle.GetUUID(); // image is unique unless underlying set
-            this.SetImage(pImage);
-        }
-
         // Create a new ImageInfo that has a copy of all the information from this one.
         // THis creates a copy of the image so it can be modified without touching the original.
         public ImageInfo Clone() {

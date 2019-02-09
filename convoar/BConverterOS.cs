@@ -51,7 +51,6 @@ using OMVR = OpenMetaverse.Rendering;
 namespace org.herbal3d.convoar {
     // Convert things from OpenSimulator to Instances and Displayables things
     public class BConverterOS {
-
         private static readonly string _logHeader = "[BConverterOS]";
 
         private readonly BLogger _log;
@@ -263,9 +262,10 @@ namespace org.herbal3d.convoar {
                     }).ToList();
                     if (rootDisplayableList.Count != 1) {
                         // There should be only one root prim
-                        _log.ErrorFormat("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
+                        string errorMsg = String.Format("{0} ConvertSOGToInstance: Found not one root prim in SOG. ID={1}, numRoots={2}",
                                     _logHeader, sog.UUID, rootDisplayableList.Count);
-                        promReject(new Exception(String.Format("Found more than one root prim in SOG. ID={0}", sog.UUID)));
+                        _log.ErrorFormat(errorMsg);
+                        promReject(new Exception(errorMsg));
                         return null;
                     }
 

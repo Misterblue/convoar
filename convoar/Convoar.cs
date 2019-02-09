@@ -78,7 +78,8 @@ namespace org.herbal3d.convoar {
         // If run programmatically, create instance and call 'Start' with parameters.
         public void Start(string[] args) {
             Globals = new GlobalContext() {
-                log = new LoggerLog4Net(),
+                // log = new LoggerLog4Net(),
+                log = new LoggerConsole(),
                 stats = new ConvoarStats()
             };
             Globals.parms = new ConvoarParams(Globals.log);

@@ -133,11 +133,11 @@ namespace org.herbal3d.cs.os.CommonEntities {
         }
 
         private void PersistInit(AssetType pAssetType, string pInfo, TargetType pTargetType, BLogger pLog, IParameters pParams) {
+            _log = pLog;
+            _params = pParams;
             _assetType = pAssetType;
             _assetInfo = pInfo;
             _targetType = FigureOutTargetType();
-            _log = pLog;
-            _params = pParams;
 
             BaseDirectory = AssetTypeToSubDir[_assetType];
         }
