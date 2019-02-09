@@ -275,7 +275,7 @@ namespace org.herbal3d.convoar {
             BScene ret = null;
 
             try {
-                BConverterOS converter = new BConverterOS(Globals.log, Globals.parms);
+                OarConverter converter = new OarConverter(Globals.log, Globals.parms);
                 ret = await converter.ConvertOarToScene(assetService, assetManager);
             }
             catch (Exception e) {

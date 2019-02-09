@@ -108,6 +108,7 @@
   <ItemGroup>
     <Compile Include="AssetManager.cs" />
     <Compile Include="BAttributes.cs" />
+    <Compile Include="BConverterOS.cs" />
     <Compile Include="BCoordinates.cs" />
     <Compile Include="BInstance.cs" />
     <Compile Include="BScene.cs" />
@@ -126,9 +127,6 @@
       <Project>{dab7cef5-c7c1-4dfa-85d7-267658efc466}</Project>
       <Name>Util</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
