@@ -40,9 +40,6 @@
     <Reference Include="OpenMetaverse">
       <HintPath>..\libs\OpenMetaverse.dll</HintPath>
     </Reference>
-    <Reference Include="OpenMetaverse.Rendering.Meshmerizer">
-      <HintPath>..\libs\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
-    </Reference>
     <Reference Include="OpenMetaverse.StructuredData">
       <HintPath>..\libs\OpenMetaverse.StructuredData.dll</HintPath>
     </Reference>
@@ -116,6 +113,7 @@
     <Compile Include="ImageInfo.cs" />
     <Compile Include="MaterialInfo.cs" />
     <Compile Include="MeshInfo.cs" />
+    <Compile Include="MeshmerizerR.cs" />
     <Compile Include="PersistRules.cs" />
     <Compile Include="PrimToMesh.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

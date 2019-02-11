@@ -1,4 +1,4 @@
-    <Project frameworkVersion="v4_6" name="CommonEntities" path="addon-modules/convoar/CommonEntities" type="Library">
+    <Project frameworkVersion="v4_6" name="CommonEntitiesUtil" path="addon-modules/convoar/CommonEntitiesUtil" type="Library">
       <Configuration name="Debug">
         <Options>
           <OutputPath>../../../bin/</OutputPath>
@@ -27,25 +27,6 @@
       <Reference name="OpenMetaverseTypes" path="../../../bin/"/>
       <Reference name="OpenMetaverse.StructuredData" path="../../../bin/"/>
 
-      <Reference name="PrimMesher" path="../../../bin/"/>
-
-      <Reference name="OpenSim.Framework"/>
-      <Reference name="OpenSim.Framework.Monitoring"/>
-      <Reference name="OpenSim.Framework.Serialization"/>
-      <Reference name="OpenSim.Framework.Servers.HttpServer"/>
-      <Reference name="OpenSim.Capabilities"/>
-      <Reference name="OpenSim.Data.Null"/>
-      <Reference name="OpenSim.Services.Connectors"/>
-      <Reference name="OpenSim.Services.Interfaces"/>
-      <Reference name="OpenSim.Region.Framework"/>
-      <Reference name="OpenSim.Region.CoreModules"/>
-      <Reference name="OpenSim.Region.PhysicsModules.SharedBase"/>
-      <Reference name="OpenSim.Region.PhysicsModules.BasiPhysics"/>
-      <Reference name="OpenSim.Tests.Common"/>
-
-      <Reference name="org.herbal3d.cs.CommonEntitiesUtil" path="../../../bin/"/>
-
-      <Reference name="CSJ2K" path="../../../bin/"/>
       <Reference name="Nini" path="../../../bin/"/>
       <Reference name="log4net" path="../../../bin/"/>
 
