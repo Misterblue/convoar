@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "convoar", "convoar\convoar.csproj", "{BD9942A1-315C-4961-B56A-D1770BED83B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonEntitiesUtil", "Util\CommonEntitiesUtil.csproj", "{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonEntitiesUtil", "CommonEntitiesUtil\CommonEntitiesUtil.csproj", "{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonEntities", "CommonEntities\CommonEntities.csproj", "{C9DADDA3-1AD2-4378-9417-D681FADCA107}"
 EndProject

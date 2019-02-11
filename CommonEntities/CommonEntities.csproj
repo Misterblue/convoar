@@ -122,7 +122,7 @@
     <Compile Include="Terrain.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Util\CommonEntitiesUtil.csproj">
+    <ProjectReference Include="..\CommonEntitiesUtil\CommonEntitiesUtil.csproj">
       <Project>{dab7cef5-c7c1-4dfa-85d7-267658efc466}</Project>
       <Name>CommonEntitiesUtil</Name>
     </ProjectReference>

@@ -7,8 +7,8 @@
     <ProjectGuid>{DAB7CEF5-C7C1-4DFA-85D7-267658EFC466}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Util</RootNamespace>
-    <AssemblyName>Util</AssemblyName>
+    <RootNamespace>CommonEntitiesUtil</RootNamespace>
+    <AssemblyName>CommonEntitiesUtil</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
