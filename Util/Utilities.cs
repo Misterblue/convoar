@@ -5,7 +5,7 @@ using System.Text;
 
 using OMV = OpenMetaverse;
 
-namespace org.herbal3d.cs.Util {
+namespace org.herbal3d.cs.CommonEntitiesUtil {
     // A container for useful, static utility functions
     public class Utilities {
         // Base function that creates a 4x4 transform from pos, rotation, and scale.

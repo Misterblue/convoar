@@ -17,7 +17,7 @@ using System;
 
 using log4net;
 
-namespace org.herbal3d.cs.Util {
+namespace org.herbal3d.cs.CommonEntitiesUtil {
 
     public abstract class BLogger {
         public abstract void SetVerbose(bool val);

@@ -70,9 +70,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CSJ2K, Version=3.0.0.0, Culture=neutral, PublicKeyToken=0ca7be2ec378a773, processorArchitecture=MSIL">
-      <HintPath>..\packages\CSJ2K.3.0.0\lib\net40-client\CSJ2K.dll</HintPath>
-    </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\libs\log4net.dll</HintPath>
@@ -179,7 +176,6 @@
     <None Include="libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
@@ -218,12 +214,12 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonEntities\CommonEntities.csproj">
-      <Project>{ded4bc9a-cfbd-453d-814f-b3850d14ff27}</Project>
+      <Project>{c9dadda3-1ad2-4378-9417-d681fadca107}</Project>
       <Name>CommonEntities</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Util\Util.csproj">
+    <ProjectReference Include="..\Util\CommonEntitiesUtil.csproj">
       <Project>{dab7cef5-c7c1-4dfa-85d7-267658efc466}</Project>
-      <Name>Util</Name>
+      <Name>CommonEntitiesUtil</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -20,7 +20,7 @@ using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace org.herbal3d.cs.Util {
+namespace org.herbal3d.cs.CommonEntitiesUtil {
 
     // Basil wrapper for hash functions.
     // There are several different hashing systems ranging from int's to SHA versions.

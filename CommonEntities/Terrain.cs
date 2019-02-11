@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 using OpenSim.Region.CoreModules.World.LegacyMap;
 
-using org.herbal3d.cs.Util;
+using org.herbal3d.cs.CommonEntitiesUtil;
 
 using OMV = OpenMetaverse;
 using OpenSim.Region.Framework.Interfaces;

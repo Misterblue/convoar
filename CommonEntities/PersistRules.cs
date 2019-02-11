@@ -23,7 +23,7 @@ using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.IO;
 
-using org.herbal3d.cs.Util;
+using org.herbal3d.cs.CommonEntitiesUtil;
 
 using OMV = OpenMetaverse;
 

@@ -18,7 +18,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 
-using org.herbal3d.cs.Util;
+using org.herbal3d.cs.CommonEntitiesUtil;
 using org.herbal3d.cs.os.CommonEntities;
 
 // I hoped to keep the Gltf classes separate from the OMV requirement but

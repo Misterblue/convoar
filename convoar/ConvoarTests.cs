@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 
 using OpenSim.Region.Framework.Scenes;
 
-using org.herbal3d.cs.Util;
+using org.herbal3d.cs.CommonEntitiesUtil;
 using org.herbal3d.cs.os.CommonEntities;
 
 using OMV = OpenMetaverse;

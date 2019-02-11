@@ -20,7 +20,7 @@
 using System;
 using System.Text;
 
-using org.herbal3d.cs.Util;
+using org.herbal3d.cs.CommonEntitiesUtil;
 
 using OMV = OpenMetaverse;
 

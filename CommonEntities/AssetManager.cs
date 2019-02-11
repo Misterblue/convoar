@@ -29,7 +29,7 @@ using OMV = OpenMetaverse;
 using OMVA = OpenMetaverse.Assets;
 using OpenMetaverse.Imaging;
 
-using org.herbal3d.cs.Util;
+using org.herbal3d.cs.CommonEntitiesUtil;
 
 using CSJ2K;
 

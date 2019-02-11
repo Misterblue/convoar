@@ -38,8 +38,8 @@ using OpenSim.Region.PhysicsModules.SharedBase;
 using OpenSim.Tests.Common;
 using OpenSim.Data.Null;
 
-using org.herbal3d.cs.Util;
 using org.herbal3d.cs.os.CommonEntities;
+using org.herbal3d.cs.CommonEntitiesUtil;
 
 using OMV = OpenMetaverse;
 using OMVS = OpenMetaverse.StructuredData;

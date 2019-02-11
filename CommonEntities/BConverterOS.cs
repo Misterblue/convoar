@@ -26,7 +26,7 @@ using OpenSim.Region.CoreModules.World.Serialiser;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 
-using org.herbal3d.cs.Util;
+using org.herbal3d.cs.CommonEntitiesUtil;
 
 using OMV = OpenMetaverse;
 using OMVS = OpenMetaverse.StructuredData;

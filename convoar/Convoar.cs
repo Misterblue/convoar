@@ -23,8 +23,8 @@ using System.Threading.Tasks;
 
 using OpenSim.Services.Interfaces;
 
-using org.herbal3d.cs.Util;
 using org.herbal3d.cs.os.CommonEntities;
+using org.herbal3d.cs.CommonEntitiesUtil;
 
 namespace org.herbal3d.convoar {
 

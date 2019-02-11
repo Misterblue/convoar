@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <RootNamespace>CommonEntities_core</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,14 +9,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="log4net">
-      <HintPath>..\libs\log4net.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\Util\CommonEntitiesUtil.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Nini">
       <HintPath>..\libs\Nini.dll</HintPath>
-    </Reference>
-    <Reference Include="nunit.framework">
-      <HintPath>..\libs\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="OpenMetaverse">
       <HintPath>..\libs\OpenMetaverse.dll</HintPath>

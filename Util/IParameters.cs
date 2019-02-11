@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace org.herbal3d.cs.Util {
+namespace org.herbal3d.cs.CommonEntitiesUtil {
     public interface IParameters {
         // Basic parameter fetching interface which returns the parameter
         //   value of the requested parameter name.
