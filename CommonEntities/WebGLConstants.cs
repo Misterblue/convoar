@@ -15,7 +15,7 @@
  */
 
 // Derived from WebGLConstants.js from Cesium project. (Apache 2.0)
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
 
     public class WebGLConstants {
    

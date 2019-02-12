@@ -23,7 +23,7 @@ using System.Threading.Tasks;
 
 using OMV = OpenMetaverse;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
     // Some static routines for creating JSON output
     public class JSONHelpers {
 
@@ -35,7 +35,7 @@ namespace org.herbal3d.convoar {
 
         public static void SimpleOutputValue(StreamWriter outt, Object val, int level) {
             if (val == null) {
-                ConvOAR.Globals.log.ErrorFormat("SimpleJSONOutput: called with NULL value");
+                // _log.ErrorFormat("SimpleJSONOutput: called with NULL value");
                 val = "null";
             }
             if (val is string) {
@@ -90,17 +90,17 @@ namespace org.herbal3d.convoar {
             //   rather than a number and causing parsing errors. This code tells the
             //   user something is wrong but puts a number in the output JSON.
             else if (val is float && Single.IsNaN((float)val)) {
-                ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Single.NaN!!");
+                // _log.ErrorFormat("JSONHelpers: Value is Single.NaN!!");
                 outt.Write("0");
             }
             else if (val is double && Double.IsNaN((double)val)) {
-                ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is Double.NaN!!");
+                // _log.ErrorFormat("JSONHelpers: Value is Double.NaN!!");
                 outt.Write("0");
             }
             else {
                 var ret = val.ToString();
                 if (ret == "NaN") {
-                    ConvOAR.Globals.log.ErrorFormat("JSONHelpers: Value is NaN!!");
+                    // _log.ErrorFormat("JSONHelpers: Value is NaN!!");
                 }
                 else {
                     outt.Write(val);

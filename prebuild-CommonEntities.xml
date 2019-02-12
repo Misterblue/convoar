@@ -43,7 +43,7 @@
       <Reference name="OpenSim.Region.PhysicsModules.BasiPhysics"/>
       <Reference name="OpenSim.Tests.Common"/>
 
-      <Reference name="org.herbal3d.cs.CommonEntitiesUtil" path="../../../bin/"/>
+      <Reference name="CommonEntitiesUtil" path="../../../bin"/>
 
       <Reference name="CSJ2K" path="../../../bin/"/>
       <Reference name="Nini" path="../../../bin/"/>

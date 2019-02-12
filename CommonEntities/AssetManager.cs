@@ -363,7 +363,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
             if (asset != null) {
                 if (asset.IsBinaryAsset && asset.Type == (sbyte)OMV.AssetType.Texture) {
                     try {
-                        if (_params.P<bool>("UseOpenJPEG")) {
+                        // if (_params.P<bool>("UseOpenJPEG")) {
                             if (OpenJPEG.DecodeToImage(asset.Data, out ManagedImage mimage, out imageDecoded)) {
                                 mimage = null;  // 'mimage' is unused so release the reference
                             }
@@ -371,12 +371,12 @@ namespace org.herbal3d.cs.os.CommonEntities {
                                 // Could not decode the image. Odd.
                                 imageDecoded = null;
                             }
-                        }
-                        else {
-                            // Code for using NuGet CSJ2K. Thought it might be better but noticed no difference.
-                            CSJ2K.Util.BitmapImageCreator.Register();
-                            imageDecoded = CSJ2K.J2kImage.FromBytes(asset.Data).As<Bitmap>();
-                        }
+                        // }
+                        // else {
+                        //     // Code for using NuGet CSJ2K. Thought it might be better but noticed no difference.
+                        //     CSJ2K.Util.BitmapImageCreator.Register();
+                        //     imageDecoded = CSJ2K.J2kImage.FromBytes(asset.Data).As<Bitmap>();
+                        // }
                     }
                     catch (Exception e) {
                         throw new Exception("FetchTextureAsImage: exception decoding JPEG2000 texture. ID=" + handle.ToString()

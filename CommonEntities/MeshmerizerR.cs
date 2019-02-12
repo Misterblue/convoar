@@ -43,6 +43,10 @@ using OMVR = OpenMetaverse.Rendering;
 
 namespace OpenMetaverse.Rendering
 {
+// Following pragma added as we don't want to change this file too much so changes
+//      in libOpenMetaverse can be tracked.
+#pragma warning disable IDE0017 // Simplify object initialization
+#pragma warning disable IDE0019 // Use pattern matching
     /// <summary>
     /// Meshing code based on the Idealist Viewer (20081213).
     /// </summary>
@@ -422,7 +426,7 @@ namespace OpenMetaverse.Rendering
         public OMVR.FacetedMesh MeshSubMeshAsFacetedMesh(OMV.Primitive prim, byte[] compressedMeshData)
         {
             OMVR.FacetedMesh ret = null;
-            OSD meshOSD = Helpers.DecompressOSD(compressedMeshData);
+            OSD meshOSD = DecompressOSD(compressedMeshData);
 
             if (meshOSD != null)
             {
@@ -445,7 +449,7 @@ namespace OpenMetaverse.Rendering
         public OMVR.SimpleMesh MeshSubMeshAsSimpleMesh(OMV.Primitive prim, byte[] compressedMeshData)
         {
             OMVR.SimpleMesh ret = null;
-            OSD meshOSD = Helpers.DecompressOSD(compressedMeshData);
+            OSD meshOSD = DecompressOSD(compressedMeshData);
 
             if (meshOSD != null)
             {
@@ -462,11 +466,44 @@ namespace OpenMetaverse.Rendering
             return ret;
         }
 
+        /// <summary>
+        /// decompresses a gzipped OSD object
+        /// </summary>
+        /// <param name="decodedOsd"></param> the OSD object
+        /// <param name="meshBytes"></param>
+        /// <returns></returns>
+        // 20190211: imported from libOpenMetaverse.Helpers as OpenSim libomv doesn't have it
+        private OSD DecompressOSD(byte[] meshBytes) {
+            OSD decodedOsd = null;
+
+            using (MemoryStream inMs = new MemoryStream(meshBytes)) {
+                using (MemoryStream outMs = new MemoryStream()) {
+                    using (DeflateStream decompressionStream = new DeflateStream(inMs, CompressionMode.Decompress)) {
+                        byte[] readBuffer = new byte[2048];
+                        inMs.Read(readBuffer, 0, 2); // skip first 2 bytes in header
+                        int readLen = 0;
+
+                        while ((readLen = decompressionStream.Read(readBuffer, 0, readBuffer.Length)) > 0)
+                            outMs.Write(readBuffer, 0, readLen);
+
+                        outMs.Flush();
+
+                        outMs.Seek(0, SeekOrigin.Begin);
+
+                        byte[] decompressedBuf = outMs.GetBuffer();
+
+                        decodedOsd = OSDParser.DeserializeLLSDBinary(decompressedBuf);
+                    }
+                }
+            }
+            return decodedOsd;
+        }
+
         public List<List<Vector3>> MeshSubMeshAsConvexHulls(OMV.Primitive prim, byte[] compressedMeshData)
         {
             List<List<Vector3>> hulls = new List<List<Vector3>>();
             try {
-                OSD convexBlockOsd = Helpers.DecompressOSD(compressedMeshData);
+                OSD convexBlockOsd = DecompressOSD(compressedMeshData);
 
                 if (convexBlockOsd != null && convexBlockOsd is OSDMap) {
                     OSDMap convexBlock = convexBlockOsd as OSDMap;
@@ -877,4 +914,6 @@ namespace OpenMetaverse.Rendering
             return terrain;
         }
     }
+#pragma warning restore IDE0019 // Use pattern matching
+#pragma warning restore IDE0017 // Simplify object initialization
 }

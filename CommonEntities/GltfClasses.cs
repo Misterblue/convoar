@@ -19,14 +19,13 @@ using System.Collections.Generic;
 using System.IO;
 
 using org.herbal3d.cs.CommonEntitiesUtil;
-using org.herbal3d.cs.os.CommonEntities;
 
 // I hoped to keep the Gltf classes separate from the OMV requirement but
 //    it doesn't make sense to copy all the mesh info into new structures.
 using OMV = OpenMetaverse;
 using OMVR = OpenMetaverse.Rendering;
 
-namespace org.herbal3d.convoar {
+namespace org.herbal3d.cs.os.CommonEntities {
 
     // The base class for all of the different types.
     public abstract class GltfClass {
@@ -53,8 +52,8 @@ namespace org.herbal3d.convoar {
 
         // Output messge of --LogGltfBuilding was specified
         protected void LogGltf(string msg, params Object[] args) {
-            if (ConvOAR.Globals.parms.P<bool>("LogGltfBuilding")) {
-                ConvOAR.Globals.log.Log(msg, args);
+            if (_params.P<bool>("LogGltfBuilding")) {
+                _log.Log(msg, args);
             }
         }
     }
@@ -237,7 +236,7 @@ namespace org.herbal3d.convoar {
         // After all the nodes have been added to a Gltf class, build all the
         //    dependent structures
         public void BuildAccessorsAndBuffers() {
-            int maxVerticesPerBuffer = ConvOAR.Globals.parms.P<int>("VerticesMaxForBuffer");
+            int maxVerticesPerBuffer = _params.P<int>("VerticesMaxForBuffer");
 
             // Partition the meshes into smaller groups based on number of vertices going out
             List<GltfPrimitive> partial = new List<GltfPrimitive>();
@@ -603,13 +602,15 @@ namespace org.herbal3d.convoar {
             values = new GltfAttributes {
                 { "generator", "convoar" },
                 { "version", "2.0" },
-                { "copyright", ConvOAR.Globals.parms.P<string>("GltfCopyright") }
+                { "copyright", _params.P<string>("GltfCopyright") }
             };
+            /*
             extras = new GltfAttributes {
                 { "convoarCommit", ConvOAR.Globals.gitCommit },
                 { "convoarVersion", ConvOAR.Globals.version },
                 { "convoarBuildDate", ConvOAR.Globals.buildDate },
             };
+            */
         }
 
         public override Object AsJSON() {
@@ -804,7 +805,7 @@ namespace org.herbal3d.convoar {
                 hasher.Add(prim.bHash);
             });
             bHash = hasher.Finish();
-            if (ConvOAR.Globals.parms.P<bool>("AddUniqueCodes")) {
+            if (_params.P<bool>("AddUniqueCodes")) {
                 // Add a unique code to the extras section
                 extras.Add("uniqueHash", bHash.ToString());
             }
@@ -950,8 +951,8 @@ namespace org.herbal3d.convoar {
                 transparency = surfaceColor.A;
                 transparent = true;
             }
-            if (ConvOAR.Globals.parms.P<bool>("DoubleSided")) {
-                doubleSided = ConvOAR.Globals.parms.P<bool>("DoubleSided");
+            if (_params.P<bool>("DoubleSided")) {
+                doubleSided = _params.P<bool>("DoubleSided");
             }
             if (matInfo.shiny != OMV.Shininess.None) {
                 shininess = (float)matInfo.shiny / 256f;
@@ -992,7 +993,7 @@ namespace org.herbal3d.convoar {
         // Check if that is being done and find the reference to the resized image
         private ImageInfo CheckForResizedImage(ImageInfo origImage, AssetManager assetManager) {
             ImageInfo ret = origImage;
-            int maxSize = ConvOAR.Globals.parms.P<int>("TextureMaxSize");
+            int maxSize = _params.P<int>("TextureMaxSize");
             if (origImage.resizable && maxSize > 0 && maxSize < 10000) {
                 if (origImage.xSize > maxSize || origImage.ySize > maxSize) {
                     origImage.ConstrainTextureSize(maxSize);
