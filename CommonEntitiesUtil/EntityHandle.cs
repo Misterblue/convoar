@@ -82,8 +82,7 @@ namespace org.herbal3d.cs.CommonEntitiesUtil {
         // IComparable
         public override int CompareTo(object obj) {
             int ret = 0;
-            EntityHandleUUID other = obj as EntityHandleUUID;
-            if (other == null) {
+            if (!(obj is EntityHandleUUID other)) {
                 throw new ArgumentException("CompareTo in EntityHandle: other type not EntityHandle");
             }
             if (this._uuid != other._uuid) {
@@ -106,9 +105,8 @@ namespace org.herbal3d.cs.CommonEntitiesUtil {
         // IEqualityComparer.Equals
         public override bool Equals(EntityHandle x, EntityHandle y) {
             bool ret = false;
-            EntityHandleUUID xU = x as EntityHandleUUID;
             EntityHandleUUID yU = y as EntityHandleUUID;
-            if (xU != null && yU != null) {
+            if (x is EntityHandleUUID xU && yU != null) {
                 ret = xU._uuid.CompareTo(yU._uuid) == 0;
             }
             return ret;
@@ -117,9 +115,8 @@ namespace org.herbal3d.cs.CommonEntitiesUtil {
         // IEqualityComparer.GetHashCode
         public override int GetHashCode(EntityHandle obj) {
             int ret = 0;
-            EntityHandleUUID objU = obj as EntityHandleUUID;
-            if (objU != null) {
-                ret =  objU._uuid.GetHashCode();
+            if (obj is EntityHandleUUID objU) {
+                ret = objU._uuid.GetHashCode();
             }
             return ret;
         }
