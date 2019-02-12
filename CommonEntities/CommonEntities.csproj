@@ -1,288 +1,249 @@
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
-	<PropertyGroup>
-	  <ProjectType>Local</ProjectType>
-	  <ProductVersion>14.0.23107.0</ProductVersion>
-	  <SchemaVersion>2.0</SchemaVersion>
-	  <ProjectGuid>{E5FBCD68-0000-0000-0000-000000000000}</ProjectGuid>
-	  <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-	  <ApplicationIcon></ApplicationIcon>
-	  <AssemblyKeyContainerName>
-	  </AssemblyKeyContainerName>
-	  <AssemblyName>CommonEntities</AssemblyName>
-	  <DefaultClientScript>JScript</DefaultClientScript>
-	  <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
-	  <DefaultTargetSchema>IE50</DefaultTargetSchema>
-	  <DelaySign>false</DelaySign>
-	  <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-	  <OutputType>Library</OutputType>
-	  <AppDesignerFolder></AppDesignerFolder>
-	  <RootNamespace>CommonEntities</RootNamespace>
-	  <StartupObject></StartupObject>
-	  <StartArguments></StartArguments>
-	  <FileUpgradeFlags>
-	  </FileUpgradeFlags>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-	  <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-	  <BaseAddress>285212672</BaseAddress>
-	  <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-	  <ConfigurationOverrideFile>
-	  </ConfigurationOverrideFile>
-	  <DefineConstants>TRACE;DEBUG;</DefineConstants>
-	  <DocumentationFile></DocumentationFile>
-	  <DebugSymbols>True</DebugSymbols>
-	  <FileAlignment>4096</FileAlignment>
-	  <Optimize>False</Optimize>
-	  <OutputPath>..\..\..\bin\</OutputPath>
-	  <RegisterForComInterop>False</RegisterForComInterop>
-	  <RemoveIntegerChecks>False</RemoveIntegerChecks>
-	  <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
-	  <WarningLevel>4</WarningLevel>
-	  <NoStdLib>False</NoStdLib>
-	  <NoWarn></NoWarn>
-	  <PlatformTarget>AnyCPU</PlatformTarget>
-	  <Prefer32Bit>False</Prefer32Bit>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-	  <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-	  <BaseAddress>285212672</BaseAddress>
-	  <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-	  <ConfigurationOverrideFile>
-	  </ConfigurationOverrideFile>
-	  <DefineConstants>TRACE;</DefineConstants>
-	  <DocumentationFile></DocumentationFile>
-	  <DebugSymbols>False</DebugSymbols>
-	  <FileAlignment>4096</FileAlignment>
-	  <Optimize>True</Optimize>
-	  <OutputPath>..\..\..\bin\</OutputPath>
-	  <RegisterForComInterop>False</RegisterForComInterop>
-	  <RemoveIntegerChecks>False</RemoveIntegerChecks>
-	  <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
-	  <WarningLevel>4</WarningLevel>
-	  <NoStdLib>False</NoStdLib>
-	  <NoWarn></NoWarn>
-	  <PlatformTarget>AnyCPU</PlatformTarget>
-	  <Prefer32Bit>False</Prefer32Bit>
-	</PropertyGroup>
-	<ItemGroup>
-	  <Reference Include="CSJ2K" >
-		  <Name>CSJ2K</Name>
-		<HintPath>..\..\..\bin\CSJ2K.dll</HintPath>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="log4net" >
-		  <Name>log4net</Name>
-		<HintPath>..\..\..\bin\log4net.dll</HintPath>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="Mono.Addins" >
-		  <Name>Mono.Addins</Name>
-		<HintPath>..\..\..\bin\Mono.Addins.dll</HintPath>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="Nini" >
-		  <Name>Nini</Name>
-		<HintPath>..\..\..\bin\Nini.dll</HintPath>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="OpenMetaverse" >
-		  <Name>OpenMetaverse</Name>
-		<HintPath>..\..\..\bin\OpenMetaverse.dll</HintPath>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="OpenMetaverse.StructuredData" >
-		  <Name>OpenMetaverse.StructuredData</Name>
-		<HintPath>..\..\..\bin\OpenMetaverse.StructuredData.dll</HintPath>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="OpenMetaverseTypes" >
-		  <Name>OpenMetaverseTypes</Name>
-		<HintPath>..\..\..\bin\OpenMetaverseTypes.dll</HintPath>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="OpenSim.Region.PhysicsModules.BasiPhysics" >
-		  <Name>OpenSim.Region.PhysicsModules.BasiPhysics</Name>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="PrimMesher" >
-		  <Name>PrimMesher</Name>
-		<HintPath>..\..\..\bin\PrimMesher.dll</HintPath>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="System" >
-		  <Name>System</Name>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="System.Core" >
-		  <Name>System.Core</Name>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="System.Data" >
-		  <Name>System.Data</Name>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="System.Data.DataSetExtensions" >
-		  <Name>System.Data.DataSetExtensions</Name>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="System.Drawing" >
-		  <Name>System.Drawing</Name>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="System.Net.Http" >
-		  <Name>System.Net.Http</Name>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="System.Reflection" >
-		  <Name>System.Reflection</Name>
-		<Private>False</Private>
-	  </Reference>
-	  <Reference Include="System.Xml" >
-		  <Name>System.Xml</Name>
-		<Private>False</Private>
-	  </Reference>
-	</ItemGroup>
-	<ItemGroup>
-	  <ProjectReference Include="..\CommonEntitiesUtil\CommonEntitiesUtil.csproj">
-		<Name>CommonEntitiesUtil</Name>
-		<Project>{A9D65554-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Capabilities\OpenSim.Capabilities.csproj">
-		<Name>OpenSim.Capabilities</Name>
-		<Project>{FF56527B-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Data\Null\OpenSim.Data.Null.csproj">
-		<Name>OpenSim.Data.Null</Name>
-		<Project>{8D314DCC-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Framework\OpenSim.Framework.csproj">
-		<Name>OpenSim.Framework</Name>
-		<Project>{BCCDBB55-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Framework\Monitoring\OpenSim.Framework.Monitoring.csproj">
-		<Name>OpenSim.Framework.Monitoring</Name>
-		<Project>{69AB1BC7-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Framework\Serialization\OpenSim.Framework.Serialization.csproj">
-		<Name>OpenSim.Framework.Serialization</Name>
-		<Project>{BD63E665-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Framework\Servers\HttpServer\OpenSim.Framework.Servers.HttpServer.csproj">
-		<Name>OpenSim.Framework.Servers.HttpServer</Name>
-		<Project>{159EC5C2-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Region\CoreModules\OpenSim.Region.CoreModules.csproj">
-		<Name>OpenSim.Region.CoreModules</Name>
-		<Project>{B60B8DCD-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Region\Framework\OpenSim.Region.Framework.csproj">
-		<Name>OpenSim.Region.Framework</Name>
-		<Project>{C98F6D97-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Region\PhysicsModules\SharedBase\OpenSim.Region.PhysicsModules.SharedBase.csproj">
-		<Name>OpenSim.Region.PhysicsModules.SharedBase</Name>
-		<Project>{EFA63A0B-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Services\Connectors\OpenSim.Services.Connectors.csproj">
-		<Name>OpenSim.Services.Connectors</Name>
-		<Project>{B16DF9C1-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Services\Interfaces\OpenSim.Services.Interfaces.csproj">
-		<Name>OpenSim.Services.Interfaces</Name>
-		<Project>{08ECE473-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	  <ProjectReference Include="..\..\..\OpenSim\Tests\Common\OpenSim.Tests.Common.csproj">
-		<Name>OpenSim.Tests.Common</Name>
-		<Project>{CC43930F-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
-	</ItemGroup>
-	<ItemGroup>
-	  <Compile Include="AssetManager.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="BAttributes.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="BConverterOS.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="BCoordinates.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="BInstance.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="BScene.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="BSceneManipulation.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="Displayable.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="GltfClasses.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="ImageInfo.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="JSONHelpers.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="MaterialInfo.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="MeshInfo.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="MeshmerizerR.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="PersistRules.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="PrimToMesh.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="Terrain.cs">
-		<SubType>Code</SubType>
-	  </Compile>
-	  <Compile Include="WebGLConstants.cs">
-		<SubType>Code</SubType>
-	  </Compile>
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>14.0.23107.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{E5FBCD68-0000-0000-0000-000000000000}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <ApplicationIcon>
+    </ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName>CommonEntities</AssemblyName>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>
+    </AppDesignerFolder>
+    <RootNamespace>CommonEntities</RootNamespace>
+    <StartupObject>
+    </StartupObject>
+    <StartArguments>
+    </StartArguments>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE;DEBUG;</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>True</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <Optimize>False</Optimize>
+    <OutputPath>..\..\..\bin\</OutputPath>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <RemoveIntegerChecks>False</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <NoStdLib>False</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>False</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE;</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>False</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <Optimize>True</Optimize>
+    <OutputPath>..\..\..\bin\</OutputPath>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <RemoveIntegerChecks>False</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <NoStdLib>False</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>False</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CSJ2K, Version=3.0.0.0, Culture=neutral, PublicKeyToken=0ca7be2ec378a773, processorArchitecture=MSIL">
+      <HintPath>..\packages\CSJ2K.3.0.0\lib\net40-client\CSJ2K.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\libs\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="Nini">
+      <HintPath>..\libs\Nini.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenMetaverse">
+      <HintPath>..\libs\OpenMetaverse.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenMetaverse.Rendering.Meshmerizer">
+      <HintPath>..\libs\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenMetaverse.StructuredData">
+      <HintPath>..\libs\OpenMetaverse.StructuredData.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenMetaverseTypes">
+      <HintPath>..\libs\OpenMetaverseTypes.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Capabilities">
+      <HintPath>..\libs\OpenSim.Capabilities.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Data.Null">
+      <HintPath>..\libs\OpenSim.Data.Null.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Framework">
+      <HintPath>..\libs\OpenSim.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Framework.Monitoring">
+      <HintPath>..\libs\OpenSim.Framework.Monitoring.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Framework.Serialization">
+      <HintPath>..\libs\OpenSim.Framework.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Framework.Servers.HttpServer">
+      <HintPath>..\libs\OpenSim.Framework.Servers.HttpServer.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Region.CoreModules">
+      <HintPath>..\libs\OpenSim.Region.CoreModules.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Region.Framework">
+      <HintPath>..\libs\OpenSim.Region.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Region.PhysicsModule.BasicPhysics">
+      <HintPath>..\libs\OpenSim.Region.PhysicsModule.BasicPhysics.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Region.PhysicsModules.SharedBase">
+      <HintPath>..\libs\OpenSim.Region.PhysicsModules.SharedBase.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Services.Connectors">
+      <HintPath>..\libs\OpenSim.Services.Connectors.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Services.Interfaces">
+      <HintPath>..\libs\OpenSim.Services.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenSim.Tests.Common">
+      <HintPath>..\libs\OpenSim.Tests.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="PrimMesher">
+      <HintPath>..\libs\PrimMesher.dll</HintPath>
+    </Reference>
+    <Reference Include="SmartThreadPool">
+      <HintPath>..\libs\SmartThreadPool.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <Name>System</Name>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Core">
+      <Name>System.Core</Name>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <Name>System.Data.DataSetExtensions</Name>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <Name>System.Net.Http</Name>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Reflection">
+      <Name>System.Reflection</Name>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Name>System.Xml</Name>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
-	<Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-	<PropertyGroup>
-	  <PreBuildEvent>
-	  </PreBuildEvent>
-	  <PostBuildEvent>
-	  </PostBuildEvent>
-	</PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CommonEntitiesUtil\CommonEntitiesUtil.csproj">
+      <Name>CommonEntitiesUtil</Name>
+      <Project>{A9D65554-0000-0000-0000-000000000000}</Project>
+      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+      <Private>False</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssetManager.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BAttributes.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BConverterOS.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BCoordinates.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BInstance.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BScene.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BSceneManipulation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Displayable.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GltfClasses.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ImageInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="JSONHelpers.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MaterialInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MeshInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MeshmerizerR.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PersistRules.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PrimToMesh.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Terrain.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="WebGLConstants.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
 </Project>

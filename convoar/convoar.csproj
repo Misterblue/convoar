@@ -158,8 +158,6 @@
     <Compile Include="ConvoarParams.cs" />
     <Compile Include="ConvoarStats.cs" />
     <Compile Include="ConvoarTests.cs" />
-    <Compile Include="GltfClasses.cs" />
-    <Compile Include="JSONHelpers.cs" />
     <Compile Include="MemAssetService.cs" />
     <Compile Include="NullUserAccountService.cs" />
     <Compile Include="ParameterParsing.cs" />
@@ -169,7 +167,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="WebGLConstants.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
