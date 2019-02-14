@@ -200,6 +200,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 GltfNode rootNode = GltfNode.GltfNodeFactory(gltfRoot, gltfScene, rootDisp, assetManager, _log, _params);
                 rootNode.translation = pInstance.Position;
                 rootNode.rotation = pInstance.Rotation;
+                gltfScene.nodes.Add(new BHashULong(gltfScene.nodes.Count), rootNode);
             });
 
             // Load the pointed to items first and then the complex items
@@ -729,9 +730,6 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 node = new GltfNode(pRoot, containingScene, pDisplayable, assetManager, pLog, pParams);
                 // This is the only place we should be creating nodes
                 pRoot.nodes.Add(pDisplayable.GetBHash(), node);
-                if (containingScene != null) {
-                    containingScene.nodes.Add(new BHashULong(containingScene.nodes.Count), node);
-                }
             }
             return node;
         }
