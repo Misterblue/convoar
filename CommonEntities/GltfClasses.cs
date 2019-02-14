@@ -179,26 +179,6 @@ namespace org.herbal3d.cs.os.CommonEntities {
             };
         }
 
-        public void UpdateGltfv2ReferenceIndexes() {
-            // extensionsUsed.UpdateGltfv2ReferenceIndexes();
-            // asset.UpdateGltfv2ReferenceIndexes();
-            scenes.UpdateGltfv2ReferenceIndexes();
-            nodes.UpdateGltfv2ReferenceIndexes();
-            meshes.UpdateGltfv2ReferenceIndexes();
-            materials.UpdateGltfv2ReferenceIndexes();
-            accessors.UpdateGltfv2ReferenceIndexes();
-            bufferViews.UpdateGltfv2ReferenceIndexes();
-            buffers.UpdateGltfv2ReferenceIndexes();
-            techniques.UpdateGltfv2ReferenceIndexes();
-            programs.UpdateGltfv2ReferenceIndexes();
-            shaders.UpdateGltfv2ReferenceIndexes();
-            textures.UpdateGltfv2ReferenceIndexes();
-            images.UpdateGltfv2ReferenceIndexes();
-            samplers.UpdateGltfv2ReferenceIndexes();
-
-            primitives.UpdateGltfv2ReferenceIndexes();
-        }
-
         // Say this scene is using the extension.
         public void UsingExtension(string extName) {
             if (!extensionsUsed.ContainsKey(extName)) {
@@ -233,6 +213,29 @@ namespace org.herbal3d.cs.os.CommonEntities {
             _log.DebugFormat("Gltf.LoadScene: done loading");
         }
 
+        // GLTF v2 has all item references as an index to that item.
+        // Call this routine just before outputting the scene/model to
+        //    compute all the indexes and output array positions.
+        private void UpdateGltfv2ReferenceIndexes() {
+            // extensionsUsed.UpdateGltfv2ReferenceIndexes();
+            // asset.UpdateGltfv2ReferenceIndexes();
+            scenes.UpdateGltfv2ReferenceIndexes();
+            nodes.UpdateGltfv2ReferenceIndexes();
+            meshes.UpdateGltfv2ReferenceIndexes();
+            materials.UpdateGltfv2ReferenceIndexes();
+            accessors.UpdateGltfv2ReferenceIndexes();
+            bufferViews.UpdateGltfv2ReferenceIndexes();
+            buffers.UpdateGltfv2ReferenceIndexes();
+            techniques.UpdateGltfv2ReferenceIndexes();
+            programs.UpdateGltfv2ReferenceIndexes();
+            shaders.UpdateGltfv2ReferenceIndexes();
+            textures.UpdateGltfv2ReferenceIndexes();
+            images.UpdateGltfv2ReferenceIndexes();
+            samplers.UpdateGltfv2ReferenceIndexes();
+
+            primitives.UpdateGltfv2ReferenceIndexes();
+        }
+
         // After all the nodes have been added to a Gltf class, build all the
         //    dependent structures
         public void BuildAccessorsAndBuffers() {
@@ -256,12 +259,11 @@ namespace org.herbal3d.cs.os.CommonEntities {
             }
         }
 
-        // For a collection of meshes, create the buffers and accessors.
         public void BuildBufferForSomeMeshes(List<GltfPrimitive> somePrimitives) {
             // Pass over all the vertices in all the meshes and collect common vertices into 'vertexCollection'
             int numMeshes = 0;
             int numVerts = 0;
-            Dictionary<BHash, ushort> vertexIndex = new Dictionary<BHash, ushort>();
+            Dictionary<BHash, uint> vertexIndex = new Dictionary<BHash, uint>();
             List<OMVR.Vertex> vertexCollection = new List<OMVR.Vertex>();
             ushort vertInd = 0;
             // This generates a collection of unique vertices (vertexCollection) and a dictionary
@@ -283,14 +285,13 @@ namespace org.herbal3d.cs.os.CommonEntities {
             // _log.DebugFormat("{0} BuildBuffers: total vertices = {1}", _logHeader, numVerts);
             // _log.DebugFormat("{0} BuildBuffers: total unique vertices = {1}", _logHeader, vertInd);
 
-
             // Remap all the indices to the new, compacted vertex collection.
             //     mesh.underlyingMesh.face to mesh.newIndices
             // TODO: if num verts > ushort.maxValue, create array if uint's
             int numIndices = 0;
             somePrimitives.ForEach(prim => {
                 MeshInfo meshInfo = prim.meshInfo;
-                ushort[] newIndices = new ushort[meshInfo.indices.Count];
+                uint[] newIndices = new uint[meshInfo.indices.Count];
                 for (int ii = 0; ii < meshInfo.indices.Count; ii++) {
                     OMVR.Vertex aVert = meshInfo.vertexs[meshInfo.indices[ii]];
                     BHash vertHash = MeshInfo.VertexBHash(aVert);
@@ -305,10 +306,10 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
             // The vertices have been unique'ified into 'vertexCollection' and each mesh has
             //    updated indices in GltfMesh.newIndices.
-
             int sizeofOneVertex = sizeof(float) * 8;
             int sizeofVertices = vertexCollection.Count * sizeofOneVertex;
-            int sizeofOneIndices = sizeof(ushort);
+            // If all the indices fit into a ushort, use those rather than a uint
+            int sizeofOneIndices = numIndices < ushort.MaxValue ? sizeof(ushort) : sizeof(uint);
             int sizeofIndices = numIndices * sizeofOneIndices;
             // The offsets must be multiples of a good access unit so pad to a good alignment
             int padUnit = sizeof(float) * 8;
@@ -381,7 +382,6 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 byteStride = 2 * sizeof(float)
             };
             // binTexCoordView.target = WebGLConstants.ARRAY_BUFFER;
-
 
             // Gltf requires min and max values for all the mesh vertex collections
             OMV.Vector3 vmin = new OMV.Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
@@ -456,16 +456,26 @@ namespace org.herbal3d.cs.os.CommonEntities {
             int indicesOffset = 0;
             somePrimitives.ForEach((Action<GltfPrimitive>)(prim => {
                 int meshIndicesSize = prim.newIndices.Length * sizeofOneIndices;
-                Buffer.BlockCopy(prim.newIndices, 0, binBuffRaw, indicesOffset, meshIndicesSize);
+                // Above, the indices are built using uint's so, if sending the shorter form, repack indices.
+                if (sizeofOneIndices == sizeof(ushort)) {
+                    ushort[] shortIndices = new ushort[meshIndicesSize];
+                    for (int ii = 0; ii < meshIndicesSize; ii++) {
+                        shortIndices[ii] = (ushort)prim.newIndices[ii];
+                    }
+                    Buffer.BlockCopy(shortIndices, 0, binBuffRaw, indicesOffset, meshIndicesSize);
+                }
+                else {
+                    Buffer.BlockCopy(prim.newIndices, 0, binBuffRaw, indicesOffset, meshIndicesSize);
+                }
 
                 GltfAccessor indicesAccessor = new GltfAccessor(gltfRoot, prim.ID + "_accInd", _log, _params) {
                     bufferView = binIndicesView,
                     count = prim.newIndices.Length,
                     byteOffset = indicesOffset,
-                    componentType = WebGLConstants.UNSIGNED_SHORT,
+                    componentType = sizeofOneIndices == sizeof(ushort) ? WebGLConstants.UNSIGNED_SHORT : WebGLConstants.UNSIGNED_INT,
                     type = "SCALAR"
                 };
-                ushort imin = ushort.MaxValue; ushort imax = 0;
+                uint imin = uint.MaxValue; uint imax = 0;
                 for (int ii = 0; ii < prim.newIndices.Length; ii++) {
                     imin = Math.Min(imin, prim.newIndices[ii]);
                     imax = Math.Max(imax, prim.newIndices[ii]);
@@ -848,7 +858,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
         public MeshInfo meshInfo;
         public BHash bHash;          // generated from meshes and materials for this primitive
-        public ushort[] newIndices; // remapped indices posinting to global vertex list
+        public uint[] newIndices; // remapped indices posinting to global vertex list
         public GltfAccessor normals;
         public GltfAccessor position;
         public GltfAccessor texcoord;
