@@ -63,7 +63,6 @@ namespace org.herbal3d.convoar {
         }
 
         public async Task<BScene> ConvertOarToScene(IAssetService assetService, AssetManager assetManager) {
-            BScene bScene = null;
 
             // Assemble all the parameters that loadoar takes and uses
             Dictionary<string, object> options = new Dictionary<string, object> {
@@ -78,9 +77,9 @@ namespace org.herbal3d.convoar {
             // if (optNoObjects != null) options.Add("no-objects", true);
             string optSubRegion = _params.P<string>("SubRegion");
             if (optSubRegion != null) {
-                List<float> bounds = optSubRegion.Split(',').Select<string,float>(x => { return float.Parse(x); }).ToList();
+                List<float> bounds = optSubRegion.Split(',').Select<string, float>(x => { return float.Parse(x); }).ToList();
                 options.Add("bounding-origin", new OMV.Vector3(bounds[0], bounds[1], bounds[2]));
-                options.Add("bounding-size", new OMV.Vector3(bounds[3]-bounds[0], bounds[4]-bounds[1], bounds[5]-bounds[2]));
+                options.Add("bounding-size", new OMV.Vector3(bounds[3] - bounds[0], bounds[4] - bounds[1], bounds[5] - bounds[2]));
             }
 
             // Create an OpenSimulator region and scene to load the OAR into
@@ -98,74 +97,7 @@ namespace org.herbal3d.convoar {
             ArchiveReadRequest archive = new ArchiveReadRequest(scene, _params.P<string>("InputOAR"), Guid.Empty, options);
             archive.DearchiveRegion(false);
 
-            // Convert SOGs from OAR into EntityGroups
-            // _log.Log("Num assets = {0}", assetService.NumAssets);
-            LogBProgress("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
-
-            PrimToMesh mesher = new PrimToMesh(_log, _params);
-
-            BInstance[] instances = new BInstance[0];
-            try {
-                // Convert SOGs => BInstances
-                // Create a collection of parallel tasks for the SOG conversions.
-                List<Task<BInstance>> convertAllSOGs = new List<Task<BInstance>>();
-                foreach (var sog in scene.GetSceneObjectGroups()) {
-                    convertAllSOGs.Add(_converter.ConvertSogToInstance(sog, assetManager, mesher));
-                }
-                instances = await Task.WhenAll(convertAllSOGs.ToArray());
-            }
-            catch (AggregateException ae) {
-                foreach (var e in ae.InnerExceptions) {
-                    _log.ErrorFormat("Convert SOGs exception: {0}", e);
-                }
-            }
-            catch (Exception e) {
-                _log.ErrorFormat("Convert SOGs exception: {0}", e);
-            }
-
-            try {
-                _log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
-                List<BInstance> instanceList = new List<BInstance>();
-                instanceList.AddRange(instances);
-
-                // Add the terrain mesh to the scene
-                BInstance terrainInstance = null;
-                if (_params.P<bool>("AddTerrainMesh")) {
-                    _log.DebugFormat("{0} Creating terrain for scene", _logHeader);
-                    // instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetManager));
-                    terrainInstance = await Terrain.CreateTerrainMesh(scene, mesher, assetManager, _log, _params);
-                    CoordAxis.FixCoordinates(terrainInstance, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
-                }
-
-                // Twist the OpenSimulator Z-up coordinate system to the OpenGL Y-up
-                foreach (var inst in instanceList) {
-                    CoordAxis.FixCoordinates(inst, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
-                }
-
-                // package instances into a BScene
-                RegionInfo ri = scene.RegionInfo;
-                bScene = new BScene {
-                    instances = instanceList,
-                    name = ri.RegionName,
-                    terrainInstance = terrainInstance
-                };
-                bScene.attributes.Add("RegionName", ri.RegionName);
-                bScene.attributes.Add("RegionSizeX", ri.RegionSizeX);
-                bScene.attributes.Add("RegionSizeY", ri.RegionSizeY);
-                bScene.attributes.Add("RegionSizeZ", ri.RegionSizeZ);
-                bScene.attributes.Add("RegionLocX", ri.RegionLocX);
-                bScene.attributes.Add("RegionLocY", ri.RegionLocY);
-                bScene.attributes.Add("WorldLocX", ri.WorldLocX);
-                bScene.attributes.Add("WorldLocY", ri.WorldLocY);
-                bScene.attributes.Add("WaterHeight", ri.RegionSettings.WaterHeight);
-                bScene.attributes.Add("DefaultLandingPorint", ri.DefaultLandingPoint);
-            }
-            catch (Exception e) {
-                _log.ErrorFormat("{0} failed SOG conversion: {1}", _logHeader, e);
-                throw new Exception(String.Format("Failed conversion: {0}", e));
-            }
-
-            return bScene;
+            return await _converter.ConvertRegionToBScene(scene, assetManager);
         }
 
         // Create an OpenSimulator Scene and add enough auxillery services and objects

@@ -47,6 +47,79 @@ namespace org.herbal3d.cs.os.CommonEntities {
             _params = pParams;
         }
 
+        public async Task<BScene> ConvertRegionToBScene(Scene scene, AssetManager assetManager) {
+            BScene bScene = null;
+
+            // Convert SOGs from OAR into EntityGroups
+            // _log.Log("Num assets = {0}", assetService.NumAssets);
+            LogBProgress("Num SOGs = {0}", scene.GetSceneObjectGroups().Count);
+
+            PrimToMesh mesher = new PrimToMesh(_log, _params);
+
+            BInstance[] instances = new BInstance[0];
+            try {
+                // Convert SOGs => BInstances
+                // Create a collection of parallel tasks for the SOG conversions.
+                List<Task<BInstance>> convertAllSOGs = new List<Task<BInstance>>();
+                foreach (var sog in scene.GetSceneObjectGroups()) {
+                    convertAllSOGs.Add(ConvertSogToInstance(sog, assetManager, mesher));
+                }
+                instances = await Task.WhenAll(convertAllSOGs.ToArray());
+            }
+            catch (AggregateException ae) {
+                foreach (var e in ae.InnerExceptions) {
+                    _log.ErrorFormat("Convert SOGs exception: {0}", e);
+                }
+            }
+            catch (Exception e) {
+                _log.ErrorFormat("Convert SOGs exception: {0}", e);
+            }
+
+            try {
+                _log.DebugFormat("{0} Num instances = {1}", _logHeader, instances.ToList().Count);
+                List<BInstance> instanceList = new List<BInstance>();
+                instanceList.AddRange(instances);
+
+                // Add the terrain mesh to the scene
+                BInstance terrainInstance = null;
+                if (_params.P<bool>("AddTerrainMesh")) {
+                    _log.DebugFormat("{0} Creating terrain for scene", _logHeader);
+                    // instanceList.Add(ConvoarTerrain.CreateTerrainMesh(scene, mesher, assetManager));
+                    terrainInstance = await Terrain.CreateTerrainMesh(scene, mesher, assetManager, _log, _params);
+                    CoordAxis.FixCoordinates(terrainInstance, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
+                }
+
+                // Twist the OpenSimulator Z-up coordinate system to the OpenGL Y-up
+                foreach (var inst in instanceList) {
+                    CoordAxis.FixCoordinates(inst, new CoordAxis(CoordAxis.RightHand_Yup | CoordAxis.UVOriginLowerLeft));
+                }
+
+                // package instances into a BScene
+                RegionInfo ri = scene.RegionInfo;
+                bScene = new BScene {
+                    instances = instanceList,
+                    name = ri.RegionName,
+                    terrainInstance = terrainInstance
+                };
+                bScene.attributes.Add("RegionName", ri.RegionName);
+                bScene.attributes.Add("RegionSizeX", ri.RegionSizeX);
+                bScene.attributes.Add("RegionSizeY", ri.RegionSizeY);
+                bScene.attributes.Add("RegionSizeZ", ri.RegionSizeZ);
+                bScene.attributes.Add("RegionLocX", ri.RegionLocX);
+                bScene.attributes.Add("RegionLocY", ri.RegionLocY);
+                bScene.attributes.Add("WorldLocX", ri.WorldLocX);
+                bScene.attributes.Add("WorldLocY", ri.WorldLocY);
+                bScene.attributes.Add("WaterHeight", ri.RegionSettings.WaterHeight);
+                bScene.attributes.Add("DefaultLandingPorint", ri.DefaultLandingPoint);
+            }
+            catch (Exception e) {
+                _log.ErrorFormat("{0} failed SOG conversion: {1}", _logHeader, e);
+                throw new Exception(String.Format("Failed conversion: {0}", e));
+            }
+
+            return bScene;
+        }
+
         // Convert a SceneObjectGroup into an instance with displayables
         public async Task<BInstance> ConvertSogToInstance(SceneObjectGroup sog, AssetManager assetManager, PrimToMesh mesher) {
             BInstance ret = null;
