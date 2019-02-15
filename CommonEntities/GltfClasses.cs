@@ -197,9 +197,10 @@ namespace org.herbal3d.cs.os.CommonEntities {
             scene.instances.ForEach(pInstance => {
                 Displayable rootDisp = pInstance.Representation;
                 // _log.DebugFormat("Gltf.LoadScene: Loading node {0}", rootDisp.name);    // DEBUG DEBUG
-                GltfNode rootNode = GltfNode.GltfNodeFactory(gltfRoot, gltfScene, rootDisp, assetManager, _log, _params);
+                GltfNode rootNode = GltfNode.GltfNodeFactory(gltfRoot, rootDisp, assetManager, _log, _params);
                 rootNode.translation = pInstance.Position;
                 rootNode.rotation = pInstance.Rotation;
+                // The hash of the node list is never used so we just make something up.
                 gltfScene.nodes.Add(new BHashULong(gltfScene.nodes.Count), rootNode);
             });
 
@@ -685,21 +686,21 @@ namespace org.herbal3d.cs.os.CommonEntities {
         // Add a node that is not top level in a scene
         // Does not add to the built node collection
         public GltfNode(Gltf pRoot, string pID, BLogger pLog, IParameters pParams) : base(pRoot, pID, pLog, pParams) {
-            NodeInit(pRoot, null);
+            NodeInit(pRoot);
             LogGltf("{0} GltfNode: created empty. ID={1}", "Gltf", ID);
         }
 
-        public GltfNode(Gltf pRoot, GltfScene containingScene, Displayable pDisplayable, AssetManager assetManager,
+        public GltfNode(Gltf pRoot, Displayable pDisplayable, AssetManager assetManager,
                                         BLogger pLog, IParameters pParams)
                             : base(pRoot, pDisplayable.baseUUID.ToString() + "_disp", pLog, pParams) {
-            NodeInit(pRoot, containingScene);
-            InitFromDisplayable(pDisplayable, containingScene, assetManager);
+            NodeInit(pRoot);
+            InitFromDisplayable(pDisplayable, assetManager);
             LogGltf("{0} GltfNode: created from Displayable. ID={1}, pos={2}, rot={3}, mesh={4}, numCh={5}",
                         "Gltf", ID, translation, rotation, mesh.handle, children.Count);
         }
 
         // Base initialization of the node instance
-        private void NodeInit(Gltf pRoot, GltfScene containingScene) {
+        private void NodeInit(Gltf pRoot) {
             children = new GltfNodes(pRoot);
             matrix = OMV.Matrix4.Zero;
             rotation = new OMV.Quaternion();
@@ -709,7 +710,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
             extras = new GltfAttributes();
         }
 
-        private void InitFromDisplayable(Displayable pDisplayable, GltfScene containingScene, AssetManager assetManager) {
+        private void InitFromDisplayable(Displayable pDisplayable, AssetManager assetManager) {
             name = pDisplayable.name;
             translation = pDisplayable.offsetPosition;
             rotation = pDisplayable.offsetRotation;
@@ -718,16 +719,16 @@ namespace org.herbal3d.cs.os.CommonEntities {
             mesh = GltfMesh.GltfMeshFactory(gltfRoot, pDisplayable.renderable, assetManager, _log, _params);
 
             foreach (var child in pDisplayable.children) {
-                var node = GltfNode.GltfNodeFactory(gltfRoot, null, child, assetManager, _log, _params);
+                var node = GltfNode.GltfNodeFactory(gltfRoot, child, assetManager, _log, _params);
                 this.children.Add(new BHashULong(this.children.Count), node);
             }
         }
 
         // Get an existing instance of a node or create a new one
-        public static GltfNode GltfNodeFactory(Gltf pRoot, GltfScene containingScene, Displayable pDisplayable,
+        public static GltfNode GltfNodeFactory(Gltf pRoot, Displayable pDisplayable,
                         AssetManager assetManager, BLogger pLog, IParameters pParams) {
             if (!pRoot.nodes.TryGetValue(pDisplayable.GetBHash(), out GltfNode node)) {
-                node = new GltfNode(pRoot, containingScene, pDisplayable, assetManager, pLog, pParams);
+                node = new GltfNode(pRoot, pDisplayable, assetManager, pLog, pParams);
                 // This is the only place we should be creating nodes
                 pRoot.nodes.Add(pDisplayable.GetBHash(), node);
             }
