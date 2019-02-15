@@ -217,6 +217,7 @@
     <Compile Include="MaterialInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MemAssetService.cs" />
     <Compile Include="MeshInfo.cs">
       <SubType>Code</SubType>
     </Compile>

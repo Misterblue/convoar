@@ -158,7 +158,6 @@
     <Compile Include="ConvoarParams.cs" />
     <Compile Include="ConvoarStats.cs" />
     <Compile Include="ConvoarTests.cs" />
-    <Compile Include="MemAssetService.cs" />
     <Compile Include="NullUserAccountService.cs" />
     <Compile Include="ParameterParsing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

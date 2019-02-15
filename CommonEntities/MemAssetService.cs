@@ -24,7 +24,7 @@ using OpenSim.Services.Interfaces;
 
 using OMV = OpenMetaverse;
 
-namespace org.herbal3d.convoar
+namespace org.herbal3d.cs.os.CommonEntities
 {
     // A very simple, non-persistant, in memory asset service.
     public class MemAssetService : IAssetService, IDisposable {
