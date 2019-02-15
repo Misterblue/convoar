@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 using System;
+using System.Reflection;
 
 using log4net;
 
@@ -52,8 +53,21 @@ namespace org.herbal3d.cs.CommonEntitiesUtil {
 
     // Do logging with Log4net
     public class LoggerLog4Net : BLogger {
-        private static readonly ILog _log = LogManager.GetLogger("convoar");
         private static string _logHeader = "[Logger]";
+
+        private ILog _log;
+
+        public LoggerLog4Net() {
+            _log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        }
+
+        public LoggerLog4Net(string pModuleName) {
+            _log = LogManager.GetLogger(pModuleName);
+        }
+
+        public LoggerLog4Net(ILog pLogger) {
+            _log = pLogger;
+        }
 
         private bool _verbose = false;
         public override void SetVerbose(bool value) {
