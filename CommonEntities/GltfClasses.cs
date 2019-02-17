@@ -44,7 +44,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
         // Return the filename for storing this object. Return null if doesn't store.
         public string GetFilename(string pLongName) {
             // often UUID's are turned to strings with hyphens. Make sure they are gone.
-            return PersistRules.GetFilename(this, pLongName, _params).Replace("-", "");
+            return PersistRules.GetFilename(this.AssetType, this.ID, pLongName, _params).Replace("-", "");
         }
         public string GetStorageDir(string pBaseDirectory, string pStorageName) {
             string strippedStorageName = Path.GetFileNameWithoutExtension(pStorageName);

@@ -138,14 +138,15 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
         // Compute the filename of this object when written out.
         // Mostly about computing the file extension based on the AssetType.
-        public static string GetFilename(GltfClass pObject, string pLongName, IParameters pParams) {
+        // public static string GetFilename(GltfClass pObject, string pLongName, IParameters pParams) {
+        public static string GetFilename(AssetType pAssetType, string pReadableName, string pLongName, IParameters pParams) {
             string ret = null;
             if (pParams.P<bool>("UseReadableFilenames")) {
-                var targetType = FigureOutTargetTypeFromAssetType(pObject.AssetType, pParams);
-                ret = pObject.ID + "." + PersistRules.TargetTypeToExtension[targetType];
+                var targetType = FigureOutTargetTypeFromAssetType(pAssetType, pParams);
+                ret = pReadableName + "." + PersistRules.TargetTypeToExtension[targetType];
             }
             else {
-                var targetType = FigureOutTargetTypeFromAssetType(pObject.AssetType, pParams);
+                var targetType = FigureOutTargetTypeFromAssetType(pAssetType, pParams);
                 ret = pLongName + "." + PersistRules.TargetTypeToExtension[targetType];
             }
             return ret;
