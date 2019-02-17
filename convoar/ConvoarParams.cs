@@ -66,6 +66,8 @@ namespace org.herbal3d.convoar {
                 true ),
             new ParameterDefn<bool>("UseDeepFilenames", "Whether filenames be organized into a deep directory structure",
                 false ),
+            new ParameterDefn<bool>("WriteBinaryGltf", "Whether to write .gltf or .glb file",
+                false ),
 
             new ParameterDefn<string>("==========", "OAR Reading Specific Parameters", null),
             new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",

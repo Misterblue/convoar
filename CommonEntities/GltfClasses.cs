@@ -46,9 +46,9 @@ namespace org.herbal3d.cs.os.CommonEntities {
             // often UUID's are turned to strings with hyphens. Make sure they are gone.
             return PersistRules.GetFilename(this.AssetType, this.ID, pLongName, _params).Replace("-", "");
         }
-        public string GetStorageDir(string pBaseDirectory, string pStorageName) {
+        public string GetStorageDir(string pStorageName) {
             string strippedStorageName = Path.GetFileNameWithoutExtension(pStorageName);
-            return PersistRules.StorageDirectory(pBaseDirectory, strippedStorageName, _params);
+            return PersistRules.StorageDirectory(strippedStorageName, _params);
         }
         public string GetURI(string pURIBase, string pStorageName) {
             return PersistRules.ReferenceURL(pURIBase, pStorageName);
@@ -1198,7 +1198,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
         public void WriteBuffer() {
             string outFilename = this.GetFilename(_identifyingString);
-            string outDir = this.GetStorageDir(null, outFilename);
+            string outDir = this.GetStorageDir(outFilename);
             string absDir = PersistRules.CreateDirectory(outDir, _params);
             File.WriteAllBytes(Path.Combine(absDir, outFilename), bufferBytes);
             // _log.DebugFormat("{0} WriteBinaryFiles: filename={1}", LogHeader, outFilename);
@@ -1426,7 +1426,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
         public void WriteImage() {
             // string imgFilename = this.GetFilename(underlyingUUID.ToString());
             string imgFilename = this.GetFilename(imageInfo.GetBHash().ToString());
-            string imgDir = this.GetStorageDir(null, imgFilename);
+            string imgDir = this.GetStorageDir(imgFilename);
             string absDir = PersistRules.CreateDirectory(imgDir, _params);
             var targetType = PersistRules.FigureOutTargetTypeFromAssetType(AssetType, _params);
             imageInfo.image.Save(Path.Combine(absDir, imgFilename),

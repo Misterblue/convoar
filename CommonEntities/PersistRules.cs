@@ -52,7 +52,8 @@ namespace org.herbal3d.cs.os.CommonEntities {
             BMP,
             Mesh,
             Buff,
-            Gltf
+            Gltf,
+            Glb
         };
 
         // Some asset types have their own sub-directory to live in
@@ -70,7 +71,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
               { AssetType.ImageTrans, TargetType.Default},
               { AssetType.Mesh, TargetType.Mesh},
               { AssetType.Buff, TargetType.Buff},
-              { AssetType.Scene, TargetType.Gltf},
+              { AssetType.Scene, TargetType.Default},   // Gltf or Glb depending on binary file format
         };
 
         // The extension to add to target type filenames when stored
@@ -83,6 +84,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
               { TargetType.Mesh, "mesh" },
               { TargetType.Buff, "buf" },
               { TargetType.Gltf, "gltf" },
+              { TargetType.Glb, "glb" },
         };
 
         // Parameter system can specify types to output. THis converts the parameter to a target type code
@@ -120,6 +122,14 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 if (pAssetType == AssetType.ImageTrans) {
                     ret = TextureFormatToTargetType[pParams.P<string>("PreferredTextureFormat").ToLower()];
                 }
+                if (pAssetType == AssetType.Scene) {
+                    if (pParams.P<bool>("WriteBinaryGltf")) {
+                        ret = TargetType.Glb;
+                    }
+                    else {
+                        ret = TargetType.Gltf;
+                    }
+                }
             }
             return ret;
         }
@@ -156,8 +166,9 @@ namespace org.herbal3d.cs.os.CommonEntities {
         //    should be stored in.
         // Uses sub-directories made out of the filename.
         //     "01234567890123456789" => "baseDirectory/01/23/45/6789"
-        public static string StorageDirectory(string baseDirectory, string pHash, IParameters pParams) {
+        public static string StorageDirectory(string pHash, IParameters pParams) {
             string ret = null;
+            string baseDirectory = pParams.P<string>("OutputDir");
             if (pParams.P<bool>("UseDeepFilenames") && pHash.Length >= 10) {
                 if (String.IsNullOrEmpty(baseDirectory)) {
                     ret = Path.Combine(pHash.Substring(0, 2),

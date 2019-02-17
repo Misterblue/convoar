@@ -195,7 +195,7 @@ namespace org.herbal3d.convoar {
                             Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
 
                             string gltfFilename = gltf.GetFilename(gltf.IdentifyingString);
-                            string gltfDir = gltf.GetStorageDir(null, gltfFilename);
+                            string gltfDir = gltf.GetStorageDir(gltfFilename);
                             string absDir = PersistRules.CreateDirectory(gltfDir, Globals.parms);
                             string gltfPath = Path.Combine(absDir, gltfFilename);
 
