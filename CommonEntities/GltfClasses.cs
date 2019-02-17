@@ -1424,7 +1424,8 @@ namespace org.herbal3d.cs.os.CommonEntities {
         }
 
         public void WriteImage() {
-            string imgFilename = this.GetFilename(underlyingUUID.ToString());
+            // string imgFilename = this.GetFilename(underlyingUUID.ToString());
+            string imgFilename = this.GetFilename(imageInfo.GetBHash().ToString());
             string imgDir = this.GetStorageDir(null, imgFilename);
             string absDir = PersistRules.CreateDirectory(imgDir, _params);
             var targetType = PersistRules.FigureOutTargetTypeFromAssetType(AssetType, _params);
@@ -1433,7 +1434,8 @@ namespace org.herbal3d.cs.os.CommonEntities {
         }
 
         public override Object AsJSON() {
-            string imgFilename = this.GetFilename(underlyingUUID.ToString());
+            // string imgFilename = this.GetFilename(underlyingUUID.ToString());
+            string imgFilename = this.GetFilename(imageInfo.GetBHash().ToString());
             var ret = new Dictionary<string, Object> {
                 { "uri", PersistRules.ReferenceURL(_params.P<string>("URIBase"), imgFilename) }
             };

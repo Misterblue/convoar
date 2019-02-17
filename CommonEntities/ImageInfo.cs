@@ -17,6 +17,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 
 using OMV = OpenMetaverse;
 
@@ -32,6 +33,8 @@ namespace org.herbal3d.cs.os.CommonEntities {
         public Image image = null;
         public int xSize = 0;
         public int ySize = 0;
+
+        private BHash _imageHash;
 
 #pragma warning disable 414
         private readonly string _logHeader = "[ImageInfo]";
@@ -65,13 +68,17 @@ namespace org.herbal3d.cs.os.CommonEntities {
             xSize = image.Width;
             ySize = image.Height;
             hasTransprency = CheckForTransparency();
+            ComputeImageHash();
             // _log.DebugFormat("{0} SetImage. ID={1}, xSize={2}, ySize={3}, hasTrans={4}",
             //             _logHeader, handle, xSize, ySize, hasTransprency);
         }
 
         // The hash code for an image is just the hash of its UUID handle.
         public BHash GetBHash() {
-            return handle.GetBHash();
+            if (_imageHash == null) {
+                return handle.GetBHash();
+            }
+            return _imageHash;
         }
 
         // Check the image in this TextureInfo for transparency and set this.hasTransparency.
@@ -125,9 +132,24 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 image = thumbNail;
                 xSize = thumbNail.Width;
                 ySize = thumbNail.Height;
+                ComputeImageHash();
                 ret = true;
             }
             return ret;
+        }
+
+        // Computes a SHA256 hash of the image
+        public void ComputeImageHash() {
+            BHasher hasher = new BHasherSHA256();
+            if (image != null) {
+                ImageConverter converter = new ImageConverter();
+                byte[] data = (byte[])converter.ConvertTo(image, typeof(byte[]));
+                _imageHash = hasher.Finish(data, 0, data.Length);
+            }
+            else {
+                // If there isn't an image, use the UUID
+                _imageHash = hasher.Finish(imageIdentifier.GetBytes(), 0, 16);
+            }
         }
 
         public override string ToString()
