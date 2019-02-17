@@ -62,6 +62,10 @@ namespace org.herbal3d.convoar {
                 "./convoar", "d" ),
             new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
                 "" ),
+            new ParameterDefn<bool>("UseReadableFilenames", "Whether filenames should be human readable or UUIDs",
+                true ),
+            new ParameterDefn<bool>("UseDeepFilenames", "Whether filenames be organized into a deep directory structure",
+                false ),
 
             new ParameterDefn<string>("==========", "OAR Reading Specific Parameters", null),
             new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",

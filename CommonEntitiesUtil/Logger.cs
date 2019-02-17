@@ -32,7 +32,7 @@ namespace org.herbal3d.cs.CommonEntitiesUtil {
 
         private bool _verbose = false;
         public override void SetVerbose(bool value) {
-            bool _verbose = value;
+            _verbose = value;
         }
 
         public override void Log(string msg, params Object[] args) {
@@ -53,7 +53,7 @@ namespace org.herbal3d.cs.CommonEntitiesUtil {
 
     // Do logging with Log4net
     public class LoggerLog4Net : BLogger {
-        private static string _logHeader = "[Logger]";
+        private static readonly string _logHeader = "[Logger]";
 
         private ILog _log;
 

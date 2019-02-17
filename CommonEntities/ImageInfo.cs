@@ -29,7 +29,6 @@ namespace org.herbal3d.cs.os.CommonEntities {
         public OMV.UUID imageIdentifier;
         public bool hasTransprency = false;
         public bool resizable = true;   // true if image can be reduced in size
-        public PersistRules persist;    // information in filesystem storage of the image
         public Image image = null;
         public int xSize = 0;
         public int ySize = 0;
@@ -48,7 +47,6 @@ namespace org.herbal3d.cs.os.CommonEntities {
             imageIdentifier = handle.GetUUID(); // image is unique unless underlying set
             _log = pLog;
             _params = pParams;
-            persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString(), pLog, pParams);
         }
 
         // Create a new ImageInfo that has a copy of all the information from this one.
@@ -67,12 +65,6 @@ namespace org.herbal3d.cs.os.CommonEntities {
             xSize = image.Width;
             ySize = image.Height;
             hasTransprency = CheckForTransparency();
-            if (hasTransprency) {
-                persist = new PersistRules(PersistRules.AssetType.ImageTrans, handle.ToString(), _log, _params);
-            }
-            else {
-                persist = new PersistRules(PersistRules.AssetType.Image, handle.ToString(), _log, _params);
-            }
             // _log.DebugFormat("{0} SetImage. ID={1}, xSize={2}, ySize={3}, hasTrans={4}",
             //             _logHeader, handle, xSize, ySize, hasTransprency);
         }

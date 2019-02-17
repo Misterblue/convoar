@@ -194,9 +194,12 @@ namespace org.herbal3d.convoar {
                             Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
                             Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
 
-                            PersistRules.ResolveAndCreateDir(gltf.persist.Filename);
+                            string gltfFilename = gltf.GetFilename(gltf.IdentifyingString);
+                            string gltfDir = gltf.GetStorageDir(null, gltfFilename);
+                            string absDir = PersistRules.CreateDirectory(gltfDir, Globals.parms);
+                            string gltfPath = Path.Combine(absDir, gltfFilename);
 
-                            using (StreamWriter outt = File.CreateText(gltf.persist.Filename)) {
+                            using (StreamWriter outt = File.CreateText(gltfPath)) {
                                 gltf.ToJSON(outt);
                             }
                             gltf.WriteBinaryFiles();

@@ -15,8 +15,10 @@
  */
 using System;
 using System.Linq;
+using System.Drawing;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 using org.herbal3d.cs.CommonEntitiesUtil;
 
@@ -36,6 +38,21 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
         protected BLogger _log;
         protected IParameters _params;
+
+        public PersistRules.AssetType AssetType = PersistRules.AssetType.Unknown;
+
+        // Return the filename for storing this object. Return null if doesn't store.
+        public string GetFilename(string pLongName) {
+            // often UUID's are turned to strings with hyphens. Make sure they are gone.
+            return PersistRules.GetFilename(this, pLongName, _params).Replace("-", "");
+        }
+        public string GetStorageDir(string pBaseDirectory, string pStorageName) {
+            string strippedStorageName = Path.GetFileNameWithoutExtension(pStorageName);
+            return PersistRules.StorageDirectory(pBaseDirectory, strippedStorageName, _params);
+        }
+        public string GetURI(string pURIBase, string pStorageName) {
+            return PersistRules.ReferenceURL(pURIBase, pStorageName);
+        }
 
         public GltfClass() { }
         public GltfClass(Gltf pRoot, string pID, BLogger pLog, IParameters pParams) {
@@ -122,6 +139,11 @@ namespace org.herbal3d.cs.os.CommonEntities {
         public GltfAttributes extensionsUsed;   // list of extensions used herein
 
         public GltfScene defaultScene;   // ID of default scene
+        public OMV.UUID SceneUUID;
+
+        public readonly OMV.UUID GltfUUID; // Used to identify buffer
+        public readonly string IdentifyingString;   // built from GltfUUID
+
 
         public GltfAsset asset;
         public GltfScenes scenes;       // scenes that make up this package
@@ -142,13 +164,12 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
         public GltfSampler defaultSampler;
 
-        public PersistRules persist;
-
-        public Gltf(string pSceneName, BLogger pLog, IParameters pParams) : base() {
+        public Gltf(string pSceneName, BLogger pLog, IParameters pParams) :
+                            base(null, pSceneName, pLog, pParams) {
             gltfRoot = this;
-            _log = pLog;
-            _params = pParams;
-            persist = new PersistRules(PersistRules.AssetType.Scene, pSceneName, PersistRules.TargetType.Gltf, _log, _params);
+            AssetType = PersistRules.AssetType.Scene;
+            GltfUUID = OMV.UUID.Random();
+            IdentifyingString = GltfUUID.ToString().Replace("-", "");
 
             extensionsUsed = new GltfAttributes();
             asset = new GltfAsset(this, _log, _params);
@@ -322,7 +343,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
             // A key added to the buffer, vertices, and indices names to uniquify them
             string buffNum =  String.Format("{0:000}", buffers.Count + 1);
-            string buffName = this.defaultScene.name + "-buffer" + buffNum;
+            string buffName = this.defaultScene.name + "_buffer" + buffNum;
             byte[] binBuffRaw = new byte[paddedSizeofIndices + sizeofVertices];
             GltfBuffer binBuff = new GltfBuffer(gltfRoot, buffName, _log, _params) {
                 bufferBytes = binBuffRaw
@@ -575,18 +596,15 @@ namespace org.herbal3d.cs.os.CommonEntities {
             return ret;
         } 
 
-        // Write the binary files into the specified target directory
+        // Write the binary files into the persist computed target directory
         public void WriteBinaryFiles() {
             foreach (var buff in buffers.Values) {
-                string outFilename = buff.persist.Filename;
-                // _log.DebugFormat("{0} WriteBinaryFiles: filename={1}", LogHeader, outFilename);
-                File.WriteAllBytes(outFilename, buff.bufferBytes);
+                buff.WriteBuffer();
             }
         }
-
         public void WriteImages() {
             foreach (var img in images.Values) {
-                img.imageInfo.persist.WriteImage(img.imageInfo);
+                img.WriteImage();
             }
         }
     }
@@ -1148,18 +1166,21 @@ namespace org.herbal3d.cs.os.CommonEntities {
     }
 
     public class GltfBuffer : GltfClass {
-        public PersistRules persist;
         public byte[] bufferBytes;
         public string name;
         public GltfExtensions extensions;
         public GltfAttributes extras;
 
+        private readonly OMV.UUID _uuid; // Used to identify buffer
+        private readonly string _identifyingString;
+
         public GltfBuffer(Gltf pRoot, string pID, BLogger pLog, IParameters pParams) : base(pRoot, pID, pLog, pParams) {
-            persist = new PersistRules(PersistRules.AssetType.Buff, pID, pLog, pParams);
+            AssetType = PersistRules.AssetType.Buff;
             extensions = new GltfExtensions(pRoot);
             extras = new GltfAttributes();
-            // Buffs go into the directory of the root
-            persist.BaseDirectory = pRoot.persist.BaseDirectory;
+            _uuid = OMV.UUID.Random();
+            _identifyingString = _uuid.ToString().Replace("-", "");
+            // Buffs go into the roots collection. Index is not used.
             gltfRoot.buffers.Add(new BHashULong(gltfRoot.buffers.Count), this);
             LogGltf("{0} GltfBuffer: created. ID={1}", "Gltf", ID);
         }
@@ -1168,10 +1189,19 @@ namespace org.herbal3d.cs.os.CommonEntities {
             var ret = new Dictionary<string, Object>();
             if (!String.IsNullOrEmpty(name)) ret.Add("name", name);
             ret.Add("byteLength", bufferBytes.Length);
-            ret.Add("uri", persist.Uri);
+            string outFilename = this.GetFilename(_identifyingString);
+            ret.Add("uri", this.GetURI(_params.P<string>("URIBase"), outFilename));
             if (extensions != null && extensions.Count > 0) ret.Add("extensions", extensions.AsJSON());
             if (extras != null && extras.Count > 0) ret.Add("extras", extras.AsJSON());
             return ret;
+        }
+
+        public void WriteBuffer() {
+            string outFilename = this.GetFilename(_identifyingString);
+            string outDir = this.GetStorageDir(null, outFilename);
+            string absDir = PersistRules.CreateDirectory(outDir, _params);
+            File.WriteAllBytes(Path.Combine(absDir, outFilename), bufferBytes);
+            // _log.DebugFormat("{0} WriteBinaryFiles: filename={1}", LogHeader, outFilename);
         }
     }
 
@@ -1377,6 +1407,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
         public GltfImage(Gltf pRoot, ImageInfo pImageInfo, BLogger pLog, IParameters pParams)
                                 : base(pRoot, pImageInfo.handle.ToString() + "_img", pLog, pParams) {
             imageInfo = pImageInfo;
+            AssetType = imageInfo.hasTransprency ? PersistRules.AssetType.ImageTrans : PersistRules.AssetType.Image;
             if (pImageInfo.handle is EntityHandleUUID handleU) {
                 underlyingUUID = handleU.GetUUID();
             }
@@ -1392,9 +1423,19 @@ namespace org.herbal3d.cs.os.CommonEntities {
             return img;
         }
 
+        public void WriteImage() {
+            string imgFilename = this.GetFilename(underlyingUUID.ToString());
+            string imgDir = this.GetStorageDir(null, imgFilename);
+            string absDir = PersistRules.CreateDirectory(imgDir, _params);
+            var targetType = PersistRules.FigureOutTargetTypeFromAssetType(AssetType, _params);
+            imageInfo.image.Save(Path.Combine(absDir, imgFilename),
+                                PersistRules.TargetTypeToImageFormat[targetType]);
+        }
+
         public override Object AsJSON() {
+            string imgFilename = this.GetFilename(underlyingUUID.ToString());
             var ret = new Dictionary<string, Object> {
-                { "uri", imageInfo.persist.Uri }
+                { "uri", PersistRules.ReferenceURL(_params.P<string>("URIBase"), imgFilename) }
             };
             return ret;
         }

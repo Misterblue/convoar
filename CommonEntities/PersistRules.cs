@@ -36,6 +36,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
     public class PersistRules {
 
         public enum AssetType {
+            Unknown,
             Image,
             ImageTrans,
             Mesh,
@@ -65,7 +66,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
         // Asset types have a target type when stored
         public readonly static Dictionary<AssetType, TargetType> AssetTypeToTargetType = new Dictionary<AssetType, TargetType>()
-            { { AssetType.Image, TargetType.Default},
+            { { AssetType.Image, TargetType.Default},   // 'Default' means look things up in parameters for the AssetType
               { AssetType.ImageTrans, TargetType.Default},
               { AssetType.Mesh, TargetType.Mesh},
               { AssetType.Buff, TargetType.Buff},
@@ -103,121 +104,87 @@ namespace org.herbal3d.cs.os.CommonEntities {
         };
 
         public string BaseDirectory { get; set; }
-        private AssetType _assetType;
-        private TargetType _targetType;
-        private string _assetInfo;
-
-        private BLogger _log;
-        private IParameters _params;
-
-    #pragma warning disable 414
-        private static readonly string _logHeader = "[PersistRules]";
-    #pragma warning restore 414
-
-        // Rules for storing files into TargetDir and into type specific sub-directory therein
-        public PersistRules(AssetType pAssetType, string pInfo, BLogger pLog, IParameters pParams) {
-            PersistInit(pAssetType, pInfo, TargetType.Default, pLog, pParams);
-        }
-
-        public PersistRules(AssetType pAssetType, string pInfo, TargetType pTargetType, BLogger pLog, IParameters pParams) {
-            PersistInit(pAssetType, pInfo, pTargetType, pLog, pParams);
-        }
-
-        public PersistRules Clone() {
-            PersistRules pr = new PersistRules(_assetType, _assetInfo, _targetType, _log, _params) {
-                BaseDirectory = this.BaseDirectory
-            };
-            return pr;
-        }
-
-        private void PersistInit(AssetType pAssetType, string pInfo, TargetType pTargetType, BLogger pLog, IParameters pParams) {
-            _log = pLog;
-            _params = pParams;
-            _assetType = pAssetType;
-            _assetInfo = pInfo;
-            _targetType = FigureOutTargetType();
-
-            BaseDirectory = AssetTypeToSubDir[_assetType];
-        }
+        public AssetType AssetAssetType;
+        public TargetType AssetTargetType;
+        public string AssetName;
 
         // If target type is not specified, select the image type depending on parameters and transparency
-        private TargetType FigureOutTargetType() {
-            TargetType ret = AssetTypeToTargetType[_assetType];
+        public static TargetType FigureOutTargetTypeFromAssetType(AssetType pAssetType, IParameters pParams) {
+            TargetType ret = AssetTypeToTargetType[pAssetType];
 
             // If target type is not specified, select the image type depending on parameters and transparency
-            if (_targetType == TargetType.Default) {
-                if (_assetType == AssetType.Image) {
-                    ret = TextureFormatToTargetType[_params.P<string>("PreferredTextureFormatIfNoTransparency").ToLower()];
+            if (ret == TargetType.Default) {
+                if (pAssetType == AssetType.Image) {
+                    ret = TextureFormatToTargetType[pParams.P<string>("PreferredTextureFormatIfNoTransparency").ToLower()];
                 }
-                if (_assetType == AssetType.ImageTrans) {
-                    ret = TextureFormatToTargetType[_params.P<string>("PreferredTextureFormat").ToLower()];
+                if (pAssetType == AssetType.ImageTrans) {
+                    ret = TextureFormatToTargetType[pParams.P<string>("PreferredTextureFormat").ToLower()];
                 }
             }
             return ret;
         }
 
-        public string Filename {
-            get {
-                return CreateFilename();
-            }
-        }
-
-        public string Uri {
-            get {
-                return CreateURI();
-            }
-        }
-
-        public void WriteImage(ImageInfo imageInfo) {
-            string texFilename = CreateFilename();
-            if (imageInfo.image != null && !File.Exists(texFilename)) {
-                Image texImage = imageInfo.image;
-                try {
-                    // _log.DebugFormat("{0} WriteOutImageForEP: id={1}, hasAlpha={2}, format={3}",
-                    //                 _logHeader, faceInfo.textureID, faceInfo.hasAlpha, texImage.PixelFormat);
-                    PersistRules.ResolveAndCreateDir(texFilename);
-                    texImage.Save(texFilename, TargetTypeToImageFormat[_targetType]);
-                }
-                catch (Exception e) {
-                    _log.ErrorFormat("{0} FAILED PNG FILE CREATION: {0}", e);
-                }
-            }
-        }
-
-
-        private string CreateFilename() {
-            // string fnbase = JoinFilePieces(_params.P<string>("OutputDir"), baseDirectory);
-            string fnbase = BaseDirectory;
-            return JoinFilePieces(fnbase, _assetInfo + "." + TargetTypeToExtension[_targetType]);
-        }
-
-        private string CreateURI() {
-            string uribase = JoinURIPieces(_params.P<string>("URIBase"), BaseDirectory);
-            return JoinURIPieces(uribase, _assetInfo + "." + TargetTypeToExtension[_targetType]);
-        }
-
-        /// <summary>
-        /// Turn the passed relative path name into an absolute directory path and
-        /// create the directory if it does not exist.
-        /// </summary>
-        /// <param name="pDir">Absolute or relative path to a directory</param>
-        /// <returns>Absolute path to directory or 'null' if cannot resolve or create the directory</returns>
-        public static string ResolveAndCreateDir(string pDir) {
-            string absDir = null;
-            try {
-                absDir = Path.GetFullPath(pDir);
-                absDir = Path.GetDirectoryName(absDir);
-                if (!Directory.Exists(absDir)) {
-                    Directory.CreateDirectory(absDir);
-                }
-            }
-            catch (Exception e) {
-                // _log.ErrorFormat("{0} Failed creation of directory. dir={1}, e: {2}",
-                //             _logHeader, absDir, e);
-                var temp = e;   // supress warning
-                return null;
+        // Pass in a relative directory name and return a full directory path
+        //     and create the directory if it doesn't exist.
+        public static string CreateDirectory(string pDir, IParameters pParams) {
+            string baseDir = pParams.P<string>("OutputDir");
+            string fullDir = PersistRules.JoinFilePieces(baseDir, pDir);
+            string absDir = Path.GetFullPath(fullDir);
+            if (!Directory.Exists(absDir)) {
+                Directory.CreateDirectory(absDir);
             }
             return absDir;
+        }
+
+        // Compute the filename of this object when written out.
+        // Mostly about computing the file extension based on the AssetType.
+        public static string GetFilename(GltfClass pObject, string pLongName, IParameters pParams) {
+            string ret = null;
+            if (pParams.P<bool>("UseReadableFilenames")) {
+                var targetType = FigureOutTargetTypeFromAssetType(pObject.AssetType, pParams);
+                ret = pObject.ID + "." + PersistRules.TargetTypeToExtension[targetType];
+            }
+            else {
+                var targetType = FigureOutTargetTypeFromAssetType(pObject.AssetType, pParams);
+                ret = pLongName + "." + PersistRules.TargetTypeToExtension[targetType];
+            }
+            return ret;
+        }
+
+        // Given a directory base and a filename, return the directory that that filename
+        //    should be stored in.
+        // Uses sub-directories made out of the filename.
+        //     "01234567890123456789" => "baseDirectory/01/23/45/6789"
+        public static string StorageDirectory(string baseDirectory, string pHash, IParameters pParams) {
+            string ret = null;
+            if (pParams.P<bool>("UseDeepFilenames") && pHash.Length >= 10) {
+                if (String.IsNullOrEmpty(baseDirectory)) {
+                    ret = Path.Combine(pHash.Substring(0, 2),
+                            Path.Combine(pHash.Substring(2, 2),
+                                Path.Combine(pHash.Substring(4, 2),
+                                    pHash.Substring(6, 4)
+                            )));
+                }
+                else {
+                    ret = Path.Combine(baseDirectory,
+                            Path.Combine(pHash.Substring(0, 2),
+                                Path.Combine(pHash.Substring(2, 2),
+                                    Path.Combine(pHash.Substring(4, 2),
+                                        pHash.Substring(6, 4)
+                            ))));
+                }
+            }
+            else {
+                ret = String.IsNullOrEmpty(baseDirectory) ? "" : baseDirectory;
+            }
+            return ret;
+        }
+
+        // Create the URI for referring to this object.
+        // THis is as opposed to the storage directory as the HTTP server resolving
+        //     this URL will do any extra filesystem hashing to access the file.
+        public static string ReferenceURL(string pBaseDirectory, string pStorageName) {
+            return JoinURIPieces(pBaseDirectory, pStorageName);
         }
 
         /// <summary>
