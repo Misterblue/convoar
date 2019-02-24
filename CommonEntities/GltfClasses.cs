@@ -304,9 +304,9 @@ namespace org.herbal3d.cs.os.CommonEntities {
                     }
                 });
             });
-            // _log.DebugFormat("{0} BuildBuffers: total meshes = {1}", _logHeader, numMeshes);
-            // _log.DebugFormat("{0} BuildBuffers: total vertices = {1}", _logHeader, numVerts);
-            // _log.DebugFormat("{0} BuildBuffers: total unique vertices = {1}", _logHeader, vertInd);
+            LogGltf("{0} BuildBuffers: total meshes = {1}", _logHeader, numMeshes);
+            LogGltf("{0} BuildBuffers: total vertices = {1}", _logHeader, numVerts);
+            LogGltf("{0} BuildBuffers: total unique vertices = {1}", _logHeader, vertInd);
 
             // Remap all the indices to the new, compacted vertex collection.
             //     mesh.underlyingMesh.face to mesh.newIndices
@@ -348,6 +348,9 @@ namespace org.herbal3d.cs.os.CommonEntities {
             GltfBuffer binBuff = new GltfBuffer(gltfRoot, buffName, _log, _params) {
                 bufferBytes = binBuffRaw
             };
+            LogGltf("{0} BuildBuffers: oneVertSz={1}, vertSz={2}, oneIndSz={3}, indSz={4}, patUnit={5}, padIndSz={6}",
+                        _logHeader, sizeofOneVertex, sizeofVertices,
+                        sizeofOneIndices, sizeofIndices, padUnit, paddedSizeofIndices);
 
             // Copy the vertices into the output binary buffer 
             // Buffer.BlockCopy only moves primitives. Copy the vertices into a float array.
@@ -478,11 +481,12 @@ namespace org.herbal3d.cs.os.CommonEntities {
             //    that point from the mesh into the binary info.
             int indicesOffset = 0;
             somePrimitives.ForEach((Action<GltfPrimitive>)(prim => {
-                int meshIndicesSize = prim.newIndices.Length * sizeofOneIndices;
+                int numPrimIndices = prim.newIndices.Length;
+                int meshIndicesSize = numPrimIndices * sizeofOneIndices;
                 // Above, the indices are built using uint's so, if sending the shorter form, repack indices.
                 if (sizeofOneIndices == sizeof(ushort)) {
-                    ushort[] shortIndices = new ushort[meshIndicesSize];
-                    for (int ii = 0; ii < meshIndicesSize; ii++) {
+                    ushort[] shortIndices = new ushort[numPrimIndices];
+                    for (int ii = 0; ii < numPrimIndices; ii++) {
                         shortIndices[ii] = (ushort)prim.newIndices[ii];
                     }
                     Buffer.BlockCopy(shortIndices, 0, binBuffRaw, indicesOffset, meshIndicesSize);
@@ -837,7 +841,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 extras.Add("uniqueHash", bHash.ToString());
             }
             gltfRoot.meshes.Add(pDR.GetBHash(), this);
-            LogGltf("{0} GltfMesh: created from DR. ID={1}, handle={2}, numPrimitives={3}",
+            LogGltf("{0} GltfMesh: created from DisplayableRenderable. ID={1}, handle={2}, numPrimitives={3}",
                         "Gltf", ID, handle, primitives.Count);
         }
 
