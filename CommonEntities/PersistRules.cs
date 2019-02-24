@@ -137,9 +137,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
         // Pass in a relative directory name and return a full directory path
         //     and create the directory if it doesn't exist.
         public static string CreateDirectory(string pDir, IParameters pParams) {
-            string baseDir = pParams.P<string>("OutputDir");
-            string fullDir = PersistRules.JoinFilePieces(baseDir, pDir);
-            string absDir = Path.GetFullPath(fullDir);
+            string absDir = Path.GetFullPath(pDir);
             if (!Directory.Exists(absDir)) {
                 Directory.CreateDirectory(absDir);
             }
