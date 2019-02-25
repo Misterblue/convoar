@@ -102,20 +102,18 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 // Use the default texture code for terrain
                 terrainTextureHandle = new EntityHandleUUID(defaultTextureID);
                 BHash terrainHash = new BHashULong(terrainTextureHandle.GetHashCode());
-                terrainImageInfo = await assetManager.GetImageInfo(terrainHash, async () => {
+                terrainImageInfo = await assetManager.Assets.GetImageInfo(terrainHash, async () => {
                     // The image is not already in the cache so create ImageInfo
                     ImageInfo newTerrainImageInfo = new ImageInfo(pLog, pParam) {
                         handle = terrainTextureHandle,
                         resizable = false // terrain image resolution is not reduced
                     };
-                    var img = await assetManager.FetchTextureAsImage(terrainTextureHandle);
+                    var img = await assetManager.OSAssets.FetchTextureAsImage(terrainTextureHandle);
                     newTerrainImageInfo.image = img;
                     return newTerrainImageInfo;
                 });
             }
-            assetManager.Images.Add(new BHashULong(terrainTextureHandle.GetHashCode()), terrainTextureHandle, terrainImageInfo);
-            // Store the new image into the asset system so it can be read later.
-            assetManager.StoreTextureImage(terrainTextureHandle, scene.Name + " Terrain", convoarID, terrainImage);
+            assetManager.Assets.Images.Add(new BHashULong(terrainTextureHandle.GetHashCode()), terrainTextureHandle, terrainImageInfo);
             // Link this image to the material
             terrainFace.TextureID = terrainTextureHandle.GetUUID();
 

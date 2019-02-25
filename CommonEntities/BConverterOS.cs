@@ -175,7 +175,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 }).ToList();
 
                 // Add the Displayable into the collection of known Displayables for instancing
-                assetManager.AddUniqueDisplayable(rootDisplayable);
+                assetManager.Assets.AddUniqueDisplayable(rootDisplayable);
 
                 // Package the Displayable into an instance that is position in the world
                 ret = new BInstance {

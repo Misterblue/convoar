@@ -144,6 +144,12 @@ namespace org.herbal3d.cs.os.CommonEntities {
             return absDir;
         }
 
+        // Given a filename, return the relative directory that the file will be stored in
+        public string GetStorageDir(string pStorageName, IParameters pParams) {
+            string strippedStorageName = Path.GetFileNameWithoutExtension(pStorageName);
+            return PersistRules.StorageDirectory(strippedStorageName, pParams);
+        }
+
         // Compute the filename of this object when written out.
         // Mostly about computing the file extension based on the AssetType.
         // public static string GetFilename(GltfClass pObject, string pLongName, IParameters pParams) {

@@ -136,7 +136,7 @@ namespace org.herbal3d.convoar {
 
                 // 'assetManager' is the asset cache and fetching code -- where all the mesh,
                 //    material, and instance information is stored for later processing.
-                using (AssetManager assetManager = new OSAssetFetcher(memAssetService, Globals.log, Globals.parms)) {
+                using (AssetManager assetManager = new AssetManager(memAssetService, Globals.log, Globals.parms)) {
 
                     try {
                         BScene bScene = await LoadOAR(memAssetService, assetManager);
@@ -145,10 +145,10 @@ namespace org.herbal3d.convoar {
 
                         Globals.log.DebugFormat("{0} Scene created. name={1}, instances={2}",
                             _logHeader, bScene.name, bScene.instances.Count);
-                        Globals.log.DebugFormat("{0}    num assetFetcher.images={1}", _logHeader, assetManager.Images.Count);
-                        Globals.log.DebugFormat("{0}    num assetFetcher.materials={1}", _logHeader, assetManager.Materials.Count);
-                        Globals.log.DebugFormat("{0}    num assetFetcher.meshes={1}", _logHeader, assetManager.Meshes.Count);
-                        Globals.log.DebugFormat("{0}    num assetFetcher.renderables={1}", _logHeader, assetManager.Renderables.Count);
+                        Globals.log.DebugFormat("{0}    num assetFetcher.images={1}", _logHeader, assetManager.Assets.Images.Count);
+                        Globals.log.DebugFormat("{0}    num assetFetcher.materials={1}", _logHeader, assetManager.Assets.Materials.Count);
+                        Globals.log.DebugFormat("{0}    num assetFetcher.meshes={1}", _logHeader, assetManager.Assets.Meshes.Count);
+                        Globals.log.DebugFormat("{0}    num assetFetcher.renderables={1}", _logHeader, assetManager.Assets.Renderables.Count);
 
                         if (ConvOAR.Globals.parms.P<bool>("AddTerrainMesh")) {
                             ConvOAR.Globals.log.DebugFormat("{0} Adding terrain to scene", _logHeader);
@@ -195,17 +195,16 @@ namespace org.herbal3d.convoar {
                             Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
 
                             string gltfFilename = gltf.GetFilename(gltf.IdentifyingString);
-                            string gltfDir = gltf.GetStorageDir(gltfFilename);
-                            string absDir = PersistRules.CreateDirectory(gltfDir, Globals.parms);
-                            string gltfPath = Path.Combine(absDir, gltfFilename);
-
-                            using (StreamWriter outt = File.CreateText(gltfPath)) {
-                                gltf.ToJSON(outt);
+                            using (var outm = new MemoryStream()) {
+                                using (var outt = new StreamWriter(outm)) {
+                                    gltf.ToJSON(outt);
+                                }
+                                await assetManager.AssetStorage.Store(gltfFilename, outm.ToArray());
                             }
-                            gltf.WriteBinaryFiles();
+                            gltf.WriteBinaryFiles(assetManager.AssetStorage);
 
                             if (Globals.parms.P<bool>("ExportTextures")) {
-                                gltf.WriteImages();
+                                gltf.WriteImages(assetManager.AssetStorage);
                             }
                         }
                         catch (Exception e) {

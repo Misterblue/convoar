@@ -154,7 +154,7 @@ namespace org.herbal3d.convoar.tests {
             _assetService = new MemAssetService();
             _converter = new OarConverter(_log, _params);
             _scene = _converter.CreateScene(_assetService, "convoar-test");
-            _assetManager = new OSAssetFetcher(_assetService, _log, _params);
+            _assetManager = new AssetManager(_assetService, _log, _params);
             OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
             _defaultTexture = new OMV.Primitive.TextureEntryFace(null) {
                 TextureID = defaultTextureID

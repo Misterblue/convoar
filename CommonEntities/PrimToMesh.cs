@@ -93,7 +93,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
             OMVR.FacetedMesh mesh = _mesher.GenerateFacetedMesh(prim, lod);
             DisplayableRenderable dr = await ConvertFacetedMeshToDisplayable(assetManager, mesh, prim.Textures.DefaultTexture, prim.Scale);
             BHash drHash = dr.GetBHash();
-            DisplayableRenderable realDR = assetManager.GetRenderable(drHash, () => { return dr; });
+            DisplayableRenderable realDR = assetManager.Assets.GetRenderable(drHash, () => { return dr; });
             LogBProgress("{0} MeshFromPrimShapeData. numGenedMeshed={1}",
                     _logHeader, ((RenderableMeshGroup)realDR).meshes.Count);
             return realDR;
@@ -105,13 +105,13 @@ namespace org.herbal3d.cs.os.CommonEntities {
             try {
                 // Get the asset that the sculpty is built on
                 EntityHandleUUID texHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
-                var img = await assetManager.FetchTextureAsImage(texHandle);
+                var img = await assetManager.OSAssets.FetchTextureAsImage(texHandle);
 
                 OMVR.FacetedMesh fMesh = _mesher.GenerateFacetedSculptMesh(prim, img as Bitmap, lod);
                 DisplayableRenderable dr =
                         await ConvertFacetedMeshToDisplayable(assetManager, fMesh, prim.Textures.DefaultTexture, prim.Scale);
                 BHash drHash = dr.GetBHash();
-                realDR = assetManager.GetRenderable(drHash, () => { return dr; });
+                realDR = assetManager.Assets.GetRenderable(drHash, () => { return dr; });
                 LogBProgress("{0} MeshFromPrimSculptData. numFaces={1}, numGenedMeshed={2}",
                                 _logHeader, fMesh.Faces.Count, ((RenderableMeshGroup)realDR).meshes.Count);
             }
@@ -132,7 +132,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
 
             try {
                 EntityHandleUUID meshHandle = new EntityHandleUUID(prim.Sculpt.SculptTexture);
-                var meshBytes = await assetManager.FetchRawAsset(meshHandle);
+                var meshBytes = await assetManager.OSAssets.FetchRawAsset(meshHandle);
                 // OMVA.AssetMesh meshAsset = new OMVA.AssetMesh(prim.ID, meshBytes);
                 // if (OMVR.FacetedMesh.TryDecodeFromAsset(prim, meshAsset, lod, out fMesh)) {
                 OMVR.FacetedMesh fMesh = null;
@@ -149,7 +149,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
                     // Now use the hash to see if this has already been done.
                     // If this DisplayableRenderable has already been built, use the other one and throw this away.
                     BHash drHash = dr.GetBHash();
-                    realDR = assetManager.GetRenderable(drHash, () => { return dr; });
+                    realDR = assetManager.Assets.GetRenderable(drHash, () => { return dr; });
                 }
                 else {
                     failure = new Exception("MeshFromPrimMeshData: could not decode mesh information from asset. ID="
@@ -223,12 +223,12 @@ namespace org.herbal3d.cs.os.CommonEntities {
                 // Textures/images use the UUID from OpenSim and the hash is just the hash of the UUID
                 EntityHandleUUID textureHandle = new EntityHandleUUID((OMV.UUID)matInfo.textureID);
                 BHash textureHash = new BHashULong(textureHandle.GetUUID().GetHashCode());
-                ImageInfo lookupImageInfo = await assetManager.GetImageInfo(textureHash, async () => {
+                ImageInfo lookupImageInfo = await assetManager.Assets.GetImageInfo(textureHash, async () => {
                     // The image is not in the cache yet so create an ImageInfo entry for it
                     // Note that image gets the same UUID as the OpenSim texture
                     ImageInfo imageInfo = new ImageInfo(textureHandle, _log, _params);
                     try {
-                        var img = await assetManager.FetchTextureAsImage(textureHandle);
+                        var img = await assetManager.OSAssets.FetchTextureAsImage(textureHandle);
                         imageInfo.SetImage(img);
                     }
                     catch (Exception e) {
@@ -258,11 +258,11 @@ namespace org.herbal3d.cs.os.CommonEntities {
             }
 
             // See that the material is in the cache
-            MaterialInfo lookupMatInfo = assetManager.GetMaterialInfo(matInfo.GetBHash(), () => { return matInfo; });
+            MaterialInfo lookupMatInfo = assetManager.Assets.GetMaterialInfo(matInfo.GetBHash(), () => { return matInfo; });
             rmesh.material = lookupMatInfo;
 
             // See that the mesh is in the cache
-            MeshInfo lookupMeshInfo = assetManager.GetMeshInfo(meshInfo.GetBHash(true), () => { return meshInfo; });
+            MeshInfo lookupMeshInfo = assetManager.Assets.GetMeshInfo(meshInfo.GetBHash(true), () => { return meshInfo; });
             rmesh.mesh = lookupMeshInfo;
             if (lookupMeshInfo.indices.Count == 0) {    // DEBUG DEBUG
                 _log.ErrorFormat("{0} indices count of zero. rmesh={1}", _logHeader, rmesh.ToString());

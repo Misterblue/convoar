@@ -18,7 +18,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>
     </AppDesignerFolder>
-    <RootNamespace>CommonEntities</RootNamespace>
+    <RootNamespace>org.herbal3d.cs.os.CommonEntities</RootNamespace>
     <StartupObject>
     </StartupObject>
     <StartArguments>
@@ -184,6 +184,8 @@
     <Compile Include="AssetManager.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="BAssets.cs" />
+    <Compile Include="BAssetStorage.cs" />
     <Compile Include="BAttributes.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -224,6 +226,7 @@
     <Compile Include="MeshmerizerR.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="OSAssetFetcher.cs" />
     <Compile Include="PersistRules.cs">
       <SubType>Code</SubType>
     </Compile>
