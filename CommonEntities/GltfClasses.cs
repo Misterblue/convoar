@@ -1199,12 +1199,7 @@ namespace org.herbal3d.cs.os.CommonEntities {
         public void WriteBuffer(BAssetStorage pStorage) {
             string outFilename = this.GetFilename(_identifyingString);
             pStorage.Store(outFilename, bufferBytes);
-            /*
-            string outDir = this.GetStorageDir(outFilename);
-            string absDir = PersistRules.CreateDirectory(outDir, _params);
-            File.WriteAllBytes(Path.Combine(absDir, outFilename), bufferBytes);
             // _log.DebugFormat("{0} WriteBinaryFiles: filename={1}", LogHeader, outFilename);
-            */
         }
     }
 
