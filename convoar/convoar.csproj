@@ -209,13 +209,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CommonEntities\CommonEntities.csproj">
-      <Project>{c9dadda3-1ad2-4378-9417-d681fadca107}</Project>
-      <Name>CommonEntities</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CommonEntitiesUtil\CommonEntitiesUtil.csproj">
-      <Project>{dab7cef5-c7c1-4dfa-85d7-267658efc466}</Project>
+    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesUtil\CommonEntitiesUtil.csproj">
+      <Project>{a9d65554-0000-0000-0000-000000000000}</Project>
       <Name>CommonEntitiesUtil</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntities\CommonEntities.csproj">
+      <Project>{e5fbcd68-0000-0000-0000-000000000000}</Project>
+      <Name>CommonEntities</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
