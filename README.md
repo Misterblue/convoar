@@ -96,6 +96,11 @@ OAR file. These source files are included in this repository. So there is a *sim
 build where one just builds the sources checked out, and there is the *updating* build
 where one fetches new versions of the [OpenSimulator] sources.
 
+Some functionality has been moved out into another project that must be
+checked out in the same directory as [Convoar]. Checkout [HerbalCommonEntitiesCS]
+into the same directory as the [Convoar] project. This will include
+```CommonEntities``` and ```CommonEntitiesUtil```.
+
 ## Simple Build
 
 Under windows 10, use Visual Studio 2017 or better. At the moment, convoar is
@@ -115,12 +120,11 @@ into the same directory as the convoar repository so the steps could be:
 
 ```
 git clone https://github.com/Misterblue/convoar.git
+git clone https://github.com/Herbal3d/HerbalCommonEntitiesCS.git
 git clone git://opensimulator.org/git/opensim
 (build OpenSimulator)
 git clone https://github.com/Misterblue/libopenmetaverse.git
 (build libOpenMetaverse)
-git clone https://github.com/Real-Serious-Games/C-Sharp-Promise.git
-(build C-Sharp-Promise)
 cd convoar
 ./gatherLibs.sh
 ```
@@ -165,7 +169,9 @@ which is usually is the right thing for write permissions into the mapped direct
 - [ ] Release 2.1
     * pipeline tools for scene optimizations (small mesh elimination, mesh decimation/simplification, etc.)
 
+[Convoar]: https://github.com/Misterblue/convoar
 [OpenSimulator]: http://opensimulator.org
 [Mono]: http://www.mono-project.com/
 [Blender]: https://www.blender.org/
+[HerbalCommonEntitiesCS]: https://github.com/Herbal3d/HerbalCommonEntitiesCS
 
