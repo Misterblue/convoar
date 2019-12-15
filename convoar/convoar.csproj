@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -209,11 +209,15 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesUtil\CommonEntitiesUtil.csproj">
+    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesConv\Herbal3d.CommonEntitiesConv.csproj">
+      <Project>{5cdc0865-2f86-4ce2-bd3e-408b4a0a835d}</Project>
+      <Name>Herbal3d.CommonEntitiesConv</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesUtil\Herbal3d.CommonEntitiesUtil.csproj">
       <Project>{a9d65554-0000-0000-0000-000000000000}</Project>
       <Name>CommonEntitiesUtil</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntities\CommonEntities.csproj">
+    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntities\Herbal3d.CommonEntities.csproj">
       <Project>{e5fbcd68-0000-0000-0000-000000000000}</Project>
       <Name>CommonEntities</Name>
     </ProjectReference>

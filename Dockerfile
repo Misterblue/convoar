@@ -26,6 +26,7 @@ RUN apt-get update \
         curl \
         git \
         vim \
+        libc6-dev libgdiplus \
     && apt-get clean \
     && rm -rf /tmp/* var/tmp/* \
     && rm -rf /var/lib/apt/lists/*
