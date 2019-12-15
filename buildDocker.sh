@@ -22,7 +22,7 @@ DO_GIT_TAG=no
 DO_DOCKER_BUILD=yes
 
 # Push the built docker image to DockerHub.
-DO_DOCKERHUB_PUSH=yes
+DO_DOCKERHUB_PUSH=no
 
 # Tag the version in git
 if [[ "$DO_GIT_TAG" == "yes" ]] ; then
