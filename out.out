@@ -1,0 +1,153 @@
+Sending build context to Docker daemon  86.94MB
+Step 1/15 : FROM mono:latest
+ ---> 2ba93b1033ba
+Step 2/15 : ARG VERSION
+ ---> Using cache
+ ---> 993f6d054589
+Step 3/15 : ENV TARGET=Release
+ ---> Using cache
+ ---> 4a52f65c4f09
+Step 4/15 : ENV USER=convoar
+ ---> Using cache
+ ---> f7fb7d031754
+Step 5/15 : ENV CONVOAR_PASSWORD=convoarconvoar
+ ---> Using cache
+ ---> 9470eec07c59
+Step 6/15 : ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
+ ---> Using cache
+ ---> 1118fd4aed96
+Step 7/15 : LABEL Version=${VERSION}
+ ---> Using cache
+ ---> 5ddc95d56d60
+Step 8/15 : LABEL Description="Docker container convoar"
+ ---> Using cache
+ ---> 908ef1d5d11d
+Step 9/15 : RUN apt-get update     && apt-get upgrade -y     && apt-get install -y         curl         git         vim         libc6-dev libgdiplus     && apt-get clean     && rm -rf /tmp/* var/tmp/*     && rm -rf /var/lib/apt/lists/*
+ ---> Using cache
+ ---> 5a6486f4a006
+Step 10/15 : RUN adduser --disabled-password --gecos 'Convoar user' ${USER}     && echo "${USER}:${CONVOAR_PASSWORD}" | chpasswd
+ ---> Using cache
+ ---> fe7a291a08ee
+Step 11/15 : WORKDIR /home/${USER}
+ ---> Using cache
+ ---> d87f68e52722
+Step 12/15 : USER ${USER}:${USER}
+ ---> Using cache
+ ---> 225ba774fe83
+Step 13/15 : RUN cd /home/${USER}     && git clone https://github.com/Misterblue/convoar.git     && git clone https://github.com/Herbal3d/HerbalCommonEntitiesCS.git     && cd convoar     && rm -rf OMV.Pieces     && nuget restore convoar.sln     && msbuild /p:Configuration=${TARGET}
+ ---> Running in 45eeaa9f60dd
+[91mCloning into 'convoar'...
+[0m[91mCloning into 'HerbalCommonEntitiesCS'...
+[0mMSBuild auto-detection: using msbuild version '15.0' from '/usr/lib/mono/msbuild/15.0/bin'.
+Restoring packages for /home/convoar/HerbalCommonEntitiesCS/CommonEntities/Herbal3d.CommonEntities.csproj...
+  GET https://api.nuget.org/v3-flatcontainer/netstandard.library/index.json
+  GET https://api.nuget.org/v3-flatcontainer/system.drawing.common/index.json
+  OK https://api.nuget.org/v3-flatcontainer/netstandard.library/index.json 71ms
+  GET https://api.nuget.org/v3-flatcontainer/netstandard.library/2.0.3/netstandard.library.2.0.3.nupkg
+  OK https://api.nuget.org/v3-flatcontainer/netstandard.library/2.0.3/netstandard.library.2.0.3.nupkg 22ms
+  OK https://api.nuget.org/v3-flatcontainer/system.drawing.common/index.json 170ms
+  GET https://api.nuget.org/v3-flatcontainer/system.drawing.common/4.5.1/system.drawing.common.4.5.1.nupkg
+  OK https://api.nuget.org/v3-flatcontainer/system.drawing.common/4.5.1/system.drawing.common.4.5.1.nupkg 21ms
+  GET https://api.nuget.org/v3-flatcontainer/microsoft.netcore.platforms/index.json
+  OK https://api.nuget.org/v3-flatcontainer/microsoft.netcore.platforms/index.json 154ms
+  GET https://api.nuget.org/v3-flatcontainer/microsoft.netcore.platforms/1.1.0/microsoft.netcore.platforms.1.1.0.nupkg
+  OK https://api.nuget.org/v3-flatcontainer/microsoft.netcore.platforms/1.1.0/microsoft.netcore.platforms.1.1.0.nupkg 16ms
+Installing Microsoft.NETCore.Platforms 1.1.0.
+Installing NETStandard.Library 2.0.3.
+Installing System.Drawing.Common 4.5.1.
+Committing restore...
+Generating MSBuild file /home/convoar/HerbalCommonEntitiesCS/CommonEntities/obj/Herbal3d.CommonEntities.csproj.nuget.g.props.
+Generating MSBuild file /home/convoar/HerbalCommonEntitiesCS/CommonEntities/obj/Herbal3d.CommonEntities.csproj.nuget.g.targets.
+Writing assets file to disk. Path: /home/convoar/HerbalCommonEntitiesCS/CommonEntities/obj/project.assets.json
+Restore completed in 1.78 sec for /home/convoar/HerbalCommonEntitiesCS/CommonEntities/Herbal3d.CommonEntities.csproj.
+Restoring packages for /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/Herbal3d.CommonEntitiesConv.csproj...
+Committing restore...
+Generating MSBuild file /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/obj/Herbal3d.CommonEntitiesConv.csproj.nuget.g.props.
+Generating MSBuild file /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/obj/Herbal3d.CommonEntitiesConv.csproj.nuget.g.targets.
+Writing assets file to disk. Path: /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/obj/project.assets.json
+Restore completed in 6.74 ms for /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/Herbal3d.CommonEntitiesConv.csproj.
+Restoring packages for /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/Herbal3d.CommonEntitiesUtil.csproj...
+Committing restore...
+Generating MSBuild file /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/obj/Herbal3d.CommonEntitiesUtil.csproj.nuget.g.props.
+Generating MSBuild file /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/obj/Herbal3d.CommonEntitiesUtil.csproj.nuget.g.targets.
+Writing assets file to disk. Path: /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/obj/project.assets.json
+Restore completed in 3.07 ms for /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/Herbal3d.CommonEntitiesUtil.csproj.
+
+NuGet Config files used:
+    /home/convoar/.config/NuGet/NuGet.Config
+
+Feeds used:
+    https://api.nuget.org/v3/index.json
+
+Installed:
+    3 package(s) to /home/convoar/HerbalCommonEntitiesCS/CommonEntities/Herbal3d.CommonEntities.csproj
+    3 package(s) to /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/Herbal3d.CommonEntitiesConv.csproj
+    2 package(s) to /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/Herbal3d.CommonEntitiesUtil.csproj
+Microsoft (R) Build Engine version 16.3.0-ci for Mono
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Build started 12/15/2019 19:39:31.
+Project "/home/convoar/convoar/convoar.sln" on node 1 (default targets).
+ValidateSolutionConfiguration:
+  Building solution configuration "Release|Any CPU".
+Project "/home/convoar/convoar/convoar.sln" (1) is building "/home/convoar/convoar/convoar/convoar.csproj" (2) on node 1 (default targets).
+PrepareForBuild:
+  Creating directory "obj/Release/".
+PreBuildEvent:
+  date > "/home/convoar/convoar/convoar//Resources/BuildDate.txt"
+  git rev-parse HEAD > "/home/convoar/convoar/convoar//Resources/GitCommit.txt"
+[91m  It was not possible to find any installed dotnet SDKs
+  Did you mean to run dotnet SDK commands? Please install dotnet SDK from:
+      https://aka.ms/dotnet-download
+[0m[91m  It was not possible to find any installed dotnet SDKs
+  Did you mean to run dotnet SDK commands? Please install dotnet SDK from:
+      https://aka.ms/dotnet-download
+[0mProject "/home/convoar/convoar/convoar/convoar.csproj" (2) is building "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/Herbal3d.CommonEntitiesConv.csproj" (3:2) on node 1 (default targets).
+_CheckForNETCoreSdkIsPreview:
+  You are using a preview version of .NET Core. See: https://aka.ms/dotnet-core-preview
+PrepareForBuild:
+  Creating directory "bin/Release/netstandard2.0/".
+  Creating directory "obj/Release/netstandard2.0/".
+Project "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/Herbal3d.CommonEntitiesConv.csproj" (3:2) is building "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/Herbal3d.CommonEntitiesUtil.csproj" (4:3) on node 1 (default targets).
+PrepareForBuild:
+  Creating directory "bin/Release/netstandard2.0/".
+  Creating directory "obj/Release/netstandard2.0/".
+CoreCompile:
+  /usr/lib/mono/msbuild/Current/bin/Roslyn/csc.exe /noconfig /unsafe- /checked- /nowarn:1701,1702,1701,1702 /nostdlib+ /errorreport:prompt /warn:4 /define:TRACE;RELEASE;NETSTANDARD;NETSTANDARD2_0 /reference:/home/convoar/HerbalCommonEntitiesCS/libs/log4net.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/Microsoft.Win32.Primitives.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/mscorlib.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/netstandard.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.AppContext.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Collections.Concurrent.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Collections.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Collections.NonGeneric.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Collections.Specialized.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.ComponentModel.Composition.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.ComponentModel.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.ComponentModel.EventBasedAsync.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.ComponentModel.Primitives.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.ComponentModel.TypeConverter.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Console.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Core.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Data.Common.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Data.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.Contracts.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.Debug.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.FileVersionInfo.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.Process.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.StackTrace.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.TextWriterTraceListener.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.Tools.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.TraceSource.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Diagnostics.Tracing.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Drawing.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Drawing.Primitives.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Dynamic.Runtime.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Globalization.Calendars.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Globalization.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Globalization.Extensions.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.Compression.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.Compression.FileSystem.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.Compression.ZipFile.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.FileSystem.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.FileSystem.DriveInfo.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.FileSystem.Primitives.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.FileSystem.Watcher.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.IsolatedStorage.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.MemoryMappedFiles.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.Pipes.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.IO.UnmanagedMemoryStream.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Linq.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Linq.Expressions.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Linq.Parallel.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Linq.Queryable.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.Http.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.NameResolution.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.NetworkInformation.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.Ping.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.Primitives.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.Requests.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.Security.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.Sockets.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.WebHeaderCollection.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.WebSockets.Client.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Net.WebSockets.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Numerics.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.ObjectModel.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Reflection.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Reflection.Extensions.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Reflection.Primitives.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Resources.Reader.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Resources.ResourceManager.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Resources.Writer.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.CompilerServices.VisualC.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.Extensions.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.Handles.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.InteropServices.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.InteropServices.RuntimeInformation.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.Numerics.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.Serialization.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.Serialization.Formatters.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.Serialization.Json.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.Serialization.Primitives.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Runtime.Serialization.Xml.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Security.Claims.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Security.Cryptography.Algorithms.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Security.Cryptography.Csp.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Security.Cryptography.Encoding.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Security.Cryptography.Primitives.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Security.Cryptography.X509Certificates.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Security.Principal.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Security.SecureString.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.ServiceModel.Web.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Text.Encoding.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Text.Encoding.Extensions.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Text.RegularExpressions.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Threading.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Threading.Overlapped.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Threading.Tasks.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Threading.Tasks.Parallel.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Threading.Thread.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Threading.ThreadPool.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Threading.Timer.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Transactions.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.ValueTuple.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Web.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Windows.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.Linq.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.ReaderWriter.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.Serialization.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.XDocument.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.XmlDocument.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.XmlSerializer.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.XPath.dll /reference:/home/convoar/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/System.Xml.XPath.XDocument.dll /debug- /debug:portable /filealign:512 /optimize+ /out:obj/Release/netstandard2.0/Herbal3d.CommonEntitiesUtil.dll /target:library /warnaserror- /utf8output /deterministic+ /langversion:7.3 BHasher.cs IParameters.cs Logger.cs Util.cs "/tmp/.NETStandard,Version=v2.0.AssemblyAttributes.cs" obj/Release/netstandard2.0/Herbal3d.CommonEntitiesUtil.AssemblyInfo.cs /warnaserror+:NU1605
+_CopyFilesMarkedCopyLocal:
+  Copying file from "/home/convoar/HerbalCommonEntitiesCS/libs/log4net.dll" to "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/bin/Release/netstandard2.0/log4net.dll".
+  Creating "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/obj/Release/netstandard2.0//Herbal3d.CommonEntitiesUtil.csproj.CopyComplete" because "AlwaysCreate" was specified.
+CopyFilesToOutputDirectory:
+  Copying file from "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/obj/Release/netstandard2.0/Herbal3d.CommonEntitiesUtil.dll" to "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/bin/Release/netstandard2.0/Herbal3d.CommonEntitiesUtil.dll".
+  Herbal3d.CommonEntitiesUtil -> /home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/bin/Release/netstandard2.0/Herbal3d.CommonEntitiesUtil.dll
+  Copying file from "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/obj/Release/netstandard2.0/Herbal3d.CommonEntitiesUtil.pdb" to "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/bin/Release/netstandard2.0/Herbal3d.CommonEntitiesUtil.pdb".
+Done Building Project "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesUtil/Herbal3d.CommonEntitiesUtil.csproj" (default targets).
+Project "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/Herbal3d.CommonEntitiesConv.csproj" (3:2) is building "/home/convoar/HerbalCommonEntitiesCS/CommonEntities/Herbal3d.CommonEntities.csproj" (5:3) on node 1 (default targets).
+PrepareForBuild:
+  Creating directory "bin/Release/netstandard2.0/".
+  Creating directory "obj/Release/netstandard2.0/".
+Project "/home/convoar/HerbalCommonEntitiesCS/CommonEntities/Herbal3d.CommonEntities.csproj" (5:3) is building "/home/convoar/HerbalCommonEntitiesCS/OMV.Pieces/OMV.Pieces.csproj" (6:3) on node 1 (default targets).
+PrepareForBuild:
+  Creating directory "bin/Debug/netstandard2.0/".
+  Creating directory "obj/Debug/netstandard2.0/".
+/usr/lib/mono/msbuild/Current/bin/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(234,5): error NETSDK1004: Assets file '/home/convoar/HerbalCommonEntitiesCS/OMV.Pieces/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/home/convoar/HerbalCommonEntitiesCS/OMV.Pieces/OMV.Pieces.csproj]
+Done Building Project "/home/convoar/HerbalCommonEntitiesCS/OMV.Pieces/OMV.Pieces.csproj" (default targets) -- FAILED.
+Done Building Project "/home/convoar/HerbalCommonEntitiesCS/CommonEntities/Herbal3d.CommonEntities.csproj" (default targets) -- FAILED.
+Done Building Project "/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/Herbal3d.CommonEntitiesConv.csproj" (default targets) -- FAILED.
+Done Building Project "/home/convoar/convoar/convoar/convoar.csproj" (default targets) -- FAILED.
+Done Building Project "/home/convoar/convoar/convoar.sln" (default targets) -- FAILED.
+
+Build FAILED.
+
+"/home/convoar/convoar/convoar.sln" (default target) (1) ->
+"/home/convoar/convoar/convoar/convoar.csproj" (default target) (2) ->
+"/home/convoar/HerbalCommonEntitiesCS/CommonEntitiesConv/Herbal3d.CommonEntitiesConv.csproj" (default target) (3:2) ->
+"/home/convoar/HerbalCommonEntitiesCS/CommonEntities/Herbal3d.CommonEntities.csproj" (default target) (5:3) ->
+"/home/convoar/HerbalCommonEntitiesCS/OMV.Pieces/OMV.Pieces.csproj" (default target) (6:3) ->
+(ResolvePackageAssets target) -> 
+  /usr/lib/mono/msbuild/Current/bin/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(234,5): error NETSDK1004: Assets file '/home/convoar/HerbalCommonEntitiesCS/OMV.Pieces/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/home/convoar/HerbalCommonEntitiesCS/OMV.Pieces/OMV.Pieces.csproj]
+
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:03.61
