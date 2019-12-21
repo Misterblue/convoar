@@ -16,13 +16,13 @@ VERSION=$(cat VERSION)
 
 # Tag and create commit git sources with the version number.
 # Not working yet... need to automate Visual Studio versioning.
-DO_GIT_TAG=yes
+DO_GIT_TAG=no
 
 # Build the docker image of the latest git commited sources.
 DO_DOCKER_BUILD=yes
 
 # Push the built docker image to DockerHub.
-DO_DOCKERHUB_PUSH=yes
+DO_DOCKERHUB_PUSH=no
 
 # Tag the version in git
 if [[ "$DO_GIT_TAG" == "yes" ]] ; then
