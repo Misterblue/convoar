@@ -1,8 +1,8 @@
 #! /bin/bash
 
-OPENSIM=../opensim-ssh/bin
-LIBOMV=../libopenmetaverse/bin
-RSGPROMISE=../C-Sharp-Promise/bin/Release
+OPENSIM=../../opensim-ssh/bin
+LIBOMV=../../opensim-ssh/bin
+# LIBOMV=../../libopenmetaverse/bin
 
 # Copy the dll file and the PDB file if it exists
 function GetLib() {
@@ -43,13 +43,10 @@ GetLib "$OPENSIM" "libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so" "convoar"
 
 GetLib "$LIBOMV" "OpenMetaverse.dll"
 GetLib "$LIBOMV" "OpenMetaverse.dll.config"
-GetLib "$LIBOMV" "OpenMetaverse.XML"
+# GetLib "$LIBOMV" "OpenMetaverse.XML"
 GetLib "$LIBOMV" "OpenMetaverseTypes.dll"
-GetLib "$LIBOMV" "OpenMetaverseTypes.XML"
+# GetLib "$LIBOMV" "OpenMetaverseTypes.XML"
 GetLib "$LIBOMV" "OpenMetaverse.StructuredData.dll"
-GetLib "$LIBOMV" "OpenMetaverse.StructuredData.XML"
+# GetLib "$LIBOMV" "OpenMetaverse.StructuredData.XML"
 GetLib "$LIBOMV" "OpenMetaverse.Rendering.Meshmerizer.dll"
 GetLib "$LIBOMV" "PrimMesher.dll"
-
-GetLib "$RSGPROMISE" "RSG.Promise.dll"
-
