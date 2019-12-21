@@ -5,6 +5,7 @@
   * [Simple Build](https://github.com/Misterblue/convoar#simple-build)
   * [Library Updating Build](https://github.com/Misterblue/convoar#update-build)
 * [Docker Image](https://github.com/Misterblue/convoar#docker-image)
+* [What Is Converted](https://github.com/Misterblue/convoar#what-is-converted)
 * [Releases and Roadmap](https://github.com/Misterblue/convoar#releases-and-roadmap)
 
 Command line application for converting OpenSimulator OAR files into GLTF scene file.
@@ -150,6 +151,28 @@ into the `/tmp/frog` directory.
 NOTE: the most common problem is permissions. The command above, sets the
 user and group IDs to that of the current user (the `--user` parameter)
 which is usually is the right thing for write permissions into the mapped directory.
+
+# What Is Converted
+
+Convoar reads in the totality of the OAR file and then maps the various
+features of the scene into the GLTF definition. This mapping is incomplete.
+What follows is a list of features that are copied:
+
+* Scene
+* Primitives: converted to a mesh using PrimMesher using highest LOD setting
+* Sculptie: converted into a mesh using PrimMesher using highest LOD setting
+* Mesh: repackaged as a mesh. Mesh vertices and indices are deduplicated and repacked for GPU efficiency
+* Linksets: All meshes in a linkset are grouped into a GLTF group of meshes
+* Images: All images are converted into JPEG or PNG. PNG is used if there is any transparency in the image. The images are all resized to be less than `TextureMaxSize` on a side (default is 256);
+* Materials: mesh face info is converted into a material and the following attributes are copied:
+  * face image
+  * face color (RGBA)
+  * transparency
+  * bump
+  * glow
+  * shiny
+  * two sided (parameter `DoubleSided`. Default is `false`)
+- Terrain: A mesh is created from the region heightmap. The mesh resolution is in meters (so a standard sized region would be 256x256 vertices) but a half size mesh (parameter `HalfRezTerrain` default is `true`) can be generated
 
 # Releases and Roadmap
 

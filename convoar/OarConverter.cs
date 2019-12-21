@@ -21,9 +21,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Drawing.Drawing2D;
+using System.Xml;
 
 using OpenSim.Framework;
 using OpenSim.Services.Interfaces;

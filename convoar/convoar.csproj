@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -84,18 +84,21 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\libs\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="OpenMetaverse">
-      <HintPath>..\libs\OpenMetaverse.dll</HintPath>
+    <Reference Include="OpenMetaverse, Version=0.9.4.24465, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\HerbalCommonEntitiesCS\libs\OpenMetaverse.dll</HintPath>
     </Reference>
-    <Reference Include="OpenMetaverse.Rendering.Meshmerizer">
-      <HintPath>..\libs\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
+    <Reference Include="OpenMetaverse.Rendering.Meshmerizer, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\HerbalCommonEntitiesCS\libs\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
     </Reference>
     <Reference Include="OpenMetaverse.StructuredData, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\OpenMetaverse.StructuredData.dll</HintPath>
+      <HintPath>..\..\HerbalCommonEntitiesCS\libs\OpenMetaverse.StructuredData.dll</HintPath>
     </Reference>
-    <Reference Include="OpenMetaverseTypes">
-      <HintPath>..\libs\OpenMetaverseTypes.dll</HintPath>
+    <Reference Include="OpenMetaverseTypes, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\HerbalCommonEntitiesCS\libs\OpenMetaverseTypes.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Capabilities">
       <HintPath>..\libs\OpenSim.Capabilities.dll</HintPath>
@@ -145,11 +148,9 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -210,7 +211,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesConv\Herbal3d.CommonEntitiesConv.csproj">
-      <Project>{5cdc0865-2f86-4ce2-bd3e-408b4a0a835d}</Project>
+      <Project>{a260ef90-d948-470a-a043-9c016a367dc2}</Project>
       <Name>Herbal3d.CommonEntitiesConv</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesUtil\Herbal3d.CommonEntitiesUtil.csproj">
@@ -218,8 +219,8 @@
       <Name>CommonEntitiesUtil</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntities\Herbal3d.CommonEntities.csproj">
-      <Project>{e5fbcd68-0000-0000-0000-000000000000}</Project>
-      <Name>CommonEntities</Name>
+      <Project>{f0f6d547-dcb2-4bd6-8978-b204361c2061}</Project>
+      <Name>Herbal3d.CommonEntities</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

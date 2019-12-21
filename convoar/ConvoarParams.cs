@@ -172,6 +172,8 @@ namespace org.herbal3d.convoar {
             public abstract void AssignDefault();
             // Get the value as a string
             public abstract string GetValue();
+            // Get the value as just an object
+            public abstract object GetObjectValue();
             // Set the value to this string value
             public abstract void SetValue(string valAsString);
         }
@@ -199,6 +201,9 @@ namespace org.herbal3d.convoar {
                     ret = value.ToString();
                 }
                 return ret;
+            }
+            public override object GetObjectValue() {
+                return value;
             }
             public override void SetValue(String valAsString) {
                 // Find the 'Parse' method on that type
@@ -321,6 +326,9 @@ namespace org.herbal3d.convoar {
             defn = foundDefn;
             return ret;
         }
+        public bool HasParam(string pParamName) {
+            return TryGetParameter(pParamName, out ParameterDefnBase pbase);
+        }
 
         // Return a value for the parameter.
         // This is used by most callers to get parameter values.
@@ -335,6 +343,13 @@ namespace org.herbal3d.convoar {
                 else {
                     _log.ErrorFormat("{0} Fetched unknown parameter. Param={1}", _logHeader, paramName);
                 }
+            }
+            return ret;
+        }
+        public object GetObjectValue(string pParamName) {
+            object ret = null;
+            if (TryGetParameter(pParamName, out ParameterDefnBase pbase)) {
+                ret = pbase.GetObjectValue();
             }
             return ret;
         }

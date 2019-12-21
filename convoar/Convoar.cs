@@ -184,7 +184,7 @@ namespace org.herbal3d.convoar {
                         Gltf gltf = new Gltf(bScene.name, Globals.log, Globals.parms);
 
                         try {
-                            gltf.LoadScene(bScene, assetManager);
+                            gltf.LoadScene(bScene);
 
                             Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
                             Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
