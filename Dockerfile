@@ -42,6 +42,8 @@ USER ${USER}:${USER}
 RUN cd /home/${USER} \
     && git clone https://github.com/Misterblue/convoar.git \
     && git clone https://github.com/Herbal3d/HerbalCommonEntitiesCS.git \
+    && cd convoar \
+    && nuget restore convoar.sln \
     && msbuild /p:Configuration=${TARGET}
 
 # Alternate Linux method that uses the precompiled binaries in  the repository
