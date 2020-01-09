@@ -34,6 +34,7 @@ if [[ "$DO_GIT_TAG" == "yes" ]] ; then
 fi
 
 if [[ "$DO_DOCKER_BUILD" == "yes" ]] ; then
+    cd docker
     docker build --no-cache --build-arg VERSION=${VERSION} -t herbal3d/convoar .
     # docker build --build-arg VERSION=${VERSION} -t herbal3d/convoar .
 

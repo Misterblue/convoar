@@ -50,7 +50,7 @@ RUN cd /home/${USER} \
 # RUN mkdir -p /home/${USER}/convoar/dist
 # COPY dist /home/${USER}/convoar/dist/
 
-COPY docker/run-convoar.sh /home/convoar
+COPY ./run-convoar.sh /home/convoar
 
 ENTRYPOINT [ "./run-convoar.sh" ]
 
