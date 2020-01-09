@@ -85,8 +85,8 @@ namespace org.herbal3d.convoar {
         // If run programmatically, create instance and call 'Start' with parameters.
         public async void Start(string[] args) {
             Globals = new GlobalContext() {
-                // log = new LoggerLog4Net(),
-                log = new LoggerConsole(),
+                log = new LoggerLog4Net(),
+                // log = new LoggerConsole(),
                 stats = new ConvoarStats()
             };
             Globals.parms = new ConvoarParams(Globals.log);
@@ -193,22 +193,32 @@ namespace org.herbal3d.convoar {
                             Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
                             Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
                             Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
-
-                            string gltfFilename = gltf.GetFilename(gltf.IdentifyingString);
-                            using (var outm = new MemoryStream()) {
-                                using (var outt = new StreamWriter(outm)) {
-                                    gltf.ToJSON(outt);
-                                }
-                                await assetManager.AssetStorage.Store(gltfFilename, outm.ToArray());
-                            }
-                            gltf.WriteBinaryFiles(assetManager.AssetStorage);
-
-                            if (Globals.parms.P<bool>("ExportTextures")) {
-                                gltf.WriteImages(assetManager.AssetStorage);
-                            }
                         }
                         catch (Exception e) {
                             Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
+                        }
+
+                        try {
+                            if (gltf.scenes.Count > 0) {
+                                string gltfFilename = gltf.GetFilename(gltf.IdentifyingString);
+                                using (var outm = new MemoryStream()) {
+                                    using (var outt = new StreamWriter(outm)) {
+                                        gltf.ToJSON(outt);
+                                    }
+                                    await assetManager.AssetStorage.Store(gltfFilename, outm.ToArray());
+                                }
+                                gltf.WriteBinaryFiles(assetManager.AssetStorage);
+
+                                if (Globals.parms.P<bool>("ExportTextures")) {
+                                    gltf.WriteImages(assetManager.AssetStorage);
+                                }
+                            }
+                            else {
+                                Globals.log.ErrorFormat("{0} Not writing out GLTF because no scenes", _logHeader);
+                            }
+                        }
+                        catch (Exception e) {
+                            Globals.log.ErrorFormat("{0} Exception writing GltfScene: {1}", _logHeader, e);
                         }
 
                         /*
