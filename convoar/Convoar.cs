@@ -74,7 +74,7 @@ namespace org.herbal3d.convoar {
             ConvOAR prog = new ConvOAR();
             CancellationToken cancelToken = new CancellationToken();
             var running = Task.Run( () => {
-                prog.Start(cancelToken, args);
+                prog.Start(cancelToken, args).Wait();
             });
             running.Wait(cancelToken);
             return;
@@ -82,7 +82,7 @@ namespace org.herbal3d.convoar {
 
         // If run from the command line, create instance and call 'Start' with args.
         // If run programmatically, create instance and call 'Start' with parameters.
-        public async void Start(CancellationToken cancelToken, string[] args) {
+        public async Task Start(CancellationToken cancelToken, string[] args) {
             Globals = new GlobalContext() {
                 log = new LoggerLog4Net(),
                 // log = new LoggerConsole(),
