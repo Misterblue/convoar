@@ -73,10 +73,7 @@ namespace org.herbal3d.convoar {
         static void Main(string[] args) {
             ConvOAR prog = new ConvOAR();
             CancellationToken cancelToken = new CancellationToken();
-            var running = Task.Run( () => {
-                prog.Start(cancelToken, args).Wait();
-            });
-            running.Wait(cancelToken);
+            prog.Start(cancelToken, args).Wait();
             return;
         }
 
