@@ -1,6 +1,7 @@
 #! /bin/bash
 
 OPENSIM=../../opensim-ssh/bin
+# It is best to get the libomv dll's that OpenSim was built with
 LIBOMV=../../opensim-ssh/bin
 # LIBOMV=../../libopenmetaverse/bin
 
@@ -36,6 +37,7 @@ GetLib "$OPENSIM" "Nini.dll"
 GetLib "$OPENSIM" "nunit.framework.dll"
 GetLib "$OPENSIM" "Mono.Addins.dll"
 GetLib "$OPENSIM" "SmartThreadPool.dll"
+GetLib "$OPENSIM" "zlib.net.dll"
 # Following are required for OpenSimulator terrain/baking code.
 GetLib "$OPENSIM" "openjpeg-dotnet.dll" "convoar"
 GetLib "$OPENSIM" "openjpeg-dotnet-x86_64.dll" "convoar"
