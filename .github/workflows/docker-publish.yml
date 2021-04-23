@@ -46,8 +46,8 @@ jobs:
           # platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/$IMAGE_OWNER/$IMAGE_NAME: latest
-            ghcr.io/$IMAGE_OWNER/$IMAGE_NAME: $CVERSION
+            ghcr.io/${{ env.IMAGE_OWNER}}/${{ env.IMAGE_NAME}}: latest
+            ghcr.io/${{ env.IMAGE_OWNER}}/${{ env.IMAGE_NAME}}: $CVERSION
       
         # run: |
         #   cd docker
