@@ -42,12 +42,12 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          # platforms: linux/amd64
+          platforms: linux/amd64
           # platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ env.IMAGE_OWNER}}/${{ env.IMAGE_NAME}}: latest
-            ghcr.io/${{ env.IMAGE_OWNER}}/${{ env.IMAGE_NAME}}: $CVERSION
+            ${{ env.IMAGE_OWNER}}/${{ env.IMAGE_NAME}}: latest
+            ${{ env.IMAGE_OWNER}}/${{ env.IMAGE_NAME}}: $CVERSION
       
         # run: |
         #   cd docker
