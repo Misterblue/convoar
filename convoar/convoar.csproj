@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>org.herbal3d.convoar</RootNamespace>
     <AssemblyName>convoar</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -86,64 +86,64 @@
     </Reference>
     <Reference Include="OpenMetaverse, Version=0.9.4.24465, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\HerbalCommonEntitiesCS\libs\OpenMetaverse.dll</HintPath>
+      <HintPath>..\bin\OpenMetaverse.dll</HintPath>
     </Reference>
     <Reference Include="OpenMetaverse.Rendering.Meshmerizer, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\HerbalCommonEntitiesCS\libs\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
+      <HintPath>..\bin\OpenMetaverse.Rendering.Meshmerizer.dll</HintPath>
     </Reference>
     <Reference Include="OpenMetaverse.StructuredData, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\HerbalCommonEntitiesCS\libs\OpenMetaverse.StructuredData.dll</HintPath>
+      <HintPath>..\bin\OpenMetaverse.StructuredData.dll</HintPath>
     </Reference>
     <Reference Include="OpenMetaverseTypes, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\HerbalCommonEntitiesCS\libs\OpenMetaverseTypes.dll</HintPath>
+      <HintPath>..\bin\OpenMetaverseTypes.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Capabilities">
-      <HintPath>..\libs\OpenSim.Capabilities.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Capabilities.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Data.Null, Version=0.9.1.16355, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\OpenSim.Data.Null.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Data.Null.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Framework">
-      <HintPath>..\libs\OpenSim.Framework.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Framework.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Framework.Monitoring">
-      <HintPath>..\libs\OpenSim.Framework.Monitoring.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Framework.Monitoring.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Framework.Serialization">
-      <HintPath>..\libs\OpenSim.Framework.Serialization.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Framework.Serialization.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Framework.Servers.HttpServer">
-      <HintPath>..\libs\OpenSim.Framework.Servers.HttpServer.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Framework.Servers.HttpServer.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Region.CoreModules">
-      <HintPath>..\libs\OpenSim.Region.CoreModules.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Region.CoreModules.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Region.Framework">
-      <HintPath>..\libs\OpenSim.Region.Framework.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Region.Framework.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Region.PhysicsModule.BasicPhysics, Version=0.9.1.21260, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\OpenSim.Region.PhysicsModule.BasicPhysics.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Region.PhysicsModule.BasicPhysics.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Region.PhysicsModules.SharedBase, Version=0.9.1.36086, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\OpenSim.Region.PhysicsModules.SharedBase.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Region.PhysicsModules.SharedBase.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Services.Connectors">
-      <HintPath>..\libs\OpenSim.Services.Connectors.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Services.Connectors.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Services.Interfaces">
-      <HintPath>..\libs\OpenSim.Services.Interfaces.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Services.Interfaces.dll</HintPath>
     </Reference>
     <Reference Include="OpenSim.Tests.Common">
-      <HintPath>..\libs\OpenSim.Tests.Common.dll</HintPath>
+      <HintPath>..\bin\OpenSim.Tests.Common.dll</HintPath>
     </Reference>
     <Reference Include="SmartThreadPool">
-      <HintPath>..\libs\SmartThreadPool.dll</HintPath>
+      <HintPath>..\bin\SmartThreadPool.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -210,17 +210,17 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesConv\Herbal3d.CommonEntitiesConv.csproj">
-      <Project>{a260ef90-d948-470a-a043-9c016a367dc2}</Project>
+    <ProjectReference Include="..\addon-modules\HerbalCommonEntitiesCS\CommonEntitiesConv\Herbal3d.CommonEntitiesConv.csproj">
+      <Project>{ce3d1850-0000-0000-0000-000000000000}</Project>
       <Name>Herbal3d.CommonEntitiesConv</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesUtil\Herbal3d.CommonEntitiesUtil.csproj">
-      <Project>{a9d65554-0000-0000-0000-000000000000}</Project>
-      <Name>CommonEntitiesUtil</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntities\Herbal3d.CommonEntities.csproj">
-      <Project>{f0f6d547-dcb2-4bd6-8978-b204361c2061}</Project>
+    <ProjectReference Include="..\addon-modules\HerbalCommonEntitiesCS\CommonEntities\Herbal3d.CommonEntities.csproj">
+      <Project>{1267952c-0000-0000-0000-000000000000}</Project>
       <Name>Herbal3d.CommonEntities</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\addon-modules\HerbalCommonUtil\Herbal3d.CommonUtil.csproj">
+      <Project>{c0dfac61-6999-4278-855f-0e9bca2e8625}</Project>
+      <Name>Herbal3d.CommonUtil</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

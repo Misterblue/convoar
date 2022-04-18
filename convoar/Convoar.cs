@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Robert Adams
+ * Copyright (c) 2022 Robert Adams
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Reflection;
@@ -24,7 +25,7 @@ using System.Threading.Tasks;
 using OpenSim.Services.Interfaces;
 
 using org.herbal3d.cs.CommonEntities;
-using org.herbal3d.cs.CommonEntitiesUtil;
+using org.herbal3d.cs.CommonUtil;
 
 namespace org.herbal3d.convoar {
 
@@ -65,7 +66,7 @@ namespace org.herbal3d.convoar {
             StringBuilder buff = new StringBuilder();
             buff.AppendLine("Invocation: convoar <parameters> inputOARfile");
             buff.AppendLine("   Possible parameters are (negate bool parameters by prepending 'no'):");
-            string[] paramDescs = Globals.parms.ParameterDefinitions.Select(pp => { return pp.ToString(); }).ToArray();
+            string[] paramDescs = Globals.parms.ListParameters().Select(kvp => { return kvp.Key + ": " + kvp.Value; }).ToArray();
             buff.AppendLine(String.Join(Environment.NewLine, paramDescs));
             return buff.ToString();
         }
@@ -80,12 +81,16 @@ namespace org.herbal3d.convoar {
         // If run from the command line, create instance and call 'Start' with args.
         // If run programmatically, create instance and call 'Start' with parameters.
         public async Task Start(CancellationToken cancelToken, string[] args) {
+            var parms = new ConvoarParams();
+            var logger = new BLoggerNLog(parms.LogFilename);
+            // var logger = new LoggerLog4Net(),
+            // var logger = new LoggerConsole(),
+
             Globals = new GlobalContext() {
-                log = new LoggerLog4Net(),
-                // log = new LoggerConsole(),
-                stats = new ConvoarStats()
+                log = logger,
+                stats = new ConvoarStats(),
+                parms = parms,
             };
-            Globals.parms = new ConvoarParams(Globals.log);
 
             // A single parameter of '--help' outputs the invocation parameters
             if (args.Length > 0 && args[0] == "--help") {
@@ -100,16 +105,16 @@ namespace org.herbal3d.convoar {
                 Globals.parms.MergeCommandLine(args, null, "InputOAR");
             }
             catch (Exception e) {
-                Globals.log.ErrorFormat("ERROR: bad parameters: " + e.Message);
-                Globals.log.ErrorFormat(Invocation());
+                Globals.log.Error("ERROR: bad parameters: " + e.Message);
+                Globals.log.Error(Invocation());
                 return;
             }
 
-            if (Globals.parms.P<bool>("Verbose")) {
-                Globals.log.SetVerbose(Globals.parms.P<bool>("Verbose"));
+            if (Globals.parms.Verbose) {
+                Globals.log.SetLogLevel(LogLevels.Debug);
             }
 
-            if (!Globals.parms.P<bool>("Quiet")) {
+            if (!Globals.parms.Quiet) {
                 System.Console.WriteLine("Convoar v" + Globals.version
                             + " built " + Globals.buildDate
                             + " commit " + Globals.gitCommit
@@ -117,14 +122,14 @@ namespace org.herbal3d.convoar {
             }
 
             // Validate parameters
-            if (String.IsNullOrEmpty(Globals.parms.P<string>("InputOAR"))) {
-                Globals.log.ErrorFormat("An input OAR file must be specified");
-                Globals.log.ErrorFormat(Invocation());
+            if (String.IsNullOrEmpty(Globals.parms.InputOAR)) {
+                Globals.log.Error("An input OAR file must be specified");
+                Globals.log.Error(Invocation());
                 return;
             }
-            if (String.IsNullOrEmpty(Globals.parms.P<string>("OutputDir"))) {
+            if (String.IsNullOrEmpty(Globals.parms.OutputDir)) {
                 _outputDir = "./out";
-                Globals.log.DebugFormat("Output directory defaulting to {0}", _outputDir);
+                Globals.log.Debug("Output directory defaulting to {0}", _outputDir);
             }
 
             // Base asset storage system -- 'MemAssetService' is in-memory storage
@@ -132,27 +137,22 @@ namespace org.herbal3d.convoar {
 
                 // 'assetManager' is the asset cache and fetching code -- where all the mesh,
                 //    material, and instance information is stored for later processing.
-                using (AssetManager assetManager = new AssetManager(memAssetService, Globals.log, Globals.parms)) {
+                using (AssetManager assetManager = new AssetManager(memAssetService, Globals.log, Globals.parms.OutputDir)) {
 
                     try {
                         BScene bScene = await LoadOAR(memAssetService, assetManager);
 
                         Globals.contextName = bScene.name;
 
-                        Globals.log.DebugFormat("{0} Scene created. name={1}, instances={2}",
+                        Globals.log.Debug("{0} Scene created. name={1}, instances={2}",
                             _logHeader, bScene.name, bScene.instances.Count);
-                        Globals.log.DebugFormat("{0}    num assetFetcher.images={1}", _logHeader, assetManager.Assets.Images.Count);
-                        Globals.log.DebugFormat("{0}    num assetFetcher.materials={1}", _logHeader, assetManager.Assets.Materials.Count);
-                        Globals.log.DebugFormat("{0}    num assetFetcher.meshes={1}", _logHeader, assetManager.Assets.Meshes.Count);
-                        Globals.log.DebugFormat("{0}    num assetFetcher.renderables={1}", _logHeader, assetManager.Assets.Renderables.Count);
+                        Globals.log.Debug("{0}    num assetFetcher.images={1}", _logHeader, assetManager.Assets.Images.Count);
+                        Globals.log.Debug("{0}    num assetFetcher.materials={1}", _logHeader, assetManager.Assets.Materials.Count);
+                        Globals.log.Debug("{0}    num assetFetcher.meshes={1}", _logHeader, assetManager.Assets.Meshes.Count);
+                        Globals.log.Debug("{0}    num assetFetcher.renderables={1}", _logHeader, assetManager.Assets.Renderables.Count);
 
-                        if (ConvOAR.Globals.parms.P<bool>("AddTerrainMesh")) {
-                            ConvOAR.Globals.log.DebugFormat("{0} Adding terrain to scene", _logHeader);
-                            bScene.instances.Add(bScene.terrainInstance);
-                        }
-
-                        if (ConvOAR.Globals.parms.P<bool>("TerrainOnly")) {
-                            ConvOAR.Globals.log.DebugFormat("{0} Clearing out scene so there's only terrain (TerrainOnly)", _logHeader);
+                        if (ConvOAR.Globals.parms.TerrainOnly) {
+                            ConvOAR.Globals.log.Debug("{0} Clearing out scene so there's only terrain (TerrainOnly)", _logHeader);
                             bScene.instances.Clear();
                             bScene.instances.Add(bScene.terrainInstance);
                         }
@@ -169,29 +169,45 @@ namespace org.herbal3d.convoar {
                             }
                         }
                         */
-                        if (Globals.parms.P<bool>("MergeSharedMaterialMeshes")) {
-                            using (BSceneManipulation optimizer = new BSceneManipulation(Globals.log, Globals.parms)) {
+                        if (Globals.parms.MergeSharedMaterialMeshes) {
+                            // using (BSceneManipulation optimizer = new BSceneManipulation(Globals.log, Globals.parms)) {
+                            var manipParams = new ParamBlock(new Dictionary<string, object> {
+                                { "SeparateInstancedMeshes", false },
+                                { "MergeSharedMaterialMeshes", false },
+                                { "MeshShareThreshold", 5 }
+
+                            });
+                            using (BSceneManipulation optimizer = new BSceneManipulation(Globals.log, manipParams)) {
                                 bScene = optimizer.RebuildSceneBasedOnSharedMeshes(bScene);
-                                Globals.log.DebugFormat("{0} merged meshes in scene. numInstances={1}", _logHeader, bScene.instances.Count);
+                                Globals.log.Debug("{0} merged meshes in scene. numInstances={1}", _logHeader, bScene.instances.Count);
                             }
                         }
 
                         // Output the transformed scene as Gltf version 2
-                        Gltf gltf = new Gltf(bScene.name, Globals.log, Globals.parms);
+                        GltfB gltf = new GltfB(bScene.name, Globals.log, new gltfParamsB() {
+                            uriBase = Globals.parms.URIBase,
+                            verticesMaxForBuffer = Globals.parms.VerticesMaxForBuffer,
+                            gltfCopyright = Globals.parms.GltfCopyright,
+                            addUniqueCodes = Globals.parms.AddUniqueCodes,
+                            doubleSided = Globals.parms.DoubleSided,
+                            textureMaxSize = Globals.parms.TextureMaxSize,
+                            logBuilding = Globals.parms.LogBuilding,
+                            logGltfBuilding = Globals.parms.LogGltfBuilding
+                        });
 
                         try {
                             gltf.LoadScene(bScene);
 
-                            Globals.log.DebugFormat("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
-                            Globals.log.DebugFormat("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
+                            Globals.log.Debug("{0}   num Gltf.nodes={1}", _logHeader, gltf.nodes.Count);
+                            Globals.log.Debug("{0}   num Gltf.meshes={1}", _logHeader, gltf.meshes.Count);
+                            Globals.log.Debug("{0}   num Gltf.materials={1}", _logHeader, gltf.materials.Count);
+                            Globals.log.Debug("{0}   num Gltf.images={1}", _logHeader, gltf.images.Count);
+                            Globals.log.Debug("{0}   num Gltf.accessor={1}", _logHeader, gltf.accessors.Count);
+                            Globals.log.Debug("{0}   num Gltf.buffers={1}", _logHeader, gltf.buffers.Count);
+                            Globals.log.Debug("{0}   num Gltf.bufferViews={1}", _logHeader, gltf.bufferViews.Count);
                         }
                         catch (Exception e) {
-                            Globals.log.ErrorFormat("{0} Exception loading GltfScene: {1}", _logHeader, e);
+                            Globals.log.Error("{0} Exception loading GltfScene: {1}", _logHeader, e);
                         }
 
                         try {
@@ -205,16 +221,16 @@ namespace org.herbal3d.convoar {
                                 }
                                 gltf.WriteBinaryFiles(assetManager.AssetStorage);
 
-                                if (Globals.parms.P<bool>("ExportTextures")) {
+                                if (Globals.parms.ExportTextures) {
                                     gltf.WriteImages(assetManager.AssetStorage);
                                 }
                             }
                             else {
-                                Globals.log.ErrorFormat("{0} Not writing out GLTF because no scenes", _logHeader);
+                                Globals.log.Error("{0} Not writing out GLTF because no scenes", _logHeader);
                             }
                         }
                         catch (Exception e) {
-                            Globals.log.ErrorFormat("{0} Exception writing GltfScene: {1}", _logHeader, e);
+                            Globals.log.Error("{0} Exception writing GltfScene: {1}", _logHeader, e);
                         }
 
                         /*
@@ -254,11 +270,11 @@ namespace org.herbal3d.convoar {
                         */
                     }
                     catch (Exception e) {
-                        Globals.log.ErrorFormat("{0} Global exception converting scene: {1}", _logHeader, e);
+                        Globals.log.Error("{0} Global exception converting scene: {1}", _logHeader, e);
                         // A common error is not having all the DLLs for OpenSimulator. Print out what's missing.
                         if (e is ReflectionTypeLoadException refE) {
                             foreach (var ee in refE.LoaderExceptions) {
-                                Globals.log.ErrorFormat("{0} reference exception: {1}", _logHeader, ee);
+                                Globals.log.Error("{0} reference exception: {1}", _logHeader, ee);
                             }
                         }
                     }
@@ -287,7 +303,7 @@ namespace org.herbal3d.convoar {
                 ret = await converter.ConvertOarToScene(assetService, assetManager);
             }
             catch (Exception e) {
-                ConvOAR.Globals.log.ErrorFormat("{0} LoadOAR exception: {1}", _logHeader, e);
+                ConvOAR.Globals.log.Error("{0} LoadOAR exception: {1}", _logHeader, e);
                 throw (e);
             }
             return ret;

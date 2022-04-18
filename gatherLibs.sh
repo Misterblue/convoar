@@ -1,54 +1,58 @@
 #! /bin/bash
 
-OPENSIM=../../opensim-ssh/bin
+OPENSIMBIN=${OPENSIMBIN:-../opensim/bin}
 # It is best to get the libomv dll's that OpenSim was built with
-LIBOMV=../../opensim-ssh/bin
-# LIBOMV=../../libopenmetaverse/bin
+LIBOMVBIN=${LIBOMVBIN:-../opensim/bin}
+# LIBOMVBIN=${LIBOMVBIN:-../libopenmetaverse/bin}
+
+DSTDIR=./bin
+
+echo "Copying from $OPENSIMBIN to $DSTDIR"
 
 # Copy the dll file and the PDB file if it exists
 function GetLib() {
     if [[ -z "$3" ]] ; then
-        cp "$1/$2" libs
+        cp "$1/$2" "$DSTDIR"
     else
         cp "$1/$2" "$3"
     fi
     pdbfile=$1/${2%.dll}.pdb
     if [[ -e "$pdbfile" ]] ; then
-        cp "$pdbfile" libs
+        cp "$pdbfile" "$DSTDIR"
     fi
 }
 
-GetLib "$OPENSIM" "OpenSim.Data.Null.dll"
-GetLib "$OPENSIM" "OpenSim.Capabilities.dll"
-GetLib "$OPENSIM" "OpenSim.Framework.dll"
-GetLib "$OPENSIM" "OpenSim.Framework.Monitoring.dll"
-GetLib "$OPENSIM" "OpenSim.Framework.Serialization.dll"
-GetLib "$OPENSIM" "OpenSim.Framework.Servers.HttpServer.dll"
-GetLib "$OPENSIM" "OpenSim.Services.Interfaces.dll"
-GetLib "$OPENSIM" "OpenSim.Services.Connectors.dll"
-GetLib "$OPENSIM" "OpenSim.Region.CoreModules.dll"
-GetLib "$OPENSIM" "OpenSim.Region.Framework.dll"
-GetLib "$OPENSIM" "OpenSim.Region.PhysicsModule.BasicPhysics.dll"
-GetLib "$OPENSIM" "OpenSim.Region.PhysicsModules.SharedBase.dll"
-GetLib "$OPENSIM" "OpenSim.Tests.Common.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Data.Null.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Capabilities.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Framework.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Framework.Monitoring.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Framework.Serialization.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Framework.Servers.HttpServer.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Services.Interfaces.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Services.Connectors.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Region.CoreModules.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Region.Framework.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Region.PhysicsModule.BasicPhysics.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Region.PhysicsModules.SharedBase.dll"
+GetLib "$OPENSIMBIN" "OpenSim.Tests.Common.dll"
 
-GetLib "$OPENSIM" "log4net.dll"
-GetLib "$OPENSIM" "Nini.dll"
-GetLib "$OPENSIM" "nunit.framework.dll"
-GetLib "$OPENSIM" "Mono.Addins.dll"
-GetLib "$OPENSIM" "SmartThreadPool.dll"
-GetLib "$OPENSIM" "zlib.net.dll"
+GetLib "$OPENSIMBIN" "log4net.dll"
+GetLib "$OPENSIMBIN" "Nini.dll"
+GetLib "$OPENSIMBIN" "nunit.framework.dll"
+GetLib "$OPENSIMBIN" "Mono.Addins.dll"
+GetLib "$OPENSIMBIN" "SmartThreadPool.dll"
+GetLib "$OPENSIMBIN" "zlib.net.dll"
 # Following are required for OpenSimulator terrain/baking code.
-GetLib "$OPENSIM" "openjpeg-dotnet.dll" "convoar"
-GetLib "$OPENSIM" "openjpeg-dotnet-x86_64.dll" "convoar"
-GetLib "$OPENSIM" "libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so" "convoar"
+GetLib "$OPENSIMBIN" "openjpeg-dotnet.dll" "convoar"
+GetLib "$OPENSIMBIN" "openjpeg-dotnet-x86_64.dll" "convoar"
+GetLib "$OPENSIMBIN" "libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so" "convoar"
 
-GetLib "$LIBOMV" "OpenMetaverse.dll"
-GetLib "$LIBOMV" "OpenMetaverse.dll.config"
-# GetLib "$LIBOMV" "OpenMetaverse.XML"
-GetLib "$LIBOMV" "OpenMetaverseTypes.dll"
-# GetLib "$LIBOMV" "OpenMetaverseTypes.XML"
-GetLib "$LIBOMV" "OpenMetaverse.StructuredData.dll"
-# GetLib "$LIBOMV" "OpenMetaverse.StructuredData.XML"
-GetLib "$LIBOMV" "OpenMetaverse.Rendering.Meshmerizer.dll"
-GetLib "$LIBOMV" "PrimMesher.dll"
+GetLib "$LIBOMVBIN" "OpenMetaverse.dll"
+GetLib "$LIBOMVBIN" "OpenMetaverse.dll.config"
+# GetLib "$LIBOMVBIN" "OpenMetaverse.XML"
+GetLib "$LIBOMVBIN" "OpenMetaverseTypes.dll"
+# GetLib "$LIBOMVBIN" "OpenMetaverseTypes.XML"
+GetLib "$LIBOMVBIN" "OpenMetaverse.StructuredData.dll"
+# GetLib "$LIBOMVBIN" "OpenMetaverse.StructuredData.XML"
+GetLib "$LIBOMVBIN" "OpenMetaverse.Rendering.Meshmerizer.dll"
+GetLib "$LIBOMVBIN" "PrimMesher.dll"

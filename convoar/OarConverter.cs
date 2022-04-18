@@ -37,7 +37,7 @@ using OpenSim.Tests.Common;
 using OpenSim.Data.Null;
 
 using org.herbal3d.cs.CommonEntities;
-using org.herbal3d.cs.CommonEntitiesUtil;
+using org.herbal3d.cs.CommonUtil;
 
 using OMV = OpenMetaverse;
 using OMVS = OpenMetaverse.StructuredData;
@@ -51,13 +51,20 @@ namespace org.herbal3d.convoar {
         private static readonly string _logHeader = "[OarConverter]";
 
         private readonly BLogger _log;
-        private readonly IParameters _params;
+        private readonly ConvoarParams _params;
         private readonly BConverterOS _converter;
 
-        public OarConverter(BLogger pLog, IParameters pParams) {
+        public OarConverter(BLogger pLog, ConvoarParams pParams) {
             _log = pLog;
             _params = pParams;
-            _converter = new BConverterOS(pLog, pParams);
+            _converter = new BConverterOS(_log, new BConverterOSParams() {
+                addTerrainMesh      = _params.AddTerrainMesh,
+                displayTimeScaling  = _params.DisplayTimeScaling,
+                doubleSided         = _params.DoubleSided,
+                logBuilding         = _params.LogBuilding,
+                convoarId           = _params.ConvoarID
+            });
+
         }
 
         public async Task<BScene> ConvertOarToScene(IAssetService assetService, AssetManager assetManager) {
@@ -65,15 +72,15 @@ namespace org.herbal3d.convoar {
             // Assemble all the parameters that loadoar takes and uses
             Dictionary<string, object> options = new Dictionary<string, object> {
                 // options.Add("merge", false);
-                { "displacement", _params.P<OMV.Vector3>("Displacement") }
+                { "displacement", _params.Displacement }
             };
-            string optRotation = _params.P<string>("Rotation");
-            if (optRotation != null) options.Add("rotation", float.Parse(optRotation, System.Threading.Thread.CurrentThread.CurrentCulture));
+            //if (optRotation != null) options.Add("rotation", float.Parse(optRotation, System.Threading.Thread.CurrentThread.CurrentCulture));
+            if (_params.Rotation != 0) options.Add("rotation", _params.Rotation);
             // options.Add("default-user", OMV.UUID.Random());
             // if (optSkipAssets != null) options.Add('skipAssets', true);
             // if (optForceTerrain != null) options.Add("force-terrain", true);
             // if (optNoObjects != null) options.Add("no-objects", true);
-            string optSubRegion = _params.P<string>("SubRegion");
+            string optSubRegion = _params.SubRegion;
             if (optSubRegion != null) {
                 List<float> bounds = optSubRegion.Split(',').Select<string, float>(x => { return float.Parse(x); }).ToList();
                 options.Add("bounding-origin", new OMV.Vector3(bounds[0], bounds[1], bounds[2]));
@@ -82,17 +89,17 @@ namespace org.herbal3d.convoar {
 
             // Create an OpenSimulator region and scene to load the OAR into
             string regionName = "convoar";
-            if (String.IsNullOrEmpty(_params.P<String>("RegionName"))) {
+            if (String.IsNullOrEmpty(_params.RegionName)) {
                 // Try to build the region name from the OAR filesname
-                regionName = Path.GetFileNameWithoutExtension(_params.P<string>("InputOAR"));
+                regionName = Path.GetFileNameWithoutExtension(_params.InputOAR);
             }
             else {
-                regionName = _params.P<string>("RegionName");
+                regionName = _params.RegionName;
             }
             Scene scene = CreateScene(assetService, regionName);
 
             // Load the archive into our scene
-            ArchiveReadRequest archive = new ArchiveReadRequest(scene, _params.P<string>("InputOAR"), Guid.Empty, options);
+            ArchiveReadRequest archive = new ArchiveReadRequest(scene, _params.InputOAR, Guid.Empty, options);
             archive.DearchiveRegion(false);
 
             return await _converter.ConvertRegionToBScene(scene, assetManager);
@@ -154,11 +161,11 @@ namespace org.herbal3d.convoar {
                     sb.AppendLine();
                 }
                 string errorMessage = sb.ToString();
-                _log.Log("BConverterOS.CreateScene: exception adding region:");
-                _log.Log(errorMessage);
+                _log.Error("BConverterOS.CreateScene: exception adding region:");
+                _log.Error(errorMessage);
             }
             catch (Exception e) {
-                _log.Log("BConverterOS.CreateScene: exception adding region: {0}", e);
+                _log.Error("BConverterOS.CreateScene: exception adding region: {0}", e);
             }
 
             SceneManager.Instance.Add(scene);
@@ -179,8 +186,8 @@ namespace org.herbal3d.convoar {
         }
 
         public void LogBProgress(string msg, params Object[] args) {
-            if (_params.P<bool>("LogBuilding")) {
-                _log.Log(msg, args);
+            if (_params.LogBuilding) {
+                _log.Debug(msg, args);
             }
         }
     }

@@ -22,8 +22,8 @@ using System.Threading.Tasks;
 
 using OpenSim.Region.Framework.Scenes;
 
-using org.herbal3d.cs.CommonEntitiesUtil;
 using org.herbal3d.cs.CommonEntities;
+using org.herbal3d.cs.CommonUtil;
 
 using OMV = OpenMetaverse;
 using OMVR = OpenMetaverse.Rendering;
@@ -53,8 +53,8 @@ namespace org.herbal3d.convoar.tests {
 
         [TestFixtureSetUp]
         public void Init() {
-            _log = new LoggerConsole();
-            _params = new ConvoarParams(_log);
+            _log = new BLoggerConsole();
+            _params = new ConvoarParams();
             ConvOAR.Globals = new GlobalContext() {
                 log = _log,
                 parms = _params
@@ -67,7 +67,7 @@ namespace org.herbal3d.convoar.tests {
 
         [TestCase]
         public void ProcessArgsParameter() {
-            bool oldExportTextures = _params.P<bool>("ExportTextures");
+            bool oldExportTextures = _params.ExportTextures;
             string inputOARFileParameterName = "InputOAR";
             string inputOARFile = "AnOARFileToRead.oar";
             string outputDirectory = "this/that";
@@ -94,12 +94,12 @@ namespace org.herbal3d.convoar.tests {
                 Assert.Fail("Exception merging parameters: " + exceptionCode.ToString());
             }
             else {
-                Assert.AreEqual(outputDirectory, _params.P<string>("OutputDir"), "Output directory specification short form was not set");
-                Assert.AreEqual(true, _params.P<bool>("ExportTextures"), "ExportTextures was not parameterized properly");
-                Assert.AreEqual("GIF", _params.P<string>("PreferredTextureFormat"), "Preferred texture format was not set");
-                Assert.AreEqual(true, _params.P<bool>("MergeStaticMeshes"), "MergeStaticMeshes was not set");
-                Assert.AreEqual(1234, _params.P<int>("VerticesMaxForBuffer"), "VerticesMaxForBuffer was not set");
-                Assert.AreEqual(inputOARFile, _params.P<string>("InputOAR"), "The trailing filename was not set");
+                Assert.AreEqual(outputDirectory, _params.OutputDir, "Output directory specification short form was not set");
+                Assert.AreEqual(true, _params.ExportTextures, "ExportTextures was not parameterized properly");
+                Assert.AreEqual("GIF", _params.PreferredTextureFormat, "Preferred texture format was not set");
+                // Assert.AreEqual(true, _params.MergeStaticMeshes, "MergeStaticMeshes was not set");
+                Assert.AreEqual(1234, _params.VerticesMaxForBuffer, "VerticesMaxForBuffer was not set");
+                // Assert.AreEqual(inputOARFile, InputOAR, "The trailing filename was not set");
             }
         }
 
@@ -125,7 +125,7 @@ namespace org.herbal3d.convoar.tests {
                 Assert.Fail("Exception merging parameters: " + exceptionCode.ToString());
             }
             else {
-                Assert.AreEqual(false, _params.P<bool>("ExportTextures"), "ExportTextures was not set to false");
+                Assert.AreEqual(false, _params.ExportTextures, "ExportTextures was not set to false");
             }
         }
     }
@@ -145,8 +145,8 @@ namespace org.herbal3d.convoar.tests {
 
         [TestFixtureSetUp]
         public void Init() {
-            _log = new LoggerConsole();
-            _params = new ConvoarParams(_log);
+            _log = new BLoggerConsole();
+            _params = new ConvoarParams();
             ConvOAR.Globals = new GlobalContext() {
                 log = _log,
                 parms = _params
@@ -154,7 +154,7 @@ namespace org.herbal3d.convoar.tests {
             _assetService = new MemAssetService();
             _converter = new OarConverter(_log, _params);
             _scene = _converter.CreateScene(_assetService, "convoar-test");
-            _assetManager = new AssetManager(_assetService, _log, _params);
+            _assetManager = new AssetManager(_assetService, _log, _params.OutputDir);
             OMV.UUID defaultTextureID = new OMV.UUID("179cdabd-398a-9b6b-1391-4dc333ba321f");
             _defaultTexture = new OMV.Primitive.TextureEntryFace(null) {
                 TextureID = defaultTextureID
@@ -175,7 +175,12 @@ namespace org.herbal3d.convoar.tests {
         [TestCase(100, 200)]
         public async void VerifyMeshCoversWholeRegion(int heightmapSize, int regionSize) {
             float[,] heightMap = CreateHeightmap(heightmapSize);
-            PrimToMesh mesher = new PrimToMesh(_log, _params);
+            PrimToMesh mesher = new PrimToMesh(_log, new BConverterOSParams() {
+                addTerrainMesh = false,
+                displayTimeScaling = false,
+                doubleSided = false,
+                logBuilding = false,
+            });
             DisplayableRenderable dr = await mesher.MeshFromHeightMap(heightMap, regionSize, regionSize,
                                     _assetManager, _defaultTexture);
             RenderableMeshGroup rmg = dr as RenderableMeshGroup;

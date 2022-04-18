@@ -52,7 +52,7 @@ There is a logo idea in there somewhere.
 # Invocation
 
 Checkout the convoar sources and run the prebuilt binary in the `dist` directory.
-The binaries are compiled for .NET Framework 4.6 so you must install that
+The binaries are compiled for .NET Framework 4.8 so you must install that
 library version better on Windows10 or, if running on Linux, Mono v4.2.1
 or better.
 
@@ -92,14 +92,14 @@ The output directory is changed with the `--outputdir` parameter.
 
 # Building
 
-Convoar uses [OpenSimulator] sources to do the reading and conversion of the
-OAR file. These source files are included in this repository. So there is a *simple*
+Convoar uses [OpenSimulator] binaries to do the reading and conversion of the
+OAR file. These binaries files are included in the repository. So there is a *simple*
 build where one just builds the sources checked out, and there is the *updating* build
 where one fetches new versions of the [OpenSimulator] sources.
 
 Some functionality has been moved out into another project that must be
 checked out in the same directory as [Convoar]. Checkout [HerbalCommonEntitiesCS]
-into the same directory as the [Convoar] project. This will include
+into the `addon-modules` sub-directory. This will include
 ```CommonEntities``` and ```CommonEntitiesUtil```.
 
 ## Simple Build
@@ -121,12 +121,15 @@ into the same directory as the convoar repository so the steps could be:
 
 ```
 git clone https://github.com/Misterblue/convoar.git
-git clone https://github.com/Herbal3d/HerbalCommonEntitiesCS.git
 git clone git://opensimulator.org/git/opensim
-(build OpenSimulator)
-git clone https://github.com/Misterblue/libopenmetaverse.git
-(build libOpenMetaverse)
+export OPENSIMBIN="$(pwd)/opensim/bin"  # used by gatherlibs.sh
+export LIBOMVBIN="$(pwd)/opensim/bin"   # used by gatherlibs.sh
 cd convoar
+mkdir addon-modules
+cd addon-modules
+git clone https://github.com/Herbal3d/HerbalCommonEntitiesCS.git
+git clone https://github.com/Herbal3d/HerbalCommonUtil.git
+cd ..
 ./gatherLibs.sh
 ```
 
@@ -183,13 +186,15 @@ What follows is a list of features that are copied:
     * cleaned up and debugged command line and Docker version
 - [x] Release 1.2
     * bug release -- trying to figure out why some JPEG2000 don't decomopress.
-- [ ] Release 1.3 and after
+- [x] Release 1.3 and after
     * bug releases and optimization experimentation before going to version 2
 - [ ] Release 2.0
+    * Rework of initial Convoar to create validated GLTF output
+- [ ] Release 3.0
     * option to include all prim information in `extras` (scripts, notes, etc.)
     * pipeline tools in Docker image for binary/DRACO packing of GLTF file
     * invocation options to select sub-regions of OAR region
-- [ ] Release 2.1
+- [ ] Release 3.1
     * pipeline tools for scene optimizations (small mesh elimination, mesh decimation/simplification, etc.)
 
 [Convoar]: https://github.com/Misterblue/convoar

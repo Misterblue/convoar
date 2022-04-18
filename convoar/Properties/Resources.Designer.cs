@@ -19,7 +19,7 @@ namespace org.herbal3d.convoar.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -61,7 +61,7 @@ namespace org.herbal3d.convoar.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Thu 02/07/2019 14:40:02.36 
+        ///   Looks up a localized string similar to Tue 01/14/2020  8:50:33.77 
         ///.
         /// </summary>
         internal static string BuildDate {
@@ -71,7 +71,7 @@ namespace org.herbal3d.convoar.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 53c1d3e6ab3c2ea5cf898d61ad41055c73f3c3a1
+        ///   Looks up a localized string similar to fae1e64c9a193860033db3028f5a2176561255d7
         ///.
         /// </summary>
         internal static string GitCommit {

@@ -18,359 +18,199 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
-using org.herbal3d.cs.CommonEntitiesUtil;
+using org.herbal3d.cs.CommonUtil;
 
 using OMV = OpenMetaverse;
 
 namespace org.herbal3d.convoar {
-    public class ConvoarParams : IParameters {
-        private static readonly string _logHeader = "[CONVOAR PARAMS]";
+    public class ConfigParam : Attribute {
+        public ConfigParam(string name, Type valueType, string desc = "", string alt = null) {
+            this.name = name;
+            this.valueType = valueType;
+            this.desc = desc;
+            this.alt = alt;
+        }
+        public string name;
+        public Type valueType;
+        public string desc;
+        public string alt;
+    }
 
-        private readonly BLogger _log;
+    public class ConvoarParams {
 
-        public ConvoarParams(BLogger pLog) {
-            _log = pLog;
-            SetParameterDefaultValues();
+        public ConvoarParams() {
         }
 
-        // =====================================================================================
-        // =====================================================================================
-        // List of all of the externally visible parameters.
-        // For each parameter, this table maps a text name to getter and setters.
-        // To add a new externally referencable/settable parameter, add the paramter storage
-        //    location somewhere in the program and make an entry in this table with the
-        //    getters and setters.
-        // It is easiest to find an existing definition and copy it.
-        //
-        // A ParameterDefn<T>() takes the following parameters:
-        //    -- the text name of the parameter. This is used for console input and ini file.
-        //          Also used as the name of that parameter when getting and setting.
-        //    -- a short text description of the parameter. This shows up in the console listing.
-        //    -- a default value
-        //    -- optional parameter names (like an "i" as an alternate for "input")
-        //
-        // The single letter parameters for the delegates are:
-        //    v = value (appropriate type)
-        public ParameterDefnBase[] ParameterDefinitions =
-        {
-            new ParameterDefn<string>("==========", "General Input and Output Parameters", null),
-            new ParameterDefn<string>("InputOAR", "The input OAR file",
-                null, "i"),
-            new ParameterDefn<string>("OutputDir", "The directory (relative to current dir) to store output files",
-                "./convoar", "d" ),
-            new ParameterDefn<string>("URIBase", "the string added to be beginning of asset name to create URI",
-                "" ),
-            new ParameterDefn<bool>("UseReadableFilenames", "Whether filenames should be human readable or UUIDs",
-                true ),
-            new ParameterDefn<bool>("UseDeepFilenames", "Whether filenames be organized into a deep directory structure",
-                false ),
-            new ParameterDefn<bool>("WriteBinaryGltf", "Whether to write .gltf or .glb file",
-                false ),
+        // ========== General Input and Output Parameters
+        [ConfigParam(name: "InputOAR", valueType: typeof(string), desc: "Input OAR file", alt: "i")]
+        public string InputOAR = null;
+        [ConfigParam(name: "OutputDir", valueType: typeof(string), desc: "Directory (relative to current dir) to store output files", alt: "d")]
+        public string OutputDir = "./convoar";
+        [ConfigParam(name: "URIBase", valueType: typeof(string), desc: "String added to the beginning of asset name to create URI")]
+        public string URIBase = ""; 
+        [ConfigParam(name: "UseReadableFilenames", valueType: typeof(bool), desc: "Whether filenames should be human readable or UUIDs")]
+        public bool UseReadableFilenames = true; 
+        [ConfigParam(name: "UseDeepFilenames", valueType: typeof(bool), desc: "Whether filenames organized into deep directory structure")]
+        public bool UseDeepFilenames = false; 
+        [ConfigParam(name: "WriteBinaryGltf", valueType: typeof(bool), desc: "Whether to write .gltf or .glb file")]
+        public bool WriteBinaryGltf = false;
 
-            new ParameterDefn<string>("==========", "OAR Reading Specific Parameters", null),
-            new ParameterDefn<string>("ConvoarID", "GUID for 'convoar' identity (used for CreatorID, ...)",
-                "e67a2ff8-597d-4f03-b559-930aeaf4836b"),
-            new ParameterDefn<string>("RegionName", "Name to use for the region (default generated from OAR filename)",
-                String.Empty ),
-            new ParameterDefn<OMV.Vector3>("Displacement", "Optional displacement to add to OAR entites",
-                OMV.Vector3.Zero ),
-            new ParameterDefn<string>("Rotation", "Optional rotation to add to OAR entites",
-                null ),
-            new ParameterDefn<string>("SubRegion", "Bounds of subregion to export. upper-right to lower-left as (X,Y,Z,X,Y,Z). Whole region if empty or null",
-                null ),
+        // ========== OAR Reading Specific Parameters"
+        [ConfigParam(name: "ConvoarID", valueType: typeof(string), desc: "GUID for 'convoar' identity (used for CreatorID, ...)")]
+        public string ConvoarID = "e67a2ff8-597d-4f03-b559-930aeaf4836b";
+        [ConfigParam(name: "RegionName", valueType: typeof(string), desc: "Name to use for the region (default generated from OAR filename)")]
+        public string RegionName = String.Empty;
+        [ConfigParam(name: "Displacement", valueType: typeof(OMV.Vector3), desc: "Optional displacement to add to OAR entities")]
+        public OMV.Vector3 Displacement = OMV.Vector3.Zero;
+        [ConfigParam(name: "Rotation", valueType: typeof(float), desc: "Optional rotation to add to OAR entities")]
+        public float Rotation = 0;
+        [ConfigParam(name: "SubRegion", valueType: typeof(string), desc: "Bounds of subregion to export. upper-right to lower-left as (X,Y,Z,X,Y,Z). Whole region if empty or null")]
+        public string SubRegion = null;
 
-            // Optimizations
-            new ParameterDefn<string>("==========", "Optimizations", null),
-            new ParameterDefn<bool>("MergeSharedMaterialMeshes", "whether to merge meshes with similar materials",
-                false, "m"),
-            new ParameterDefn<bool>("UseOpenJPEG", "Use OpenJPEG to decode JPEG2000 images. Alternative is CSJ2K",
-                true),
+        // ========== Optimizations
+        [ConfigParam(name: "MergeSharedMaterialMeshes", valueType: typeof(bool), desc: "whether to merge meshes with similar materials", alt: "m")]
+        public bool MergeSharedMaterialMeshes = false;
+        [ConfigParam(name: "UseOpenJPEG", valueType: typeof(bool), desc: "Use OpenJPEG to decode JPEG2000 images. Alternative is CSJ2K")]
+        public bool UseOpenJPEG = true;
 
-            /*
-            new ParameterDefn<bool>("DoMeshSimplification", "pass over all the meshes and simplify if needed",
-                true ),
-            new ParameterDefn<bool>("DoSceneOptimizations", "optimize the instances in the scene",
-                true ),
-            new ParameterDefn<bool>("SeparateInstancedMeshes", "whether to find instanced meshes and not do shared meshes with them",
-                true ),
-            new ParameterDefn<int>("MeshShareThreshold", "meshes used more than this many times are not material combined",
-                5 ),
-            new ParameterDefn<bool>("CreateStaticLayer", "whether to merge meshes with similar materials in static objects",
-                false ),
-            new ParameterDefn<bool>("CreateDynamicLayer", "whether to merge meshes within non-static entities ",
-                false ),
-            */
+        /*
+        [ConfigParam(name: "DoMeshSimplification", valueType: typeof(bool), desc: "pass over all the meshes and simplify if needed")]
+        public bool DoMeshSimplification = true;
+        [ConfigParam(name: "DoSceneOptimizations", valueType: typeof(bool), desc: "optimize the instances in the scene")]
+        public bool DoSceneOptimizations = true;
+        [ConfigParam(name: "SeparateInstancedMeshes", valueType: typeof(bool), desc: "whether to find instanced meshes and not do shared meshes with them")]
+        public bool SeparateInstancedMeshes = true;
+        [ConfigParam(name:"MeshShareThreshold", valueType: typeof(int), desc: "meshes used more than this many times are not material combined")]
+        public int MeshShareThreshold = 5;
+        [ConfigParam(name: "CreateStaticLayer", valueType: typeof(bool), desc: "whether to merge meshes with similar materials in static objects")]
+        public bool CreateStaticLayer = false;
+        [ConfigParam(name: "CreateDynamicLayer", valueType: typeof(bool), desc: "whether to merge meshes within non-static entities ")]
+        public bool CreateDynamicLayer = false;
+        */
 
-            // Export to files
-            new ParameterDefn<string>("==========", "Export Parameters", null),
-            new ParameterDefn<bool>("TerrainOnly", "Only create and output the terrain and terrain texture",
-                false),
-            new ParameterDefn<string>("GltfCopyright", "Copyright notice embedded into generated GLTF files",
-                "Copyright 2018. All rights reserved" ),
-            new ParameterDefn<bool>("ExportTextures", "Convert textures to PNGs and export to target dir",
-                true ),
-            new ParameterDefn<string>("TexturesDir", "sub-directory for all the image files",
-                "images" ),
-            new ParameterDefn<int>("TextureMaxSize", "The maximum size of textures for a simple export",
-                256 ),
-            new ParameterDefn<string>("PreferredTextureFormat", "One of: PNG, JPG, GIF, BMP",
-                "PNG"),
-            new ParameterDefn<string>("PreferredTextureFormatIfNoTransparency", "One of: PNG, JPG, GIF, BMP",
-                "JPG"),
-            new ParameterDefn<int>("VerticesMaxForBuffer", "Number of vertices to cause splitting of buffer files",
-                50000 ),
-            new ParameterDefn<bool>("DisplayTimeScaling", "If to delay mesh scaling to display/GPU time",
-                false ),
-            new ParameterDefn<bool>("DoubleSided", "specify whether double sided mesh rendering",
-                false),
-            new ParameterDefn<bool>("AddUniqueCodes", "Add an extras.unique value to some GLTF objects as a unique hash",
-                true ),
-            /*
-            new ParameterDefn<bool>("ExportIndividualGltf", "Export scene objects as individual GLTF files",
-                false ),
-            */
+        // ========== Export Parameters
+        [ConfigParam(name: "TerrainOnly", valueType: typeof(bool), desc: "Only create and output the terrain and terrain texture")]
+        public bool TerrainOnly = false;
+        [ConfigParam(name: "GltfCopyright", valueType: typeof(string), desc: "Copyright notice embedded into generated GLTF files")]
+        public string GltfCopyright = "Copyright 2022. All rights reserved";
+        [ConfigParam(name: "ExportTextures", valueType: typeof(bool), desc: "Convert textures to PNGs and export to target dir")]
+        public bool ExportTextures = true;
+        [ConfigParam(name: "TexturesDir", valueType: typeof(string), desc: "sub-directory for all the image files")]
+        public string TexturesDir = "images";
+        [ConfigParam(name: "TextureMaxSize", valueType: typeof(int), desc: "The maximum size of textures for a simple export")]
+        public int TextureMaxSize = 256;
+        [ConfigParam(name: "PreferredTextureFormat", valueType: typeof(string), desc: "One of: PNG, JPG, GIF, BMP")]
+        public string PreferredTextureFormat = "PNG";
+        [ConfigParam(name: "PreferredTextureFormatIfNoTransparency", valueType: typeof(string), desc: "One of: PNG, JPG, GIF, BMP")]
+        public string PreferredTextureFormatIfNoTransparency = "JPG";
+        [ConfigParam(name: "VerticesMaxForBuffer", valueType: typeof(int), desc: "Number of vertices to cause splitting of buffer files")]
+        public int VerticesMaxForBuffer = 50000;
+        [ConfigParam(name: "DisplayTimeScaling", valueType: typeof(bool), desc: "If to delay mesh scaling to display/GPU time")]
+        public bool DisplayTimeScaling = false;
+        [ConfigParam(name: "DoubleSided", valueType: typeof(bool), desc: "specify whether double sided mesh rendering")]
+        public bool DoubleSided = false;
+        [ConfigParam(name: "AddUniqueCodes", valueType: typeof(bool), desc: "Add an extras.unique value to some GLTF objects as a unique hash")]
+        public bool AddUniqueCodes = true;
 
-            // Terrain processing
-            new ParameterDefn<string>("==========", "Terrain Generation Parameters", null),
-            new ParameterDefn<bool>("AddTerrainMesh", "whether to create and add a terrain mesh",
-                true ),
-            new ParameterDefn<bool>("HalfRezTerrain", "Whether to reduce the terrain resolution by 2",
-                true ),
-            new ParameterDefn<bool>("CreateTerrainSplat", "whether to generate a terrain mesh splat texture",
-                true ),
+        // ========== Terrain Generation Parameters
+        [ConfigParam(name: "AddTerrainMesh", valueType: typeof(bool), desc: "whether to create and add a terrain mesh")]
+        public bool AddTerrainMesh = true;
+        [ConfigParam(name: "HalfRezTerrain", valueType: typeof(bool), desc: "Whether to reduce the terrain resolution by 2")]
+        public bool HalfRezTerrain = true;
+        [ConfigParam(name: "CreateTerrainSplat", valueType: typeof(bool), desc: "whether to generate a terrain mesh splat texture")]
+        public bool CreateTerrainSplat = true;
 
-            // Debugging and logging
-            new ParameterDefn<string>("==========", "Debugging", null),
-            new ParameterDefn<bool>("Quiet", "supress as much informational output as possible",
-                false, "q" ),
-            new ParameterDefn<bool>("Verbose", "enable DEBUG information logging",
-                false, "v" ),
-            new ParameterDefn<bool>("LogBuilding", "log detailed BScene/BInstance object building",
-                false ),
-            new ParameterDefn<bool>("LogGltfBuilding", "log detailed Gltf object building",
-                false ),
-        };
+        // ========== Debugging
+        [ConfigParam(name: "Quiet", valueType: typeof(bool), desc: "supress as much informational output as possible", alt: "q")]
+        public bool Quiet = false;
+        [ConfigParam(name: "Verbose", valueType: typeof(bool), desc: "enable DEBUG information logging", alt: "v")]
+        public bool Verbose = false;
+        [ConfigParam(name: "LogFilename", valueType: typeof(string), desc: "Base filename of log files")]
+        public string LogFilename = "Convoar";
+        [ConfigParam(name: "LogBuilding", valueType: typeof(bool), desc: "log detailed BScene/BInstance object building")]
+        public bool LogBuilding = false;
+        [ConfigParam(name: "LogGltfBuilding", valueType: typeof(bool), desc: "log detailed Gltf object building")]
+        public bool LogGltfBuilding = false;
 
-        // =====================================================================================
-        // =====================================================================================
-
-        // Base parameter definition that gets and sets parameter values via a string
-        public abstract class ParameterDefnBase {
-            public string name;         // string name of the parameter
-            public string desc;         // a short description of what the parameter means
-            public abstract Type GetValueType();
-            public string[] symbols;    // command line symbols for this parameter (short forms)
-            public ConvoarParams context; // context for setting and getting values
-            public ParameterDefnBase(string pName, string pDesc, string[] pSymbols) {
-                name = pName;
-                desc = pDesc;
-                symbols = pSymbols;
+        // Find the parameter definition and return the config info and the field info
+        // Returns 'true' of the parameter is found. False otherwise.
+        public bool TryGetParameterInfo(string pName, out ConfigParam pConfigParam, out FieldInfo pFieldInfo) {
+            var lName = pName.ToLower();
+            foreach (FieldInfo fi in this.GetType().GetFields()) {
+                foreach (Attribute attr in Attribute.GetCustomAttributes(fi)) {
+                    ConfigParam cp = attr as ConfigParam;
+                    if (cp != null) {
+                        if (cp.name.ToLower() == lName || (cp.alt != null && cp.alt == lName)) {
+                            pConfigParam = cp;
+                            pFieldInfo = fi;
+                            return true;
+                        }
+                    }
+                }
             }
-            // Set the parameter value to the default
-            public abstract void AssignDefault();
-            // Get the value as a string
-            public abstract string GetValue();
-            // Get the value as just an object
-            public abstract object GetObjectValue();
-            // Set the value to this string value
-            public abstract void SetValue(string valAsString);
+            pConfigParam = null;
+            pFieldInfo = null;
+            return false;
         }
 
-        // Specific parameter definition for a parameter of a specific type.
-        public sealed class ParameterDefn<T> : ParameterDefnBase {
-            public T defaultValue;
-            public T value;
-            public override Type GetValueType() {
-                return typeof(T);
-            }
-            public ParameterDefn(string pName, string pDesc, T pDefault, params string[] symbols)
-                : base(pName, pDesc, symbols) {
-                defaultValue = pDefault;
-            }
-            public T Value() {
-                return value;
-            }
-            public override void AssignDefault() {
-                value = defaultValue;
-            }
-            public override string GetValue() {
-                string ret = String.Empty;
-                if (value != null) {
-                    ret = value.ToString();
-                }
-                return ret;
-            }
-            public override object GetObjectValue() {
-                return value;
-            }
-            public override void SetValue(String valAsString) {
-                // Find the 'Parse' method on that type
-                System.Reflection.MethodInfo parser = null;
-                try {
-                    parser = GetValueType().GetMethod("Parse", new Type[] { typeof(String) } );
-                }
-                catch {
-                    parser = null;
-                }
-                if (parser != null) {
-                    // Parse the input string
-                    try {
-                        T setValue = (T)parser.Invoke(GetValueType(), new Object[] { valAsString });
-                        // System.Console.WriteLine("SetValue: setting value on {0} to {1}", this.name, setValue);
-                        // Store the parsed value
-                        value = setValue;
-                        context._log.DebugFormat("{0} SetValue. {1} = {2}", _logHeader, name, setValue);
-                    }
-                    catch (Exception e) {
-                        context._log.ErrorFormat("{0} Failed parsing parameter value '{1}': '{2}'", _logHeader, valAsString, e);
+        // Return a string version of a particular parameter value
+        public string GetParameterValue(string pName) {
+            var ret = String.Empty;
+            foreach (FieldInfo fi in this.GetType().GetFields()) {
+                foreach (Attribute attr in Attribute.GetCustomAttributes(fi)) {
+                    ConfigParam cp = attr as ConfigParam;
+                    if (cp != null) {
+                        if (cp.name == pName) {
+                            var val = fi.GetValue(this);
+                            if (val != null) {
+                                ret = val.ToString();
+                            }
+                            break;
+                        }
                     }
                 }
-                else {
-                    // If there is not a parser, try doing a conversion
-                    try {
-                        T setValue = (T)Convert.ChangeType(valAsString, GetValueType());
-                        value = setValue;
-                        context._log.DebugFormat("{0} SetValue. Converter. {1} = {2}", _logHeader, name, setValue);
-                    }
-                    catch (Exception e) {
-                        context._log.ErrorFormat("{0} Conversion failed for {1}: {2}", _logHeader, this.name, e);
-                    }
+                if (ret != String.Empty) {
+                    break;
                 }
             }
-            // Create a description for this parameter that can be used in a list of parameters.
-            // For better listings, there is a special 'separator' parameter that is just for the description.
-            //      These separator parameters start with an equal sign ('=').
-            const int leader = 20;
-            public override string ToString() {
-                StringBuilder buff = new StringBuilder();
-                bool hasValue = true;
-                // Start with the parameter name. If multiple, first is "--" type and later are "-" type.
-                if (symbols.Length > 0) {
-                    buff.Append("[ ");
-                    buff.Append("--");
-                    buff.Append(name);
-                    foreach (string sym in symbols) {
-                        buff.Append(" | ");
-                        buff.Append("-");
-                        buff.Append(sym);
-                    }
-                    buff.Append(" ]: ");
-                }
-                else {
-                    if (name.StartsWith("=")) {
-                        hasValue = false;
-                        buff.Append(name.Substring(1));
-                    }
-                    else {
-                        buff.Append("--");
-                        buff.Append(name);
-                        buff.Append(": ");
-                    }
-                }
-                // Provide tab like padding between the name and the description
-                if (buff.Length < leader) {
-                    buff.Append("                                        ".Substring(0, leader - buff.Length));
-                }
-                buff.Append(desc);
-                // Add the type and the default value of the parameter
-                if (hasValue) {
-                    buff.Append(" (");
-                    buff.Append("Type=");
-                    switch (GetValueType().ToString()) {
-                        case "System.Boolean": buff.Append("bool"); break;
-                        case "System.Int32": buff.Append("int"); break;
-                        case "System.Float": buff.Append("float"); break;
-                        case "System.Double": buff.Append("double"); break;
-                        case "System.String": buff.Append("string"); break;
-                        case "OpenMetaverse.Vector3": buff.Append("vector3"); break;
-                        case "OpenMetaverse.Quaterion": buff.Append("quaterion"); break;
-                        default: buff.Append(GetValueType().ToString()); break;
-                    }
-                    buff.Append(",Default=");
-                    buff.Append(GetValue());
-                    buff.Append(")");
-                }
-
-                return buff.ToString();
-            }
+            return ret;
         }
-
-        // Search through the parameter definitions and return the matching
-        //    ParameterDefn structure.
-        // Case does not matter as names are compared after converting to lower case.
-        // Returns 'false' if the parameter is not found.
-        public bool TryGetParameter(string paramName, out ParameterDefnBase defn) {
-            bool ret = false;
-            ParameterDefnBase foundDefn = null;
-            string pName = paramName.ToLower();
-
-            foreach (ParameterDefnBase parm in ParameterDefinitions) {
-                string parmL = parm.name.ToLower();
-                if (pName == parmL) {
-                    foundDefn = parm;
-                    ret = true;
-                }
-                if (ret == false && parm.symbols != null) {
-                    foreach (string sym in parm.symbols) {
-                        if (sym == pName) {
-                            foundDefn = parm;
+        // Set a parameter value
+        public bool SetParameterValue(string pName, string pVal) {
+            var ret = false;
+            foreach (FieldInfo fi in this.GetType().GetFields()) {
+                foreach (Attribute attr in Attribute.GetCustomAttributes(fi)) {
+                    ConfigParam cp = attr as ConfigParam;
+                    if (cp != null) {
+                        if (cp.name == pName) {
+                            fi.SetValue(this, ParamBlock.ConvertToObj(cp.valueType, pVal));
                             ret = true;
                             break;
                         }
                     }
                 }
-                if (ret) break;
-            }
-            defn = foundDefn;
-            return ret;
-        }
-        public bool HasParam(string pParamName) {
-            return TryGetParameter(pParamName, out ParameterDefnBase pbase);
-        }
-
-        // Return a value for the parameter.
-        // This is used by most callers to get parameter values.
-        // Note that it outputs a console message if not found. Not found means that the caller
-        //     used the wrong string name.
-        public T P<T>(string paramName) {
-            T ret = default(T);
-            if (TryGetParameter(paramName, out ParameterDefnBase pbase)) {
-                if (pbase is ParameterDefn<T> pdef) {
-                    ret = pdef.Value();
-                }
-                else {
-                    _log.ErrorFormat("{0} Fetched unknown parameter. Param={1}", _logHeader, paramName);
+                if (ret) {
+                    break;
                 }
             }
             return ret;
         }
-        public object GetObjectValue(string pParamName) {
-            object ret = null;
-            if (TryGetParameter(pParamName, out ParameterDefnBase pbase)) {
-                ret = pbase.GetObjectValue();
+        // Return a list of all the parameters and their descriptions
+        public Dictionary<string, string> ListParameters() {
+            var ret = new Dictionary<string,string>();
+            foreach (FieldInfo fi in this.GetType().GetFields()) {
+                foreach (Attribute attr in Attribute.GetCustomAttributes(fi)) {
+                    ConfigParam cp = attr as ConfigParam;
+                    if (cp != null) {
+                        ret.Add(cp.name, cp.desc);
+                    }
+                }
             }
             return ret;
-        }
-
-        // Find the named parameter and set its value.
-        // Returns 'false' if the parameter could not be found.
-        public bool SetParameterValue(string paramName, string valueAsString) {
-            bool ret = false;
-            if (TryGetParameter(paramName, out ParameterDefnBase parm)) {
-                parm.SetValue(valueAsString);
-                ret = true;
-            }
-            return ret;
-        }
-
-        // Pass through the settable parameters and set the default values.
-        public void SetParameterDefaultValues() {
-            foreach (ParameterDefnBase parm in ParameterDefinitions) {
-                parm.context = this;
-                parm.AssignDefault();
-            }
         }
 
         public void MergeCommandLine(string[] args) {
@@ -450,8 +290,8 @@ namespace org.herbal3d.convoar {
             string positiveAssertion = "true";
             if (parm.Length > 2 && parm[0] == 'n' && parm[1] == 'o') {
                 string maybeParm = parm.Substring(2);
-                if (TryGetParameter(parm, out ParameterDefnBase parmDefnX)) {
-                    if (parmDefnX.GetValueType() == typeof(Boolean)) {
+                if (TryGetParameterInfo(parm, out ConfigParam bcp, out FieldInfo bfi)) {
+                    if (bcp.valueType == typeof(Boolean)) {
                         // The parameter without the 'no' exists and is a boolean
                         positiveAssertion = "false";
                         parm = maybeParm;
@@ -470,7 +310,7 @@ namespace org.herbal3d.convoar {
                 }
             }
 
-            if (TryGetParameter(parm, out ParameterDefnBase parmDefn)) {
+            if (TryGetParameterInfo(parm, out ConfigParam cp, out FieldInfo fi)) {
                 // If the parameter is a boolean type and the next value is not a parameter,
                 //      don't try to take up the next value.
                 // This handles boolean flags.
@@ -483,7 +323,7 @@ namespace org.herbal3d.convoar {
                 //        "--flag true --otherFlag ...",
                 //        "--noflag --otherflag ...",
                 //        etc
-                if (parmDefn.GetValueType() == typeof(Boolean)) {
+                if (cp.valueType == typeof(Boolean)) {
                     if (val != null) {
                         string valL = val.ToLower();
                         if (valL != "true" && valL != "t" && valL != "false" && valL != "f") {
@@ -498,7 +338,7 @@ namespace org.herbal3d.convoar {
                     }
                 }
                 // Set the named parameter to the passed value
-                parmDefn.SetValue(val);
+                fi.SetValue(this, ParamBlock.ConvertToObj(cp.valueType, val));
             }
             else {
                 throw new ArgumentException("Unknown parameter " + parm);
