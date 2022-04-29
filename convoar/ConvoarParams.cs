@@ -129,8 +129,12 @@ namespace org.herbal3d.convoar {
         public bool Quiet = false;
         [ConfigParam(name: "Verbose", valueType: typeof(bool), desc: "enable DEBUG information logging", alt: "v")]
         public bool Verbose = false;
+        [ConfigParam(name: "LogToConsole", valueType: typeof(bool), desc: "Whether to also output logs to console")]
+        public bool LogToConsole = true;
+        [ConfigParam(name: "LogToFile", valueType: typeof(bool), desc: "Whether to output logs to files")]
+        public bool LogToFiles = false;
         [ConfigParam(name: "LogFilename", valueType: typeof(string), desc: "Base filename of log files")]
-        public string LogFilename = "Convoar";
+        public string LogFilename = "Logs/convoar.log";
         [ConfigParam(name: "LogBuilding", valueType: typeof(bool), desc: "log detailed BScene/BInstance object building")]
         public bool LogBuilding = false;
         [ConfigParam(name: "LogGltfBuilding", valueType: typeof(bool), desc: "log detailed Gltf object building")]

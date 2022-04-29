@@ -218,7 +218,7 @@
       <Project>{1267952c-0000-0000-0000-000000000000}</Project>
       <Name>Herbal3d.CommonEntities</Name>
     </ProjectReference>
-    <ProjectReference Include="..\addon-modules\HerbalCommonUtil\Herbal3d.CommonUtil.csproj">
+    <ProjectReference Include="..\addon-modules\HerbalCommonUtilCS\Herbal3d.CommonUtil.csproj">
       <Project>{c0dfac61-6999-4278-855f-0e9bca2e8625}</Project>
       <Name>Herbal3d.CommonUtil</Name>
     </ProjectReference>

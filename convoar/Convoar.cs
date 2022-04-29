@@ -38,7 +38,9 @@ namespace org.herbal3d.convoar {
         public BLogger log;
         public string contextName;  // a unique identifier for this context -- used in filenames, ...
         public string version;
+        public string versionLong;
         public string buildDate;
+        public string buildDateShort;
         public string gitCommit;
 
         public GlobalContext()
@@ -49,9 +51,11 @@ namespace org.herbal3d.convoar {
             // A command is added to the pre-build events that generates BuildDate resource:
             //        echo %date% %time% > "$(ProjectDir)\Resources\BuildDate.txt"
             buildDate = Properties.Resources.BuildDate.Trim();
+            buildDateShort = buildDate.Substring(10, 4) + buildDate.Substring(4, 2) + buildDate.Substring(7, 2);
             // A command is added to the pre-build events that generates last commit resource:
             //        git rev-parse HEAD > "$(ProjectDir)\Resources\GitCommit.txt"
             gitCommit = Properties.Resources.GitCommit.Trim();
+            versionLong = version + "-" + buildDateShort + "-" + gitCommit.Substring(0, 8);
         }
     }
 
@@ -82,7 +86,7 @@ namespace org.herbal3d.convoar {
         // If run programmatically, create instance and call 'Start' with parameters.
         public async Task Start(CancellationToken cancelToken, string[] args) {
             var parms = new ConvoarParams();
-            var logger = new BLoggerNLog(parms.LogFilename);
+            var logger = new BLoggerNLog(parms.LogFilename, parms.LogToConsole, parms.LogToFiles);
             // var logger = new LoggerLog4Net(),
             // var logger = new LoggerConsole(),
 
@@ -185,6 +189,7 @@ namespace org.herbal3d.convoar {
 
                         // Output the transformed scene as Gltf version 2
                         GltfB gltf = new GltfB(bScene.name, Globals.log, new gltfParamsB() {
+                            inputOAR = Globals.parms.InputOAR,
                             uriBase = Globals.parms.URIBase,
                             verticesMaxForBuffer = Globals.parms.VerticesMaxForBuffer,
                             gltfCopyright = Globals.parms.GltfCopyright,
@@ -192,7 +197,8 @@ namespace org.herbal3d.convoar {
                             doubleSided = Globals.parms.DoubleSided,
                             textureMaxSize = Globals.parms.TextureMaxSize,
                             logBuilding = Globals.parms.LogBuilding,
-                            logGltfBuilding = Globals.parms.LogGltfBuilding
+                            logGltfBuilding = Globals.parms.LogGltfBuilding,
+                            versionLong = Globals.versionLong
                         });
 
                         try {

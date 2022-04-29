@@ -1,23 +1,6 @@
 # Dockerfile for building a runnable version of convoar
 
-FROM mono:latest
-# FROM mono:4.6
-
-ARG VERSION
-
-ENV TARGET=Release
-# ENV TARGET=Debug
-
-# An account is created in the docker file for building and running the app.
-# Set the real password in the calling environment. This is just a default.
-ENV USER=convoar
-ENV CONVOAR_PASSWORD=convoarconvoar
-
-# Optout of the .NET Core Telemetry (https://aka.ms/dotnet-cli-telemetry)
-ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
-
-LABEL Version=${VERSION}
-LABEL Description="Docker container convoar"
+FROM mono:latest as builder
 
 # add the development environment and base tools
 RUN apt-get update \
@@ -26,29 +9,62 @@ RUN apt-get update \
         curl \
         git \
         vim \
-        libc6-dev libgdiplus \
-    && apt-get clean \
-    && rm -rf /tmp/* var/tmp/* \
-    && rm -rf /var/lib/apt/lists/*
+        libc6-dev libgdiplus
+
+ARG PLACE=/tmp
+
+ARG OPENSIM_BRANCH=master
+ARG CONVOAR_BRANCH=v2
+ARG COMMON_ENTITIES_BRANCH=master
+ARG COMMON_UTIL_BRANCH=master
+
+# Gather all the sources
+RUN cd $PLACE \
+    && git clone --depth 1 -b $OPENSIM_BRANCH --single-branch git://opensimulator.org/git/opensim \
+    && git clone --depth 1 -b $CONVOAR_BRANCH --single-branch https://github.com/Misterblue/convoar.git \
+    && cd convoar \
+    && OPENSIMBIN=$PLACE/opensim/bin LIBOMVBIN=$PLACE/opensim/bin ./gatherLibs.sh \
+    && mkdir addon-modules \
+    && cd addon-modules \
+    && git clone --depth 1 -b $COMMON_ENTITIES_BRANCH --single-branch https://github.com/Herbal3d/HerbalCommonEntitiesCS.git \
+    && git clone --depth 1 -b $COMMON_UTIL_BRANCH --single-branch https://github.com/Herbal3d/HerbalCommonUtilCS.git
+
+RUN cd $PLACE/convoar \
+    && nuget restore convoar.sln \
+    && msbuild /p:Configuration=${TARGET}
+
+# Convoar is now built into $PLACE/convoar/dist
+
+# ===================================================================
+FROM mono:latest
+
+ARG TARGET=Release
+# ENV TARGET=Debug
+
+ARG VERSION
+
+LABEL Version=${VERSION}
+LABEL Description="Docker container convoar"
+
+# Optout of the .NET Core Telemetry (https://aka.ms/dotnet-cli-telemetry)
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
+
+# Must be same as in the 'builder' step above
+ARG PLACE=/tmp
+
+# An account is created in the docker file for building and running the app.
+# Set the real password in the calling environment. This is just a default.
+ENV USER=convoar
+ENV CONVOAR_PASSWORD=convoarconvoar
 
 # Add and switch to user 'convoar'
-# (From https://stackoverflow.com/questions/27701930/add-user-to-docker-container)
 RUN adduser --disabled-password --gecos 'Convoar user' ${USER} \
     && echo "${USER}:${CONVOAR_PASSWORD}" | chpasswd
 WORKDIR /home/${USER}
 USER ${USER}:${USER}
 
-# Get the 'convoar' sources
-RUN cd /home/${USER} \
-    && git clone https://github.com/Misterblue/convoar.git \
-    && git clone https://github.com/Herbal3d/HerbalCommonEntitiesCS.git \
-    && cd convoar \
-    && nuget restore convoar.sln \
-    && msbuild /p:Configuration=${TARGET}
-
-# Alternate Linux method that uses the precompiled binaries in  the repository
-# RUN mkdir -p /home/${USER}/convoar/dist
-# COPY dist /home/${USER}/convoar/dist/
+RUN mkdir -p /home/${USER}/convoar/dist
+COPY --from=builder --chown=${USER}:${USER} $PLACE/convoar/dist /home/${USER}/convoar
 
 COPY ./run-convoar.sh /home/convoar
 

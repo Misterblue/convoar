@@ -8,7 +8,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herbal3d.CommonEntities", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herbal3d.CommonEntitiesConv", "addon-modules\HerbalCommonEntitiesCS\CommonEntitiesConv\Herbal3d.CommonEntitiesConv.csproj", "{CE3D1850-0000-0000-0000-000000000000}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herbal3d.CommonUtil", "addon-modules\HerbalCommonUtil\Herbal3d.CommonUtil.csproj", "{C0DFAC61-6999-4278-855F-0E9BCA2E8625}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herbal3d.CommonUtil", "addon-modules\HerbalCommonUtilCS\Herbal3d.CommonUtil.csproj", "{C0DFAC61-6999-4278-855F-0E9BCA2E8625}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
