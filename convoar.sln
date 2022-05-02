@@ -10,6 +10,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herbal3d.CommonEntitiesConv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herbal3d.CommonUtil", "addon-modules\HerbalCommonUtilCS\Herbal3d.CommonUtil.csproj", "{C0DFAC61-6999-4278-855F-0E9BCA2E8625}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7077C142-D972-47D8-BE14-E5417159747E}"
+	ProjectSection(SolutionItems) = preProject
+		bin\libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so = bin\libopenjpeg-dotnet-2-1.5.0-dotnet-1-x86_64.so
+		bin\openjpeg-dotnet-x86_64.dll = bin\openjpeg-dotnet-x86_64.dll
+		bin\openjpeg-dotnet.dll = bin\openjpeg-dotnet.dll
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,14 +33,6 @@ Global
 		{BD9942A1-315C-4961-B56A-D1770BED83B0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BD9942A1-315C-4961-B56A-D1770BED83B0}.Release|x64.ActiveCfg = Release|x64
 		{BD9942A1-315C-4961-B56A-D1770BED83B0}.Release|x64.Build.0 = Release|x64
-		{C0A6E265-E59A-4D66-B8F5-145848231484}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C0A6E265-E59A-4D66-B8F5-145848231484}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C0A6E265-E59A-4D66-B8F5-145848231484}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C0A6E265-E59A-4D66-B8F5-145848231484}.Debug|x64.Build.0 = Debug|Any CPU
-		{C0A6E265-E59A-4D66-B8F5-145848231484}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C0A6E265-E59A-4D66-B8F5-145848231484}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C0A6E265-E59A-4D66-B8F5-145848231484}.Release|x64.ActiveCfg = Release|Any CPU
-		{C0A6E265-E59A-4D66-B8F5-145848231484}.Release|x64.Build.0 = Release|Any CPU
 		{1267952C-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1267952C-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1267952C-0000-0000-0000-000000000000}.Debug|x64.ActiveCfg = Debug|Any CPU

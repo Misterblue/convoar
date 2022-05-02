@@ -39,7 +39,6 @@ namespace org.herbal3d.convoar {
         public string contextName;  // a unique identifier for this context -- used in filenames, ...
         public string version;
         public string versionLong;
-        public string buildDate;
         public string buildDateShort;
         public string gitCommit;
 
@@ -47,15 +46,9 @@ namespace org.herbal3d.convoar {
         {
             stats = null;
             contextName = String.Empty;
-            version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            // A command is added to the pre-build events that generates BuildDate resource:
-            //        echo %date% %time% > "$(ProjectDir)\Resources\BuildDate.txt"
-            buildDate = Properties.Resources.BuildDate.Trim();
-            buildDateShort = buildDate.Substring(10, 4) + buildDate.Substring(4, 2) + buildDate.Substring(7, 2);
-            // A command is added to the pre-build events that generates last commit resource:
-            //        git rev-parse HEAD > "$(ProjectDir)\Resources\GitCommit.txt"
-            gitCommit = Properties.Resources.GitCommit.Trim();
-            versionLong = version + "-" + buildDateShort + "-" + gitCommit.Substring(0, 8);
+            version = VersionInfo.appVersion;
+            buildDateShort = VersionInfo.buildDate;
+            versionLong = VersionInfo.longVersion;
         }
     }
 
@@ -119,10 +112,7 @@ namespace org.herbal3d.convoar {
             }
 
             if (!Globals.parms.Quiet) {
-                System.Console.WriteLine("Convoar v" + Globals.version
-                            + " built " + Globals.buildDate
-                            + " commit " + Globals.gitCommit
-                            );
+                System.Console.WriteLine("Convoar " + Globals.versionLong);
             }
 
             // Validate parameters

@@ -59,25 +59,5 @@ namespace org.herbal3d.convoar.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Tue 01/14/2020  8:50:33.77 
-        ///.
-        /// </summary>
-        internal static string BuildDate {
-            get {
-                return ResourceManager.GetString("BuildDate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to fae1e64c9a193860033db3028f5a2176561255d7
-        ///.
-        /// </summary>
-        internal static string GitCommit {
-            get {
-                return ResourceManager.GetString("GitCommit", resourceCulture);
-            }
-        }
     }
 }
