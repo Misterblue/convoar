@@ -7,6 +7,9 @@
 DOCKERHUB_USER=herbal3d
 IMAGE=convoar
 
+# export TARGET=Release
+export TARGET=Debug
+
 if [[ ! -e "./VERSION" ]] ; then
     echo "No file named 'VERSION'. You might be in the wrong directory."
     echo "Run the build script in the base project directory."
@@ -22,7 +25,7 @@ DO_GIT_TAG=no
 DO_DOCKER_BUILD=yes
 
 # Push the built docker image to DockerHub.
-DO_DOCKERHUB_PUSH=yes
+DO_DOCKERHUB_PUSH=no
 
 # Tag the version in git
 if [[ "$DO_GIT_TAG" == "yes" ]] ; then
@@ -35,8 +38,8 @@ fi
 
 if [[ "$DO_DOCKER_BUILD" == "yes" ]] ; then
     cd docker
-    docker build --no-cache --build-arg VERSION=${VERSION} -t herbal3d/convoar .
-    # docker build --build-arg VERSION=${VERSION} -t herbal3d/convoar .
+    # docker build --build-arg TARGET=${TARGET} --build-arg VERSION=${VERSION} -t herbal3d/convoar .
+    docker build --no-cache --build-arg TARGET=${TARGET} --build-arg VERSION=${VERSION} -t herbal3d/convoar .
 
     docker tag $DOCKERHUB_USER/$IMAGE:latest $DOCKERHUB_USER/$IMAGE:$VERSION
 fi
