@@ -113,6 +113,9 @@ namespace org.herbal3d.convoar {
 
             if (!Globals.parms.Quiet) {
                 System.Console.WriteLine("Convoar " + Globals.versionLong);
+                System.Console.WriteLine("   using Herbal3d.CommonEntities " + org.herbal3d.cs.CommonEntities.VersionInfo.longVersion);
+                System.Console.WriteLine("   using Herbal3d.CommonEntitiesConv " + org.herbal3d.cs.CommonEntitiesConv.VersionInfo.longVersion);
+                System.Console.WriteLine("   using Herbal3d.CommonUtil " + org.herbal3d.cs.CommonUtil.VersionInfo.longVersion);
             }
 
             // Validate parameters

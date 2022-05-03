@@ -17,7 +17,7 @@ ARG PLACE=/tmp
 
 ARG OPENSIM_BRANCH=master
 ARG CONVOAR_BRANCH=v2
-ARG COMMON_ENTITIES_BRANCH=dev
+ARG COMMON_ENTITIES_BRANCH=master
 ARG COMMON_UTIL_BRANCH=main
 
 ADD https://api.github.com/repos/opensim/opensim/git/refs/heads/$OPENSIM_BRANCH opensim-git-version.json
