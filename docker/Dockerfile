@@ -20,9 +20,9 @@ ARG CONVOAR_BRANCH=v2
 ARG COMMON_ENTITIES_BRANCH=dev
 ARG COMMON_UTIL_BRANCH=main
 
-ADD https://api.github.com/repos/misterblue/BuildVersion/git/refs/heads/main buildversion-git-version.json
+ADD https://api.github.com/repos/herbal3d/BuildVersion/git/refs/heads/main buildversion-git-version.json
 RUN cd $PLACE \
-    && git clone --depth 1 -b main --single-branch https://github.com/misterblue/BuildVersion.git \
+    && git clone --depth 1 -b main --single-branch https://github.com/herbal3d/BuildVersion.git \
     && cd BuildVersion \
     && msbuild /p:Configuration=Release
 
@@ -43,7 +43,7 @@ RUN cd $PLACE \
     && cd convoar \
     && mkdir bin \
     && OPENSIMBIN=$PLACE/opensim/bin LIBOMVBIN=$PLACE/opensim/bin ./gatherLibs.sh \
-    && ./updateVersion.sh ../BuildVersion/bin/Release/BuildVersion.exe \
+    && ./updateVersion.sh "mono ../BuildVersion/bin/Release/BuildVersion.exe" \
     && mkdir addon-modules \
     && cd addon-modules \
     && git clone --depth 1 -b $COMMON_ENTITIES_BRANCH --single-branch https://github.com/Herbal3d/HerbalCommonEntitiesCS.git \
