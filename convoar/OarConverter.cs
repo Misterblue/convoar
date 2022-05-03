@@ -48,7 +48,7 @@ using OMVR = OpenMetaverse.Rendering;
 namespace org.herbal3d.convoar {
     // Convert things from OpenSimulator to Instances and Displayables things
     public class OarConverter {
-        private static readonly string _logHeader = "[OarConverter]";
+        // private static readonly string _logHeader = "[OarConverter]";
 
         private readonly BLogger _log;
         private readonly ConvoarParams _params;
