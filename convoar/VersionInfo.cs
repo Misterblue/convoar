@@ -3,8 +3,8 @@
 using System;
 namespace org.herbal3d.convoar {
     public class VersionInfo {
-        public static string appVersion = "2.0.1";
-        public static string longVersion = "2.0.1-20220502-1f9e2600";
-        public static string buildDate = "20220502";
+        public static string appVersion = "2.0.2";
+        public static string longVersion = "2.0.2-20220503-1f9e2600";
+        public static string buildDate = "20220503";
     }
 }

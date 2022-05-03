@@ -11,19 +11,33 @@ RUN apt-get update \
         vim \
         libc6-dev libgdiplus
 
+ARG TARGET=Release
+
 ARG PLACE=/tmp
 
 ARG OPENSIM_BRANCH=master
 ARG CONVOAR_BRANCH=v2
-ARG COMMON_ENTITIES_BRANCH=master
-ARG COMMON_UTIL_BRANCH=master
+ARG COMMON_ENTITIES_BRANCH=dev
+ARG COMMON_UTIL_BRANCH=main
+
+ADD https://api.github.com/repos/opensim/opensim/git/refs/heads/$OPENSIM_BRANCH opensim-git-version.json
+RUN cd $PLACE \
+    && git clone --depth 1 -b $OPENSIM_BRANCH --single-branch https://github.com/opensim/opensim.git \
+    && cd opensim \
+    && ./runprebuild48.sh \
+    && msbuild /p:Configuration=${TARGET}
 
 # Gather all the sources
+# The following ADD's break the caching of the sources changed
+ADD https://api.github.com/repos/Misterblue/convoar/git/refs/heads/$CONVOAR_BRANCH convoar-git-version.json
+ADD https://api.github.com/repos/Herbal3d/HerbalCommonEntitiesCS/git/refs/heads/$COMMON_ENTITES_BRANCH commonentites-git-version.json
+ADD https://api.github.com/repos/Herbal3d/HerbalCommonUtilCS/git/refs/heads/$COMMON_UTIL_BRANCH commonutil-git-version.json
 RUN cd $PLACE \
-    && git clone --depth 1 -b $OPENSIM_BRANCH --single-branch git://opensimulator.org/git/opensim \
     && git clone --depth 1 -b $CONVOAR_BRANCH --single-branch https://github.com/Misterblue/convoar.git \
     && cd convoar \
+    && mkdir bin \
     && OPENSIMBIN=$PLACE/opensim/bin LIBOMVBIN=$PLACE/opensim/bin ./gatherLibs.sh \
+    && ./updateVersion.sh \
     && mkdir addon-modules \
     && cd addon-modules \
     && git clone --depth 1 -b $COMMON_ENTITIES_BRANCH --single-branch https://github.com/Herbal3d/HerbalCommonEntitiesCS.git \
@@ -37,9 +51,6 @@ RUN cd $PLACE/convoar \
 
 # ===================================================================
 FROM mono:latest
-
-ARG TARGET=Release
-# ENV TARGET=Debug
 
 ARG VERSION
 
@@ -64,7 +75,7 @@ WORKDIR /home/${USER}
 USER ${USER}:${USER}
 
 RUN mkdir -p /home/${USER}/convoar/dist
-COPY --from=builder --chown=${USER}:${USER} $PLACE/convoar/dist /home/${USER}/convoar
+COPY --from=builder --chown=${USER}:${USER} $PLACE/convoar/dist /home/${USER}/convoar/dist/
 
 COPY ./run-convoar.sh /home/convoar
 
