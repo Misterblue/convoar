@@ -1,6 +1,8 @@
 #! /bin/bash
 
-./BuildVersion/BuildVersion.exe --namespace org.herbal3d.convoar \
+BUILDVERSION=${1:-./BuildVersion/BuildVersion.exe}
+
+$BUILDVERSION --namespace org.herbal3d.convoar \
     --verbose \
     --version $(cat VERSION) \
     --versionFile convoar/VersionInfo.cs \
