@@ -35,10 +35,10 @@ ADD https://api.github.com/repos/Herbal3d/HerbalCommonUtilCS/git/refs/heads/$COM
 RUN cd $PLACE \
     && git clone --depth 1 -b $CONVOAR_BRANCH --single-branch https://github.com/Misterblue/convoar.git \
     && cd convoar \
-    && mkdir bin \
+    && mkdir -p bin \
     && OPENSIMBIN=$PLACE/opensim/bin LIBOMVBIN=$PLACE/opensim/bin ./gatherLibs.sh \
     && ./updateVersion.sh "mono ./BuildVersion/BuildVersion.exe" \
-    && mkdir addon-modules \
+    && mkdir -p addon-modules \
     && cd addon-modules \
     && git clone --depth 1 -b $COMMON_ENTITIES_BRANCH --single-branch https://github.com/Herbal3d/HerbalCommonEntitiesCS.git \
     && git clone --depth 1 -b $COMMON_UTIL_BRANCH --single-branch https://github.com/Herbal3d/HerbalCommonUtilCS.git
