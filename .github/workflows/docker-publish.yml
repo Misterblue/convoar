@@ -21,7 +21,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
 
-      - name: Extract version information
+      - name: Place version number into environment
         run: |
           echo "CVERSION=$(cat VERSION)" >> $GITHUB_ENV
         
@@ -41,7 +41,7 @@ jobs:
           context: ./docker
           build-args:
             TARGET=Release
-            VERSION={{ env.CVERSION }}
+            VERSION=${{ env.CVERSION }}
           platforms: linux/amd64
           # platforms: linux/amd64,linux/arm64
           push: true
