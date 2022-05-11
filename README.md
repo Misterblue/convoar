@@ -148,8 +148,8 @@ Assume the OAR to be converted is at `/tmp/frog/REGION.oar`.
 Then, to do the conversion:
 
 ```bash
-docker pull herbal3d/convoar
-docker run --rm --user $(id -u):$(id -g) -v /tmp/frog:/oar herbal3d/convoar REGION.oar
+docker pull misterblue/convoar
+docker run --rm --user $(id -u):$(id -g) -v /tmp/frog:/oar ghcr.io/misterblue/convoar REGION.oar
 ```
 
 This maps the local `/tmp/frog` directory to the `/oar` directory in
