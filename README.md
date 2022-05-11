@@ -98,11 +98,14 @@ build where one just builds the sources checked out, and there is the *updating*
 where one fetches new versions of the [OpenSimulator] sources.
 
 Some functionality has been moved out into another project that must be
-checked out in the same directory as [Convoar]. Checkout [HerbalCommonEntitiesCS]
-into the `addon-modules` sub-directory. This will include
-```CommonEntities``` and ```CommonEntitiesUtil```.
+checked out in the directory `addon-modules`.
+The script `setupConvoar.sh` fetches 
+[HerbalCommonEntitiesCS] and [HerbalCommonUtilCS] into this directory
+and sets things up for compilation.
 
-## Simple Build
+If you have a current [OpenSimulator] build, you can use the binaries from
+that by setting the environment variable `OPENSIMBIN` to point to the
+`bin` directory in that build. See below.
 
 Under windows 10, use Visual Studio 2017 or better. At the moment, convoar is
 built under Windows to create the `dist` directory.
@@ -112,6 +115,14 @@ everything is included in the Convoar GitHub repository.
 
 If compiling on Linux, one needs [Mono] version 5 or better and one
 just uses `msbuild`.
+So the steps are:
+
+```
+git clone https://github.com/Misterblue/convoar
+cd convoar
+./setupConvoar.sh
+msbuild   # or open the .sln file with Visual Studio
+```
 
 ## Updating Build
 
@@ -120,17 +131,11 @@ required DLLs from other repositories. The other repositories must be cloned
 into the same directory as the convoar repository so the steps could be:
 
 ```
-git clone https://github.com/Misterblue/convoar.git
-git clone git://opensimulator.org/git/opensim
-export OPENSIMBIN="$(pwd)/opensim/bin"  # used by gatherlibs.sh
-export LIBOMVBIN="$(pwd)/opensim/bin"   # used by gatherlibs.sh
+git clone https://github.com/Misterblue/convoar
 cd convoar
-mkdir addon-modules
-cd addon-modules
-git clone https://github.com/Herbal3d/HerbalCommonEntitiesCS.git
-git clone https://github.com/Herbal3d/HerbalCommonUtil.git
-cd ..
-./gatherLibs.sh
+OPENSIMBIN=pathToOpenSimBinDir ./setupConvoar.sh
+msbuild   # or open the .sln file with Visual Studio
+
 ```
 
 Then convoar can be built using either Visual Studio or `msbuild`.
@@ -188,7 +193,7 @@ What follows is a list of features that are copied:
     * bug release -- trying to figure out why some JPEG2000 don't decomopress.
 - [x] Release 1.3 and after
     * bug releases and optimization experimentation before going to version 2
-- [ ] Release 2.0
+- [x] Release 2.0
     * Rework of initial Convoar to create validated GLTF output
 - [ ] Release 3.0
     * option to include all prim information in `extras` (scripts, notes, etc.)
@@ -202,4 +207,5 @@ What follows is a list of features that are copied:
 [Mono]: http://www.mono-project.com/
 [Blender]: https://www.blender.org/
 [HerbalCommonEntitiesCS]: https://github.com/Herbal3d/HerbalCommonEntitiesCS
+[HerbalCommonUtilCS]: https://github.com/Herbal3d/HerbalCommonUtilCS
 
