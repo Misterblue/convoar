@@ -8,7 +8,7 @@ on:
 
 env:
   IMAGE_NAME: convoar
-  IMAGE_OWNER: herbal3d
+  IMAGE_OWNER: misterblue
 
 jobs:
   # Push image to GitHub Packages.
