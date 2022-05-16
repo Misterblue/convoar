@@ -21,12 +21,12 @@ VERSION=$(cat VERSION)
 DO_DOCKER_BUILD=yes
 
 # Push the built docker image to DockerHub.
-DO_DOCKERHUB_PUSH=no
+DO_DOCKERHUB_PUSH=yes
 
 if [[ "$DO_DOCKER_BUILD" == "yes" ]] ; then
     cd docker
     # docker build --build-arg TARGET=${TARGET} --build-arg VERSION=${VERSION} -t herbal3d/convoar .
-    docker build --no-cache --build-arg TARGET=${TARGET} --build-arg VERSION=${VERSION} -t herbal3d/convoar .
+    docker build --no-cache --build-arg TARGET=${TARGET} --build-arg VERSION=${VERSION} -t $DOCKERHUB_USER/convoar .
 
     docker tag $DOCKERHUB_USER/$IMAGE:latest $DOCKERHUB_USER/$IMAGE:$VERSION
 fi
