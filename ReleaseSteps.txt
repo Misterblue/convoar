@@ -5,10 +5,9 @@ steps to build and release convoar are:
 
 CREATE THE GITHUB PRE-COMPILED BINARIES
 =======================================
-Pull the latest github sources
-Verify the VERSION file has the correct version number
-Verify AssemblyInfo.cs has correct version number
-Open project in Visual Studio 2017
+Update VERSION
+Run ./setupConvoar.sh
+Open project in Visual Studio 2019+
 Verify compile target is "Release"
 Rebuild Solution
 Git commit all changed files (should be exe's and date files)
