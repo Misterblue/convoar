@@ -160,6 +160,10 @@ NOTE: the most common problem is permissions. The command above, sets the
 user and group IDs to that of the current user (the `--user` parameter)
 which is usually is the right thing for write permissions into the mapped directory.
 
+ALSO NOTE: `docker` does not automatically pull the newest image if
+there is a local image of the same name. You must do the `docker pull`
+operation to make sure you have the latest version of the image.
+
 # What Is Converted
 
 Convoar reads in the totality of the OAR file and then maps the various
